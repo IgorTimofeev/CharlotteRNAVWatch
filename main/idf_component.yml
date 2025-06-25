@@ -1,0 +1,7 @@
+dependencies:
+  YOBA:
+    path: ../components/YOBA
+    #git: https://github.com/IgorTimofeev/YOBA.git
+#  RadioLib:
+#    path: ../components/RadioLib
+    #git: https://github.com/jgromes/RadioLib.git

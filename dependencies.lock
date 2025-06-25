@@ -1,0 +1,16 @@
+dependencies:
+  YOBA:
+    dependencies: []
+    source:
+      path: C:\Users\Igor\Documents\Code\MCU\ESP32\Charlotte\Remote\components\YOBA
+      type: local
+    version: 0.0.1
+  idf:
+    source:
+      type: idf
+    version: 5.4.1
+direct_dependencies:
+- YOBA
+manifest_hash: c90253e225556174ecf17769a967ef844d4e1b037a057fe2e1d988275e535b8f
+target: esp32c3
+version: 2.0.0
