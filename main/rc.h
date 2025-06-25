@@ -3,7 +3,7 @@
 #include <cstdint>
 
 #include <YOBA/main.h>
-#include <hardware/GPS/GPS.h>
+#include <hardware/GNSS/GNSS.h>
 #include <settings/settings.h>
 #include <constants.h>
 
@@ -23,7 +23,7 @@ namespace pizda {
 		public:
 			Settings settings {};
 
-			GPS gps {
+			GNSS gps {
 				constants::uart::port
 			};
 

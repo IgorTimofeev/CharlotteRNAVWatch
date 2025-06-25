@@ -3,7 +3,7 @@
 #include "driver/uart.h"
 #include "constants.h"
 #include "esp_log.h"
-#include "hardware/GPS/TinyGPS++.h"
+#include "hardware/GNSS/TinyGPS++.h"
 #include <inttypes.h>
 
 namespace pizda {
@@ -18,9 +18,9 @@ namespace pizda {
 		};
 	}
 
-	class GPS {
+	class GNSS {
 		public:
-			explicit GPS(const uart_port_t uartPort) : _uartPort(uartPort) {
+			explicit GNSS(const uart_port_t uartPort) : _uartPort(uartPort) {
 
 			}
 			
@@ -38,10 +38,10 @@ namespace pizda {
 				ESP_ERROR_CHECK(uart_param_config(_uartPort, &config));
 				ESP_ERROR_CHECK(uart_set_pin(_uartPort, constants::uart::tx, constants::uart::rx, GPIO_NUM_NC, GPIO_NUM_NC));
 
-				xTaskCreate(startTask, "GPS task", 4096, this, 3, nullptr);
+				xTaskCreate(startTask, "GPS task", 4096, this, 1, nullptr);
 			}
 
-			void setGNSSSystem(const uint8_t flags) {
+			void setGNSSSystem(const uint8_t flags) const {
 				const auto buffer = new char[11];
 				snprintf(buffer, 11, "PCAS04,%d", flags);
 
@@ -50,7 +50,7 @@ namespace pizda {
 				delete[] buffer;
 			}
 
-			void setUpdateInterval(const uint16_t intervalMs) {
+			void setUpdateInterval(const uint16_t intervalMs) const {
 				const auto buffer = new char[13];
 				snprintf(buffer, 13, "MTK220,%d", intervalMs);
 
@@ -121,7 +121,7 @@ namespace pizda {
 			constexpr static uint16_t _queueSize = 10;
 
 			static void startTask(void* args) {
-				static_cast<GPS*>(args)->tick();
+				static_cast<GNSS*>(args)->tick();
 			}
 
 			static uint8_t computeCommandCRC(const char* data) {
@@ -168,10 +168,10 @@ namespace pizda {
 					}
 
 					ESP_LOGI("GPS", "---------------- Processed data ----------------");
-					ESP_LOGI("GPS", "Sat / HDOP: %lu, %lf", _gps.satellites.value(), _gps.hdop.hdop());
-					ESP_LOGI("GPS", "Date / time: %d.%d.%d %d:%d:%d", _gps.date.day(), _gps.date.month(), _gps.date.year(), _gps.time.hour(), _gps.time.minute(), _gps.time.second());
-					ESP_LOGI("GPS", "Lat / lon / alt: %f deg, %f deg, %f ft", _gps.location.lat(), _gps.location.lng(), _gps.altitude.feet());
-					ESP_LOGI("GPS", "Speed / Course: %f kt, %f deg", _gps.speed.knots(), _gps.course.deg());
+					ESP_LOGI("GPS", "Sat / HDOP: %lu, %lf", getSatellites(), getHDOP());
+					ESP_LOGI("GPS", "Date / time: %d.%d.%d %d:%d:%d", getDateDay(), getDateMonth(), getDateYear(), getTimeHours(), getTimeMinutes(), getTimeSeconds());
+					ESP_LOGI("GPS", "Lat / lon / alt: %f deg, %f deg, %f ft", getLatitude(), getLongitude(), getAltitudeFt());
+					ESP_LOGI("GPS", "Speed / Course: %f kt, %f deg", getSpeedKt(), getCourseDeg());
 
 					vTaskDelay(pdMS_TO_TICKS(1000));
 				}
