@@ -46,11 +46,11 @@ namespace pizda {
 			// Background
 			RGB888Color(0x000000),
 			RGB888Color(0x0C0C0C),
-			RGB888Color(0x1C1C1C),
-			RGB888Color(0x2C2C2C),
-			RGB888Color(0x3C3C3C),
-			RGB888Color(0x4C4C4C),
-			RGB888Color(0x5C5C5C),
+			RGB888Color(0x181818),
+			RGB888Color(0x242424),
+			RGB888Color(0x484848),
+			RGB888Color(0x545454),
+			RGB888Color(0x606060),
 
 			// Foreground
 			RGB888Color(0xF0F0F0),

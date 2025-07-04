@@ -43,8 +43,11 @@ namespace pizda {
 			Application application {};
 			Eblo eblo {};
 
-			float courseDeg = 0;
 			float HSICourseDeg = 32;
+
+			float courseDeg = 0;
+			float altitudeFt = 0;
+			float speedKt = 0;
 
 			static RC& getInstance();
 

@@ -60,6 +60,8 @@ namespace pizda {
 		// Slow
 		float LPFFactor = 1.0f * static_cast<float>(deltaTime) / 1'000'000.f;
 		LowPassFilter::apply(courseDeg, gps.getCourseDeg(), LPFFactor);
+		LowPassFilter::apply(speedKt, gps.getSpeedKt(), LPFFactor);
+		LowPassFilter::apply(altitudeFt, gps.getAltitudeFt(), LPFFactor);
 
 		_interpolationTickTime = esp_timer_get_time() + constants::application::interpolationTickInterval;
 	}

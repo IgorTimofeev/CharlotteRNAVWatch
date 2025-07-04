@@ -68,11 +68,13 @@ namespace pizda {
 			}
 
 			float getAltitudeFt() {
-				return _gps.altitude.feet();
+				// return _gps.altitude.feet();
+				return testAltitude;
 			}
 
 			float getSpeedKt() {
-				return _gps.speed.knots();
+				// return _gps.speed.knots();
+				return testSpeed;
 			}
 
 			float getCourseDeg() {
@@ -118,6 +120,8 @@ namespace pizda {
 			QueueHandle_t _uartQueue {};
 
 			float testCourse = 0;
+			float testSpeed = 0;
+			float testAltitude = 0;
 
 			constexpr static uint16_t _rxBufferSize = 2048;
 			constexpr static uint16_t _txBufferSize = 2048;
@@ -196,6 +200,16 @@ namespace pizda {
 
 					if (testCourse >= 360)
 						testCourse = 0;
+
+					testSpeed += 2;
+
+					if (testSpeed >= 10)
+						testSpeed = 0;
+
+					testAltitude += 100;
+
+					if (testAltitude >= 3500)
+						testAltitude = 0;
 
 					ESP_LOGI("GNSS", "---------------- Processed data ----------------");
 					ESP_LOGI("GNSS", "Sat / HDOP: %lu, %lf", getSatellites(), getHDOP());
