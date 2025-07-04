@@ -9,7 +9,7 @@
 
 #include <YOBA/main.h>
 #include <YOBA/UI.h>
-#include <YOBA/hardware/displays/SH1106Display.h>
+#include <YOBA/hardware/displays/GC9A01Display.h>
 
 #include "UI/theme.h"
 #include "UI/navigation/eblo.h"
@@ -27,7 +27,7 @@ namespace pizda {
 				constants::uart::port
 			};
 
-			SH1106Display display = SH1106Display(
+			GC9A01Display display = GC9A01Display(
 				constants::spi::mosi,
 				constants::spi::miso,
 				constants::spi::sck,
@@ -38,10 +38,13 @@ namespace pizda {
 				constants::screen::frequency
 			);
 
-			MonochromeRenderer renderer {};
+			Bit8PaletteRenderer renderer { 32 };
 
 			Application application {};
 			Eblo eblo {};
+
+			float courseDeg = 0;
+			float HSICourseDeg = 32;
 
 			static RC& getInstance();
 
@@ -50,6 +53,9 @@ namespace pizda {
 		private:
 			RC() = default;
 
+			uint64_t _interpolationTickTime = 0;
+
 			void SPIBusSetup() const;
+			void interpolationTick();
 	};
 }

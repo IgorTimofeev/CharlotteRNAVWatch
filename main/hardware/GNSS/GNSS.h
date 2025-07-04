@@ -9,12 +9,12 @@
 namespace pizda {
 	namespace GNSSSystem {
 		enum : uint8_t {
-			GPS = 0b00000001,
+			GPS =     0b00000001,
 			GLONASS = 0b00000010,
 			Galileo = 0b00000100,
-			BeiDou = 0b00001000,
-			QZSS = 0b00010000,
-			SBAS = 0b00100000,
+			BeiDou =  0b00001000,
+			QZSS =    0b00010000,
+			SBAS =    0b00100000,
 		};
 	}
 
@@ -59,24 +59,25 @@ namespace pizda {
 				delete[] buffer;
 			}
 
-			double getLatitude() {
+			float getLatitude() {
 				return _gps.location.lat();
 			}
 
-			double getLongitude() {
+			float getLongitude() {
 				return _gps.location.lng();
 			}
 
-			double getAltitudeFt() {
+			float getAltitudeFt() {
 				return _gps.altitude.feet();
 			}
 
-			double getSpeedKt() {
+			float getSpeedKt() {
 				return _gps.speed.knots();
 			}
 
-			double getCourseDeg() {
-				return _gps.course.deg();
+			float getCourseDeg() {
+				// return _gps.course.deg();
+				return testCourse;
 			}
 
 			uint8_t getTimeHours() {
@@ -107,7 +108,7 @@ namespace pizda {
 				return _gps.satellites.value();
 			}
 
-			double getHDOP() {
+			float getHDOP() {
 				return _gps.hdop.hdop();
 			}
 
@@ -115,6 +116,8 @@ namespace pizda {
 			uart_port_t _uartPort;
 			TinyGPSPlus _gps {};
 			QueueHandle_t _uartQueue {};
+
+			float testCourse = 0;
 
 			constexpr static uint16_t _rxBufferSize = 2048;
 			constexpr static uint16_t _txBufferSize = 2048;
@@ -142,7 +145,7 @@ namespace pizda {
 				const auto buffer = new char[targetLen + 1];
 				snprintf(buffer, targetLen + 1, "$%s*%02X\r\n", command, crc);
 
-				ESP_LOGI("GPS", "Sending command: %s", buffer);
+				ESP_LOGI("GNSS", "Sending command: %s", buffer);
 
 				uart_write_bytes(_uartPort, buffer, targetLen);
 
@@ -158,20 +161,47 @@ namespace pizda {
 					if (bytesRead) {
 						data[bytesRead] = '\0';
 
-						ESP_LOGI("GPS", "Received:\n%s", (char *) data);
+						ESP_LOGI("GNSS", "Received:\n%s", (char *) data);
 
-						auto ptr = data;
+						const auto sample =
+						"$GPRMC,112019.950,A,5950.225256,N,03035.104663,E,22.9,37.0,250625,,,*2C\r\n"
+						"$IIVHW,37.0,T,37.0,M,22.9,N,42.3,K*59\r\n"
+						"$GPVTG,37.0,T,37.0,M,22.9,N,42.3,K*42\r\n"
+						"$IIHDT,37.0,T*16"
+						"$GPGLL,5950.225256,N,03035.104663,E,112019.950,A*3C\r\n"
+						"$GPGGA,112019.950,5950.225256,N,03035.104663,E,1,4,0.7,630.0,M,,,,*31\r\n"
+						"$GPGSA,A,3,8,11,15,22,,,,,,,,,0.5,0.7,1.1*0C\r\n"
+						"$GPZDA,112019.950,25,06,2025,03,00*57\r\n"
+						"$IIVBW,22.1,22.5,A,22.0,22.8,A,22.4,A,22.6,A*4D\r\n"
+						"!AIVDO,1,1,,A,17PaewhP3TR<0N<R?C;1LQ:V0000,0*27\r\n"
+						"!AIVDM,1,1,,A,17PaewhP3TR<0N<R?C;1LQ:V0000,0*25\r\n"
+						"$INWPL,5949.665751,N,03034.126540,E,wpt*2F\r\n"
+						"!AIVDO,2,1,9,A,57Paewh00001<To7;?@plD5<Tl0000000000000U1@:551dcD2TnA3QF,0*4A\r\n"
+						"!AIVDO,2,2,9,A,@00000000000002,2*5D\r\n"
+						"!AIVDM,2,1,9,A,57Paewh00001<To7;?@plD5<Tl0000000000000U1@:551dcD2TnA3QF,0*48\r\n"
+						"!AIVDM,2,2,9,A,@00000000000002,2*5F\r\n"
+						"$IIRPM,E,1,3450.0,10.5,A*50\r\n"
+						"$IIRPM,E,2,0,10.5,A*7F\r\n"
+						"$IIAPB,V,V,,R,N,,,,T,,,T,,T,N*79\r\n"
+						"$GPRMB,V,,R,,,,,,,,,,,N*00\r\n";
+
+						auto ptr = sample;
 
 						while (*ptr) {
 							_gps.encode(*ptr++);
 						}
 					}
 
-					ESP_LOGI("GPS", "---------------- Processed data ----------------");
-					ESP_LOGI("GPS", "Sat / HDOP: %lu, %lf", getSatellites(), getHDOP());
-					ESP_LOGI("GPS", "Date / time: %d.%d.%d %d:%d:%d", getDateDay(), getDateMonth(), getDateYear(), getTimeHours(), getTimeMinutes(), getTimeSeconds());
-					ESP_LOGI("GPS", "Lat / lon / alt: %f deg, %f deg, %f ft", getLatitude(), getLongitude(), getAltitudeFt());
-					ESP_LOGI("GPS", "Speed / Course: %f kt, %f deg", getSpeedKt(), getCourseDeg());
+					testCourse += 5;
+
+					if (testCourse >= 360)
+						testCourse = 0;
+
+					ESP_LOGI("GNSS", "---------------- Processed data ----------------");
+					ESP_LOGI("GNSS", "Sat / HDOP: %lu, %lf", getSatellites(), getHDOP());
+					ESP_LOGI("GNSS", "Date / time: %d.%d.%d %d:%d:%d", getDateDay(), getDateMonth(), getDateYear(), getTimeHours(), getTimeMinutes(), getTimeSeconds());
+					ESP_LOGI("GNSS", "Lat / lon / alt: %f deg, %f deg, %f ft", getLatitude(), getLongitude(), getAltitudeFt());
+					ESP_LOGI("GNSS", "Speed / Course: %f kt, %f deg", getSpeedKt(), getCourseDeg());
 
 					vTaskDelay(pdMS_TO_TICKS(1000));
 				}

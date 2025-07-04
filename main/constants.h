@@ -27,7 +27,13 @@ namespace pizda {
 					constexpr static gpio_num_t slaveSelect = GPIO_NUM_1;
 					constexpr static gpio_num_t dataCommand = GPIO_NUM_2;
 					constexpr static gpio_num_t reset = GPIO_NUM_3;
-					constexpr static uint32_t frequency = 10'000'000;
+					constexpr static uint32_t frequency = 40'000'000;
+			};
+
+			class application {
+				public:
+					constexpr static uint32_t mainTickInterval = 1'000'000 / 30;
+					constexpr static uint32_t interpolationTickInterval = 1'000'000 / 30;
 			};
 	};
 }

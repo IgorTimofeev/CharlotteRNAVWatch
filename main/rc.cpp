@@ -1,5 +1,5 @@
 #include <rc.h>
-
+#include "utils/lowPassFilter.h"
 
 namespace pizda {
 	using namespace YOBA;
@@ -20,11 +20,12 @@ namespace pizda {
 		// GPS
 		gps.setup();
 		gps.setUpdateInterval(1000);
-		gps.setGNSSSystem(GNSSSystem::GPS | GNSSSystem::GLONASS | GNSSSystem::Galileo);
+		gps.setGNSSSystem(GNSSSystem::GPS | GNSSSystem::GLONASS | GNSSSystem::Galileo | GNSSSystem::QZSS | GNSSSystem::SBAS);
 
 		// UI
+		Theme::setup(&renderer);
 		application.setRenderer(&renderer);
-		application.setBackgroundColor(&Theme::b);
+		application.setBackgroundColor(&Theme::bg1);
 
 		application += &eblo;
 
@@ -33,8 +34,34 @@ namespace pizda {
 			application.tick();
 			application.render();
 
-			vTaskDelay(pdMS_TO_TICKS(1000 / 30));
+			interpolationTick();
+
+			// Skipping remaining tick time if any
+			const auto deltaTime = esp_timer_get_time() - esp_timer_get_time();
+
+			if (deltaTime < constants::application::mainTickInterval)
+				vTaskDelay(pdMS_TO_TICKS((constants::application::mainTickInterval - deltaTime) / 1000));
 		}
+	}
+
+	void RC::interpolationTick() {
+		const uint32_t deltaTime = esp_timer_get_time() - _interpolationTickTime;
+
+		if (deltaTime < constants::application::interpolationTickInterval)
+			return;
+
+		// Principle of calculating the interpolation factor:
+		//
+		// factorPerSecond -> 1'000'000 us
+		// factorPerTick -> deltaTime us
+		//
+		// factorPerTick = factorPerSecond * deltaTime / 1'000'000
+
+		// Slow
+		float LPFFactor = 1.0f * static_cast<float>(deltaTime) / 1'000'000.f;
+		LowPassFilter::apply(courseDeg, gps.getCourseDeg(), LPFFactor);
+
+		_interpolationTickTime = esp_timer_get_time() + constants::application::interpolationTickInterval;
 	}
 
 	void RC::SPIBusSetup() const {
