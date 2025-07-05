@@ -20,15 +20,16 @@ namespace pizda {
 
 		float lineYInt;
 		const auto lineYFract = std::modff(speed / speedStepUnits, &lineYInt);
-		auto lineY = lineSpeedHalfCount * speedStepPixels + lineYFract * speedStepPixels;
+		auto lineY = static_cast<float>(lineSpeedHalfCount) * speedStepPixels + lineYFract * speedStepPixels;
 
 		for (int32_t lineSpeed = lineSpeedFrom; lineSpeed <= lineSpeedTo; lineSpeed += speedStepUnits) {
 			if (lineSpeed >= 0) {
+				// Line
 				const auto lineX = std::sqrtf(displayRadius * displayRadius - lineY * lineY);
 
 				const auto lineFrom = Point(
 					center.getX() - static_cast<int32_t>(lineX),
-					center.getY() + lineY
+					center.getY() + static_cast<int32_t>(lineY)
 				);
 
 				const auto isBig = lineSpeed % speedStepUnitsBig == 0;
@@ -37,9 +38,10 @@ namespace pizda {
 				renderer->renderHorizontalLine(
 					lineFrom,
 					lineLength,
-					&Theme::fg1
+					&Theme::fg5
 				);
 
+				// Text
 				if (isBig) {
 					renderer->renderString(
 						Point(
@@ -47,7 +49,7 @@ namespace pizda {
 							lineFrom.getY() - Theme::fontSmall.getHeight() / 2
 						),
 						&Theme::fontSmall,
-						&Theme::fg1,
+						&Theme::fg5,
 						std::to_wstring(lineSpeed)
 					);
 				}
@@ -145,9 +147,50 @@ namespace pizda {
 			}
 		}
 
+		// Heading value
+		{
+			renderer->renderHorizontalLine(
+				Point(
+					center.getX() - headingValueWidth / 2,
+					bounds.getY() + headingValueHeight - 1
+				),
+				headingValueWidth,
+				&Theme::fg1
+			);
+
+			constexpr static uint8_t triangleSize = 4;
+
+			renderer->renderFilledTriangle(
+				Point(
+					center.getX() - triangleSize / 2,
+					bounds.getY() + headingValueHeight - 1
+				),
+				Point(
+					center.getX() + triangleSize / 2,
+					bounds.getY() + headingValueHeight - 1
+				),
+				Point(
+					center.getX(),
+					bounds.getY() + headingValueHeight - 1 + triangleSize
+				),
+				&Theme::fg1
+			);
+
+			const auto headingValueText = std::to_wstring(static_cast<int16_t>(rc.courseDeg));
+
+			renderer->renderString(
+				Point(
+					center.getX() - Theme::fontNormal.getWidth(headingValueText) / 2,
+					bounds.getY() + headingValueHeight / 2 - Theme::fontNormal.getHeight() / 2
+				),
+				&Theme::fontNormal,
+				&Theme::fg1,
+				headingValueText
+			);
+		}
+
 		// HSI
 		const auto HSICourseRad = toRadians(rc.HSICourseDeg);
-
 		const auto HSICourseVec = Vector2F(0, -HSICourseLengthHalf).rotate(HSICourseRad - headingRad);
 		const auto HSICourseTo = static_cast<Point>(centerVec + HSICourseVec);
 		const auto HSICourseFrom = static_cast<Point>(centerVec - HSICourseVec);
@@ -155,44 +198,61 @@ namespace pizda {
 		renderer->renderLine(
 			HSICourseFrom,
 			HSICourseTo,
-			&Theme::purple
+			&Theme::purple,
+			2
 		);
 	}
 
-	void Eblo::onRender(Renderer* renderer, const Bounds& bounds) {
+	void Eblo::testBlackBg(Renderer* renderer, const Bounds& bounds) {
 		const auto center = bounds.getCenter();
 
 		// Background
-		renderer->clear(&Theme::bg3);
+		renderer->clear(&Theme::bg1);
 
 		// Circle
 		renderer->renderFilledCircle(
 			center,
 			compassRadius,
-			&Theme::bg1
+			&Theme::bg3
+		);
+	}
+
+	void Eblo::testHorizon(Renderer* renderer, const Bounds& bounds) {
+		const auto center = bounds.getCenter();
+
+		// Background
+		renderer->clear(&Theme::bg1);
+
+		// Sky
+		renderer->renderFilledCircle(
+			center,
+			compassRadius,
+			&Theme::sky
 		);
 
-		// Top bar
-		renderer->renderFilledRectangle(
-			Bounds(
-				bounds.getX(),
-				bounds.getY(),
-				bounds.getWidth(),
-				verticalBarSize
-			),
-			&Theme::bg1
+		// Ground
+		const auto oldViewport = renderer->pushViewport(Bounds(
+			bounds.getX(),
+			bounds.getY() + bounds.getHeight() / 2,
+			bounds.getWidth(),
+			bounds.getHeight() / 2
+		));
+
+		renderer->renderFilledCircle(
+			center,
+			compassRadius,
+			&Theme::ground
 		);
 
-		// Bottom bar
-		renderer->renderFilledRectangle(
-			Bounds(
-				bounds.getX(),
-				bounds.getY2() - verticalBarSize + 1,
-				bounds.getWidth(),
-				verticalBarSize
-			),
-			&Theme::bg1
-		);
+		renderer->popViewport(oldViewport);
+	}
+
+	void Eblo::onRender(Renderer* renderer, const Bounds& bounds) {
+		const auto center = bounds.getCenter();
+
+		// testBlack(renderer, bounds);
+		// testBlackBg(renderer, bounds);
+		testHorizon(renderer, bounds);
 
 		// Compass
 		renderCompass(renderer, bounds);
@@ -202,9 +262,9 @@ namespace pizda {
 			renderer,
 			Bounds(
 				bounds.getX(),
-				bounds.getY() + verticalBarSize,
+				center.getY() - sidebarHeight / 2,
 				bounds.getWidth(),
-				bounds.getHeight() - verticalBarSize * 2
+				sidebarHeight
 			)
 		);
 	}

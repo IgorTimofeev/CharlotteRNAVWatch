@@ -165,7 +165,7 @@ namespace pizda {
 					if (bytesRead) {
 						data[bytesRead] = '\0';
 
-						ESP_LOGI("GNSS", "Received:\n%s", (char *) data);
+						// ESP_LOGI("GNSS", "Received:\n%s", (char *) data);
 
 						const auto sample =
 						"$GPRMC,112019.950,A,5950.225256,N,03035.104663,E,22.9,37.0,250625,,,*2C\r\n"
@@ -203,7 +203,7 @@ namespace pizda {
 
 					testSpeed += 2;
 
-					if (testSpeed >= 10)
+					if (testSpeed >= 20)
 						testSpeed = 0;
 
 					testAltitude += 100;
@@ -211,11 +211,11 @@ namespace pizda {
 					if (testAltitude >= 3500)
 						testAltitude = 0;
 
-					ESP_LOGI("GNSS", "---------------- Processed data ----------------");
-					ESP_LOGI("GNSS", "Sat / HDOP: %lu, %lf", getSatellites(), getHDOP());
-					ESP_LOGI("GNSS", "Date / time: %d.%d.%d %d:%d:%d", getDateDay(), getDateMonth(), getDateYear(), getTimeHours(), getTimeMinutes(), getTimeSeconds());
-					ESP_LOGI("GNSS", "Lat / lon / alt: %f deg, %f deg, %f ft", getLatitude(), getLongitude(), getAltitudeFt());
-					ESP_LOGI("GNSS", "Speed / Course: %f kt, %f deg", getSpeedKt(), getCourseDeg());
+					// ESP_LOGI("GNSS", "---------------- Processed data ----------------");
+					// ESP_LOGI("GNSS", "Sat / HDOP: %lu, %lf", getSatellites(), getHDOP());
+					// ESP_LOGI("GNSS", "Date / time: %d.%d.%d %d:%d:%d", getDateDay(), getDateMonth(), getDateYear(), getTimeHours(), getTimeMinutes(), getTimeSeconds());
+					// ESP_LOGI("GNSS", "Lat / lon / alt: %f deg, %f deg, %f ft", getLatitude(), getLongitude(), getAltitudeFt());
+					// ESP_LOGI("GNSS", "Speed / Course: %f kt, %f deg", getSpeedKt(), getCourseDeg());
 
 					vTaskDelay(pdMS_TO_TICKS(1000));
 				}
