@@ -63,6 +63,11 @@ namespace pizda {
 		LowPassFilter::apply(speedKt, gps.getSpeedKt(), LPFFactor);
 		LowPassFilter::apply(altitudeFt, gps.getAltitudeFt(), LPFFactor);
 
+		LowPassFilter::apply(courseDeviationDeg, courseDeviationDeg + 2, LPFFactor);
+
+		if (courseDeviationDeg > 20)
+			courseDeviationDeg = -20;
+
 		_interpolationTickTime = esp_timer_get_time() + constants::application::interpolationTickInterval;
 	}
 

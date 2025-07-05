@@ -38,7 +38,7 @@ namespace pizda {
 				renderer->renderHorizontalLine(
 					lineFrom,
 					lineLength,
-					&Theme::fg5
+					&Theme::fg6
 				);
 
 				// Text
@@ -49,7 +49,7 @@ namespace pizda {
 							lineFrom.getY() - Theme::fontSmall.getHeight() / 2
 						),
 						&Theme::fontSmall,
-						&Theme::fg5,
+						&Theme::fg6,
 						std::to_wstring(lineSpeed)
 					);
 				}
@@ -104,22 +104,11 @@ namespace pizda {
 				lineLength = compassLineLength3;
 			}
 
-			{
-				const Color* lineColor;
-
-				if (lineLength == compassLineLength1 || lineLength == compassLineLength2) {
-					lineColor = &Theme::fg1;
-				}
-				else {
-					lineColor = &Theme::fg1;
-				}
-
-				renderer->renderLine(
-				   static_cast<Point>(centerVec + lineVec),
-				   static_cast<Point>(centerVec + lineVecNorm * static_cast<float>(compassRadius - lineLength)),
-				   lineColor
-			   );
-			}
+			renderer->renderLine(
+			   static_cast<Point>(centerVec + lineVec),
+			   static_cast<Point>(centerVec + lineVec - lineVecNorm * lineLength),
+			   &Theme::fg1
+		   );
 
 			// Text for big
 			if (lineLength == compassLineLength1) {
@@ -133,7 +122,7 @@ namespace pizda {
 					default: text = std::to_wstring(lineDeg / 10); break;
 				}
 
-				const auto textVec = centerVec + lineVecNorm * static_cast<float>(compassRadius - lineLength - compassLineTexOffset);
+				const auto textVec = centerVec + lineVec - lineVecNorm * (static_cast<float>(lineLength) + compassLineTexOffset);
 
 				renderer->renderString(
 					Point(
@@ -189,17 +178,134 @@ namespace pizda {
 			);
 		}
 
-		// HSI
-		const auto HSICourseRad = toRadians(rc.HSICourseDeg);
-		const auto HSICourseVec = Vector2F(0, -HSICourseLengthHalf).rotate(HSICourseRad - headingRad);
-		const auto HSICourseTo = static_cast<Point>(centerVec + HSICourseVec);
-		const auto HSICourseFrom = static_cast<Point>(centerVec - HSICourseVec);
+		// Bearing
+		{
+			const auto bearingRad = toRadians(rc.WPTCourseDeg);
+			const auto bearingVec = Vector2F(0, -bearingRadius).rotate(bearingRad - headingRad);
+			const auto bearingVecNorm = bearingVec.normalize();
+			const auto bearingVecNormPerp = bearingVecNorm.clockwisePerpendicular();
 
-		renderer->renderLine(
-			HSICourseFrom,
-			HSICourseTo,
+			// Line
+			const auto lineFromVec = centerVec - bearingVec;
+			const auto lineToVec = centerVec + bearingVec;
+
+			// Line to
+			renderer->renderLine(
+				static_cast<Point>(lineToVec - bearingVecNorm * bearingLength),
+				static_cast<Point>(lineToVec),
+				&Theme::ocean,
+				2
+			);
+
+			// Line from
+			renderer->renderLine(
+				static_cast<Point>(lineFromVec + bearingVecNorm * bearingLength),
+				static_cast<Point>(lineFromVec),
+				&Theme::ocean,
+				2
+			);
+
+			// Arrow
+			const auto arrowVec = lineToVec - bearingVecNorm * bearingArrowHeight;
+
+			// Arrow left
+			renderer->renderLine(
+				static_cast<Point>(arrowVec - bearingVecNormPerp * bearingArrowWidth),
+				static_cast<Point>(lineToVec),
+				&Theme::ocean,
+				2
+			);
+
+			// Arrow right
+			renderer->renderLine(
+				static_cast<Point>(arrowVec + bearingVecNormPerp * bearingArrowWidth),
+				static_cast<Point>(lineToVec),
+				&Theme::ocean,
+				2
+			);
+		}
+
+		// HSI
+		{
+			const auto HSIRad = toRadians(rc.HSICourseDeg);
+			const auto HSIVec = Vector2F(0, -HSIRadius).rotate(HSIRad - headingRad);
+			const auto HSIVecNorm = HSIVec.normalize();
+			const auto HSIVecNormPerp = HSIVecNorm.clockwisePerpendicular();
+
+			// CDI ellipses
+			for (int16_t angle = -HSICDIAngleMaxDeg; angle <= HSICDIAngleMaxDeg; angle += HSICDIAngleStepDeg) {
+				if (angle == 0)
+					continue;
+
+				renderer->renderCircle(
+					static_cast<Point>(centerVec + HSIVecNormPerp * static_cast<float>(angle * HSICDIAnglePixelsPerDeg)),
+					HSICDIAngleRadius,
+					&Theme::fg1
+				);
+			}
+
+			// Line from
+			renderer->renderLine(
+				static_cast<Point>(centerVec - HSIVec),
+				static_cast<Point>(centerVec - HSIVec + HSIVecNorm * HSIFixedLengthHalf),
+				&Theme::purple,
+				2
+			);
+
+			// Line to
+			const auto HSILineTo = static_cast<Point>(centerVec + HSIVec);
+
+			renderer->renderLine(
+				static_cast<Point>(centerVec + HSIVec - HSIVecNorm * HSIFixedLengthHalf),
+				HSILineTo,
+				&Theme::purple,
+				2
+			);
+
+			// Arrow to
+			const auto HSIArrowVec = centerVec + HSIVecNorm * (HSIRadius - HSIArrowHeight);
+
+			renderer->renderFilledTriangle(
+				static_cast<Point>(HSIArrowVec + HSIVecNormPerp * HSIArrowWidth),
+				static_cast<Point>(HSIArrowVec - HSIVecNormPerp * HSIArrowWidth),
+				HSILineTo,
+				&Theme::purple
+			);
+
+			// CDI
+			const auto HSICDIOffsetPixels = std::min(rc.courseDeviationDeg, static_cast<float>(HSICDIAngleMaxDeg)) * HSICDIAnglePixelsPerDeg;
+			const auto HSICDIVec = centerVec + HSIVecNormPerp * HSICDIOffsetPixels;
+
+			renderer->renderLine(
+				static_cast<Point>(HSICDIVec + HSIVecNorm * HSICDILengthHalf),
+				static_cast<Point>(HSICDIVec - HSIVecNorm * HSICDILengthHalf),
+				&Theme::purple,
+				2
+			);
+		}
+	}
+
+	void Eblo::renderField(Renderer* renderer, const Point& point, const std::wstring_view text1, const std::wstring_view text2) {
+		constexpr static uint8_t spacing = 1;
+
+		renderer->renderString(
+			Point(
+				point.getX() - Theme::fontNormal.getWidth(text1) / 2,
+				point.getY() - Theme::fontNormal.getHeight() - spacing / 2
+			),
+			&Theme::fontNormal,
 			&Theme::purple,
-			2
+			text1
+		);
+
+		renderer->renderString(
+			Point(
+				point.getX() - Theme::fontNormal.getWidth(text2) / 2,
+				point.getY() + spacing / 2
+			),
+			&Theme::fontNormal,
+			&Theme::purple,
+			text2
 		);
 	}
 
@@ -247,7 +353,37 @@ namespace pizda {
 		renderer->popViewport(oldViewport);
 	}
 
+	void Eblo::renderFields(Renderer* renderer, const Bounds& bounds) {
+		const auto& rc = RC::getInstance();
+		const auto center = bounds.getCenter();
+
+		const auto fieldsVec = static_cast<Point>(Vector2F(fieldsRadius, 0).rotate(toRadians(-45)));
+
+		// Distance
+		renderField(
+			renderer,
+			Point(
+				center.getX() - fieldsVec.getX(),
+				center.getY() - fieldsVec.getY()
+			),
+			L"DIS",
+			std::format(L"{} nm", rc.distance)
+		);
+
+		// ETE
+		renderField(
+			renderer,
+			Point(
+				center.getX() + fieldsVec.getX(),
+				center.getY() - fieldsVec.getY()
+			),
+			L"ETE",
+			std::format(L"{:02}:{:02}", rc.ETESec / 60, rc.ETESec % 60)
+		);
+	}
+
 	void Eblo::onRender(Renderer* renderer, const Bounds& bounds) {
+		const auto& rc = RC::getInstance();
 		const auto center = bounds.getCenter();
 
 		// testBlack(renderer, bounds);
@@ -267,5 +403,8 @@ namespace pizda {
 				sidebarHeight
 			)
 		);
+
+		// Fields
+		renderFields(renderer, bounds);
 	}
 }

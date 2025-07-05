@@ -89,11 +89,11 @@ namespace pizda {
 			// Ocean
 			RGB888Color(0x00ffff),
 			// Ground
-			RGB888Color(0x4f611b),
+			RGB888Color(0x343f15),
 			// Ground 2
 			RGB888Color(0xdef2a2),
 			// Sky
-			RGB888Color(0x2a425a),
+			RGB888Color(0x1d2d3c),
 			// Sky 2
 			RGB888Color(0xaed1f2),
 		});

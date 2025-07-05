@@ -44,10 +44,15 @@ namespace pizda {
 			Eblo eblo {};
 
 			float HSICourseDeg = 32;
+			float WPTCourseDeg = 60;
+			float courseDeviationDeg = 5;
 
 			float courseDeg = 0;
 			float altitudeFt = 0;
 			float speedKt = 0;
+
+			float distance = 0.75;
+			uint32_t ETESec = 12 * 60;
 
 			static RC& getInstance();
 
