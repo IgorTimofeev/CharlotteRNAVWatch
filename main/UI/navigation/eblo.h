@@ -12,14 +12,17 @@ namespace pizda {
 
 		protected:
 			void onTick() override;
+			void renderSpeedUnderlay(Renderer* renderer, const Bounds& speedBounds);
 			void renderSpeed(Renderer* renderer, const Bounds& bounds, const Point& center);
+			static Vector2F getAltitudeDeg(float altitude);
+			void renderAltitudeUnderlay(Renderer* renderer, const Bounds& altitudeBounds);
 			void renderAltitude(Renderer* renderer, const Bounds& bounds, const Point& center);
 			void renderCompass(Renderer* renderer, const Bounds& bounds);
 			void renderField(Renderer* renderer, const Point& point, std::wstring_view text1,
 							std::wstring_view text2);
 			void testBlackBg(Renderer* renderer, const Bounds& bounds);
 			void testHorizon(Renderer* renderer, const Bounds& bounds);
-			void renderFields(Renderer* renderer, const Bounds& bounds);
+			void renderCompassFields(Renderer* renderer, const Bounds& bounds);
 			void onRender(Renderer* renderer, const Bounds& bounds) override;
 
 		private:
@@ -29,20 +32,21 @@ namespace pizda {
 
 			// Sidebar
 			constexpr static uint8_t sidebarWidth = 28;
-			constexpr static uint8_t sidebarHeight = 116;
+			constexpr static uint8_t sidebarHeight = 120;
 
-			constexpr static uint8_t sidebarLineLength1 = 1;
-			constexpr static uint8_t sidebarLineLength2 = 2;
-			constexpr static uint8_t sidebarLineTextOffset = 5;
+			constexpr static uint8_t sidebarLineLength1 = 2;
+			constexpr static uint8_t sidebarLineLength2 = 1;
+			constexpr static uint8_t sidebarLineTextOffset = 4;
 
-			constexpr static uint8_t sidebarValueWidth = sidebarWidth + 10;
+			constexpr static uint8_t sidebarValueWidth = sidebarWidth;
 			constexpr static uint8_t sidebarValueHeight = 24;
-			constexpr static uint8_t sidebarValueMargin = 5;
+			constexpr static uint8_t sidebarValueMargin = 3;
+			constexpr static uint8_t sidebarValueTriangleWidth = 10;
 
 			// Pizdulka
 			constexpr static uint8_t pizdulkaWidth = sidebarWidth + 50;
-			constexpr static uint8_t pizdulkaHeight = 16;
-			constexpr static uint8_t pizdulkaTextMargin = 21;
+			constexpr static uint8_t pizdulkaHeight = 18;
+			constexpr static uint8_t pizdulkaTextCenterMargin = 35;
 
 			// Compass
 			constexpr static uint8_t compassDiameter = displayDiameter - sidebarWidth * 2;
@@ -79,19 +83,19 @@ namespace pizda {
 			constexpr static uint8_t bearingArrowHeight = HSIArrowHeight;
 
 			// Speed
-			constexpr static uint8_t speedStepPixels = 10;
-			constexpr static uint8_t speedStepUnits = 1;
-			constexpr static uint8_t speedStepUnitsBig = 5;
+			constexpr static uint8_t speedStep = 1;
+			constexpr static uint8_t speedStepBig = 5;
+			constexpr static float speedStepRadPerKt = toRadians(4.0f);
 
 			// Altitude
-			constexpr static uint8_t altitudeStepPixels = speedStepPixels;
-			constexpr static uint8_t altitudeStepUnits = 10;
-			constexpr static uint8_t altitudeStepUnitsBig = 20;
+			constexpr static uint16_t altitudeStep = 10;
+			constexpr static uint16_t altitudeStepBig = 50;
+			constexpr static float altitudeStepRadPerFt = toRadians(0.5f);
 
-			// Time
-			constexpr static uint8_t verticalBarWidth = 52;
-			constexpr static uint8_t verticalBarHeight = 40;
-			constexpr static uint8_t verticalBarTextMargin = 5;
+			// Minimums
+			constexpr static uint8_t minimumsLineWidth = sidebarWidth + 2;
+			constexpr static uint8_t minimumsTriangleWidth = 2;
+			constexpr static uint8_t minimumsTriangleHeight = 3;
 
 			// Fields
 			constexpr static float fieldsRadius = compassRadius / 2.f;

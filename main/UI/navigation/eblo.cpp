@@ -8,174 +8,296 @@ namespace pizda {
 		invalidate();
 	}
 
-	void Eblo::renderSpeed(Renderer* renderer, const Bounds& bounds, const Point& center) {
-		const auto& rc = RC::getInstance();
+	void Eblo::renderSpeedUnderlay(Renderer* renderer, const Bounds& speedBounds) {
+		const auto pizdulkaBounds =  Bounds(
+			speedBounds.getX(),
+			speedBounds.getY() + speedBounds.getHeight(),
+			pizdulkaWidth,
+			pizdulkaHeight
+	   );
 
-		constexpr static auto lineCountPerHalf = static_cast<uint8_t>(static_cast<float>(sidebarHeight) / 2.f / speedStepPixels);
-
-		const auto value = rc.speedKt;
-		const auto lineValueFrom = static_cast<int32_t>(value) - lineCountPerHalf;
-		const auto lineValueTo = lineValueFrom + lineCountPerHalf * 2;
-
-		float lineYInt;
-		const auto lineYFract = std::modff(value / speedStepUnits, &lineYInt);
-		auto lineY = static_cast<float>(lineCountPerHalf) * speedStepPixels + lineYFract * speedStepPixels;
-
-		for (int32_t lineValue = lineValueFrom; lineValue <= lineValueTo; lineValue += speedStepUnits) {
-			if (lineValue >= 0) {
-				// Line
-				const auto isBig = lineValue % altitudeStepUnitsBig == 0;
-				const auto lineLength = isBig ? sidebarLineLength1 : sidebarLineLength2;
-				const auto lineX = std::sqrtf(displayRadius * displayRadius - lineY * lineY);
-
-				const auto lineFrom = Point(
-					center.getX() - static_cast<int32_t>(lineX),
-					center.getY() + static_cast<int32_t>(lineY)
-				);
-
-				renderer->renderHorizontalLine(
-					lineFrom,
-					lineLength,
-					&Theme::fg6
-				);
-
-				// Text
-				if (isBig) {
-					renderer->renderString(
-						Point(
-							lineFrom.getX() + lineLength + sidebarLineTextOffset,
-							lineFrom.getY() - Theme::fontSmall.getHeight() / 2
-						),
-						&Theme::fontSmall,
-						&Theme::fg6,
-						std::to_wstring(lineValue)
-					);
-				}
-			}
-
-			lineY -= speedStepPixels;
-		}
-
-		// Value
 		renderer->renderFilledRectangle(
-			Bounds(
-				bounds.getX(),
-				center.getY() - sidebarValueHeight / 2,
-				sidebarValueWidth,
-				sidebarValueHeight
-			),
-			&Theme::bg4
+			pizdulkaBounds,
+			&Theme::bg3
 		);
+
+		const auto text = L"GS";
 
 		renderer->renderString(
 			Point(
-				bounds.getX() + sidebarValueMargin,
-				center.getY() - Theme::fontNormal.getHeight() / 2
+				pizdulkaBounds.getX() + pizdulkaTextCenterMargin - Theme::fontNormal.getWidth(text) / 2,
+				pizdulkaBounds.getYCenter() - Theme::fontNormal.getHeight() / 2
 			),
 			&Theme::fontNormal,
-			&Theme::fg1,
-			std::format(L"{:03}", static_cast<int16_t>(value))
+			&Theme::purple,
+			text
+		);
+	}
+
+	void Eblo::renderSpeed(Renderer* renderer, const Bounds& bounds, const Point& center) {
+		const auto& rc = RC::getInstance();
+
+		const auto value = rc.speedKt;
+		const auto snappedLineValue = static_cast<int32_t>(value / speedStep) * speedStep;
+
+		auto lineValue = snappedLineValue;
+		Point lineTo;
+
+		const auto vaginoz = [&lineValue, &lineTo, renderer, &center, value] {
+			const auto lineAngleRad = toRadians(180) - (value - static_cast<float>(lineValue)) * speedStepRadPerKt;
+			lineTo = center + static_cast<Point>(Vector2F(displayRadius, 0).rotate(lineAngleRad));
+
+			const auto isBig = lineValue % speedStepBig == 0;
+			const auto lineLength = isBig ? sidebarLineLength1 : sidebarLineLength2;
+
+			renderer->renderHorizontalLine(
+				lineTo,
+				lineLength,
+				&Theme::fg6
+			);
+
+			if (isBig) {
+				renderer->renderString(
+					Point(
+						lineTo.getX() + lineLength + sidebarLineTextOffset,
+						lineTo.getY() - Theme::fontSmall.getHeight() / 2
+					),
+					&Theme::fontSmall,
+					&Theme::fg6,
+					std::to_wstring(lineValue)
+				);
+			}
+		};
+
+		// Down
+		while (lineValue >= 0) {
+			vaginoz();
+
+			if (lineTo.getY() > bounds.getY2())
+				break;
+
+			lineValue -= speedStep;
+		}
+
+		// Up
+		lineValue = snappedLineValue + speedStep;
+
+		while (true) {
+			vaginoz();
+
+			if (lineTo.getY() < bounds.getY())
+				break;
+
+			lineValue += speedStep;
+		}
+
+		// Value
+		{
+			const auto text = std::format(L"{:03}", static_cast<int16_t>(value));
+
+			const auto valueBounds  = Bounds(
+			   bounds.getX(),
+			   center.getY() - sidebarValueHeight / 2,
+			   sidebarValueWidth,
+			   sidebarValueHeight
+		   );
+
+			renderer->renderFilledRectangle(
+				valueBounds,
+				&Theme::bg4
+			);
+
+			renderer->renderFilledTriangle(
+				Point(
+					valueBounds.getX2() + 1,
+					valueBounds.getY()
+				),
+				Point(
+					valueBounds.getX2() + 1,
+					valueBounds.getY2()
+				),
+				Point(
+					valueBounds.getX2() + 1 + sidebarValueTriangleWidth - 1,
+					center.getY()
+				),
+				&Theme::bg4
+			);
+
+			renderer->renderString(
+				Point(
+					valueBounds.getX() + sidebarValueMargin,
+					center.getY() - Theme::fontNormal.getHeight() / 2
+				),
+				&Theme::fontNormal,
+				&Theme::fg1,
+				text
+			);
+		}
+	}
+
+	Vector2F Eblo::getAltitudeDeg(const float altitude) {
+		const auto& rc = RC::getInstance();
+		const auto angleRad = (rc.altitudeFt - altitude) * altitudeStepRadPerFt;
+
+		return Vector2F(displayRadius, 0).rotate(angleRad);
+	}
+
+	void Eblo::renderAltitudeUnderlay(Renderer* renderer, const Bounds& altitudeBounds) {
+		renderer->renderFilledRectangle(
+		   Bounds(
+				altitudeBounds.getX2() - pizdulkaWidth + 1,
+				altitudeBounds.getY() + altitudeBounds.getHeight(),
+				pizdulkaWidth,
+				pizdulkaHeight
+		   ),
+		   &Theme::bg3
+	   );
+
+		const auto text = L"1013";
+
+		renderer->renderString(
+			Point(
+				altitudeBounds.getX2() - pizdulkaTextCenterMargin + 1 - Theme::fontNormal.getWidth(text) / 2,
+				altitudeBounds.getY() + altitudeBounds.getHeight() + pizdulkaHeight / 2 - Theme::fontNormal.getHeight() / 2
+			),
+			&Theme::fontNormal,
+			&Theme::ocean,
+			text
 		);
 	}
 
 	void Eblo::renderAltitude(Renderer* renderer, const Bounds& bounds, const Point& center) {
 		const auto& rc = RC::getInstance();
 
-		static constexpr auto lineCountPerHalf = static_cast<uint8_t>(static_cast<float>(sidebarHeight) / 2.f / altitudeStepPixels);
-
 		const auto value = rc.altitudeFt;
+		const auto snappedLineValue = static_cast<int32_t>(value / altitudeStep) * altitudeStep;
 
-		float valueSnappedIntPart;
-		const auto valueSnappedFractPart = std::modff(value / altitudeStepUnits, &valueSnappedIntPart);
+		auto lineValue = snappedLineValue;
+		Point lineTo;
 
-		auto lineValue = std::max(
-			static_cast<int32_t>(0),
-			(static_cast<int32_t>(valueSnappedIntPart) - lineCountPerHalf) * altitudeStepUnits
-		);
+		const auto vaginoz = [&lineValue, &lineTo, renderer, &center, this] {
+			lineTo = center + static_cast<Point>(getAltitudeDeg(static_cast<float>(lineValue)));
 
-		auto lineY = (valueSnappedIntPart - static_cast<float>(lineValue) / altitudeStepUnits + valueSnappedFractPart) * altitudeStepPixels;
-
-		// ESP_LOGI("pizda", "valueSnappedIntPart: %f, valueSnappedFractPart: %f", valueSnappedIntPart, valueSnappedFractPart);
-		// ESP_LOGI("pizda", "lineValue: %lu, lineY: %f",lineValue, lineY);
-
-		while (center.getY() + static_cast<int32_t>(lineY) > bounds.getY()) {
-			// Line
-			const auto isBig = lineValue % altitudeStepUnitsBig == 0;
+			const auto isBig = lineValue % altitudeStepBig == 0;
 			const auto lineLength = isBig ? sidebarLineLength1 : sidebarLineLength2;
-			const auto lineX = std::sqrtf(displayRadius * displayRadius - lineY * lineY);
-
-			const auto lineFrom = Point(
-				center.getX() + static_cast<int32_t>(lineX) - lineLength,
-				center.getY() + static_cast<int32_t>(lineY)
-			);
 
 			renderer->renderHorizontalLine(
-				lineFrom,
+				Point(
+					lineTo.getX() - lineLength,
+					lineTo.getY()
+				),
 				lineLength,
 				&Theme::fg6
 			);
 
-			// Text
 			if (isBig) {
 				const auto text = std::to_wstring(lineValue);
 
 				renderer->renderString(
 					Point(
-						lineFrom.getX() - sidebarLineTextOffset - Theme::fontSmall.getWidth(text),
-						lineFrom.getY() - Theme::fontSmall.getHeight() / 2
+						lineTo.getX() - lineLength - sidebarLineTextOffset - Theme::fontSmall.getWidth(text),
+						lineTo.getY() - Theme::fontSmall.getHeight() / 2
 					),
 					&Theme::fontSmall,
 					&Theme::fg6,
 					text
 				);
 			}
+		};
 
-			lineValue += altitudeStepUnits;
-			lineY -= altitudeStepPixels;
+		// Down
+		while (lineValue >= 0) {
+			vaginoz();
+
+			if (lineTo.getY() > bounds.getY2())
+				break;
+
+			lineValue -= altitudeStep;
+		}
+
+		// Up
+		lineValue = snappedLineValue + altitudeStep;
+
+		while (true) {
+			vaginoz();
+
+			if (lineTo.getY() < bounds.getY())
+				break;
+
+			lineValue += altitudeStep;
+		}
+
+		// Minimums
+		{
+			const auto minimumsPt = center + static_cast<Point>(getAltitudeDeg(rc.altitudeMinimumsFt));
+
+			if (minimumsPt.getY() >= bounds.getY() && minimumsPt.getY() <= bounds.getY2()) {
+				renderer->renderHorizontalLine(
+					Point(
+						minimumsPt.getX() - minimumsLineWidth,
+						minimumsPt.getY()
+					),
+					minimumsLineWidth,
+					&Theme::yellow
+				);
+
+				renderer->renderTriangle(
+					Point(
+						minimumsPt.getX() - minimumsLineWidth - minimumsTriangleWidth,
+						minimumsPt.getY() - minimumsTriangleHeight
+					),
+					Point(
+						minimumsPt.getX() - minimumsLineWidth - minimumsTriangleWidth,
+						minimumsPt.getY() + minimumsTriangleHeight
+					),
+					Point(
+						minimumsPt.getX() - minimumsLineWidth,
+						minimumsPt.getY()
+					),
+					&Theme::yellow
+				);
+			}
 		}
 
 		// Value
-		renderer->renderFilledRectangle(
-			Bounds(
-				bounds.getX2() - sidebarValueWidth + 1,
-				center.getY() - sidebarValueHeight / 2,
-				sidebarValueWidth,
-				sidebarValueHeight
-			),
-			&Theme::bg4
-		);
-
-		renderer->renderString(
-			Point(
-				bounds.getX2() - sidebarValueMargin - Theme::fontNormal.getWidth(L"8888"),
-				center.getY() - Theme::fontNormal.getHeight() / 2
-			),
-			&Theme::fontNormal,
-			&Theme::fg1,
-			std::format(L"{:04}", static_cast<int16_t>(value))
-		);
-
-		// Pizdulka
 		{
-			renderer->renderFilledRectangle(
-			   Bounds(
-					bounds.getX2() - pizdulkaWidth + 1,
-					bounds.getY() + bounds.getHeight(),
-					pizdulkaWidth,
-					pizdulkaHeight
-			   ),
-			   &Theme::bg3
+			const auto text = std::format(L"{:04}", static_cast<int16_t>(value));
+
+			const auto valueBounds  = Bounds(
+			   bounds.getX2() - sidebarValueWidth + 1,
+			   center.getY() - sidebarValueHeight / 2,
+			   sidebarValueWidth,
+			   sidebarValueHeight
 		   );
 
-			const auto text = L"1013";
+			renderer->renderFilledRectangle(
+				valueBounds,
+				&Theme::bg4
+			);
+
+			renderer->renderFilledTriangle(
+				Point(
+					valueBounds.getX() - 1,
+					valueBounds.getY()
+				),
+				Point(
+					valueBounds.getX() - 1,
+					valueBounds.getY2()
+				),
+				Point(
+					valueBounds.getX() - sidebarValueTriangleWidth + 1,
+					center.getY()
+				),
+				&Theme::bg4
+			);
 
 			renderer->renderString(
 				Point(
-					bounds.getX2() - pizdulkaTextMargin - Theme::fontNormal.getWidth(text),
-					bounds.getY() + bounds.getHeight() + pizdulkaHeight / 2 - Theme::fontNormal.getHeight() / 2
+					valueBounds.getX2() - sidebarValueMargin + 2 - Theme::fontNormal.getWidth(text),
+					center.getY() - Theme::fontNormal.getHeight() / 2
 				),
 				&Theme::fontNormal,
-				&Theme::ocean,
+				&Theme::fg1,
 				text
 			);
 		}
@@ -406,7 +528,7 @@ namespace pizda {
 		renderer->popViewport(oldViewport);
 	}
 
-	void Eblo::renderFields(Renderer* renderer, const Bounds& bounds) {
+	void Eblo::renderCompassFields(Renderer* renderer, const Bounds& bounds) {
 		const auto& rc = RC::getInstance();
 		const auto center = bounds.getCenter();
 
@@ -466,24 +588,35 @@ namespace pizda {
 
 		// Course
 		{
-			const auto selectedCourseBounds = Bounds(
-				center.getX() - verticalBarWidth / 2,
-				bounds.getY(),
-				verticalBarWidth,
-				verticalBarHeight
-			);
+			constexpr static uint8_t triangleWidth = 4;
+			constexpr static uint8_t triangleHeight = 5;
+			constexpr static uint8_t triangleCompassMargin = 3;
+			constexpr static uint8_t textMargin = 2;
 
-			renderer->renderFilledRectangle(
-				selectedCourseBounds,
-				&Theme::bg3
+			const auto triangleBottom = center.getY() - static_cast<int32_t>(compassRadius) - triangleCompassMargin;
+
+			renderer->renderFilledTriangle(
+				Point(
+					center.getX() - triangleWidth,
+					triangleBottom - triangleHeight
+				),
+				Point(
+					center.getX() + triangleWidth,
+					triangleBottom - triangleHeight
+				),
+				Point(
+					center.getX(),
+					triangleBottom
+				),
+				&Theme::fg1
 			);
 
 			const auto text = std::format(L"{:03}", static_cast<int16_t>(rc.courseDeg));
 
 			renderer->renderString(
 				Point(
-					selectedCourseBounds.getXCenter() - Theme::fontNormal.getWidth(text) / 2,
-					selectedCourseBounds.getY() + verticalBarTextMargin
+					center.getX() - Theme::fontNormal.getWidth(text) / 2,
+					triangleBottom - triangleHeight - textMargin - Theme::fontNormal.getHeight()
 				),
 				&Theme::fontNormal,
 				&Theme::fg1,
@@ -493,24 +626,12 @@ namespace pizda {
 
 		// Time
 		{
-			const auto timeBounds = Bounds(
-				center.getX() - verticalBarWidth / 2,
-				bounds.getY2() - verticalBarHeight + 1,
-				verticalBarWidth,
-				verticalBarHeight
-			);
-
-			renderer->renderFilledRectangle(
-				timeBounds,
-				&Theme::bg3
-			);
-
 			const auto text = std::format(L"{:02}:{:02}", rc.gps.getTimeHours(), rc.gps.getTimeMinutes());
 
 			renderer->renderString(
 				Point(
-					timeBounds.getXCenter() - Theme::fontNormal.getWidth(text) / 2,
-					timeBounds.getY2() - verticalBarTextMargin + 1 - Theme::fontNormal.getHeight()
+					center.getX() - Theme::fontNormal.getWidth(text) / 2,
+					center.getY() + static_cast<int32_t>(compassRadius) + 5
 				),
 				&Theme::fontNormal,
 				&Theme::fg1,
@@ -518,38 +639,44 @@ namespace pizda {
 			);
 		}
 
+		const auto speedBounds = Bounds(
+			bounds.getX(),
+			center.getY() - sidebarHeight / 2,
+			sidebarWidth,
+			sidebarHeight
+		);
+
+		const auto altitudeBounds = Bounds(
+		   bounds.getX2() - sidebarWidth + 1,
+		   center.getY() - sidebarHeight / 2,
+		   sidebarWidth,
+		   sidebarHeight
+		);
+
+		// Underlays
+		renderSpeedUnderlay(renderer, speedBounds);
+		renderAltitudeUnderlay(renderer, altitudeBounds);
+
+		// Compass
+
+		testBlackBg(renderer, bounds);
+		// testHorizon(renderer, bounds);
+
+		renderCompass(renderer, bounds);
+		renderCompassFields(renderer, bounds);
+
 		// Speed
 		renderSpeed(
 			renderer,
-			Bounds(
-				bounds.getX(),
-				center.getY() - sidebarHeight / 2,
-				sidebarWidth,
-				sidebarHeight
-			),
+			speedBounds,
 			center
 		);
 
 		// Altitude
 		renderAltitude(
 			renderer,
-			Bounds(
-			   bounds.getX2() - sidebarWidth + 1,
-			   center.getY() - sidebarHeight / 2,
-			   sidebarWidth,
-			   sidebarHeight
-			),
+			altitudeBounds,
 			center
 		);
-
-		// testBlack(renderer, bounds);
-		// testBlackBg(renderer, bounds);
-		// testHorizon(renderer, bounds);
-
-		// Compass
-		renderCompass(renderer, bounds);
-
-		// Fields
-		renderFields(renderer, bounds);
 	}
 }
