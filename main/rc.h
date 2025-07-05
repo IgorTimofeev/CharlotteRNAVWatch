@@ -43,7 +43,7 @@ namespace pizda {
 			Application application {};
 			Eblo eblo {};
 
-			float HSICourseDeg = 32;
+			float selectedCourseDeg = 32;
 			float WPTCourseDeg = 60;
 			float courseDeviationDeg = 5;
 

@@ -206,9 +206,9 @@ namespace pizda {
 					if (testSpeed >= 20)
 						testSpeed = 0;
 
-					testAltitude += 100;
+					testAltitude += 10;
 
-					if (testAltitude >= 3500)
+					if (testAltitude >= 150)
 						testAltitude = 0;
 
 					// ESP_LOGI("GNSS", "---------------- Processed data ----------------");

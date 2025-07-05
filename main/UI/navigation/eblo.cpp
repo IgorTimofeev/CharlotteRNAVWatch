@@ -8,32 +8,30 @@ namespace pizda {
 		invalidate();
 	}
 
-	void Eblo::renderSpeed(Renderer* renderer, const Bounds& bounds) {
+	void Eblo::renderSpeed(Renderer* renderer, const Bounds& bounds, const Point& center) {
 		const auto& rc = RC::getInstance();
 
-		const auto speed = rc.speedKt;
-		const auto lineSpeedHalfCount = static_cast<uint8_t>(static_cast<float>(bounds.getHeight()) / 2.f / speedStepPixels);
-		const auto lineSpeedFrom = static_cast<int32_t>(speed) - lineSpeedHalfCount;
-		const auto lineSpeedTo = lineSpeedFrom + lineSpeedHalfCount * 2;
+		constexpr static auto lineCountPerHalf = static_cast<uint8_t>(static_cast<float>(sidebarHeight) / 2.f / speedStepPixels);
 
-		const auto center = bounds.getCenter();
+		const auto value = rc.speedKt;
+		const auto lineValueFrom = static_cast<int32_t>(value) - lineCountPerHalf;
+		const auto lineValueTo = lineValueFrom + lineCountPerHalf * 2;
 
 		float lineYInt;
-		const auto lineYFract = std::modff(speed / speedStepUnits, &lineYInt);
-		auto lineY = static_cast<float>(lineSpeedHalfCount) * speedStepPixels + lineYFract * speedStepPixels;
+		const auto lineYFract = std::modff(value / speedStepUnits, &lineYInt);
+		auto lineY = static_cast<float>(lineCountPerHalf) * speedStepPixels + lineYFract * speedStepPixels;
 
-		for (int32_t lineSpeed = lineSpeedFrom; lineSpeed <= lineSpeedTo; lineSpeed += speedStepUnits) {
-			if (lineSpeed >= 0) {
+		for (int32_t lineValue = lineValueFrom; lineValue <= lineValueTo; lineValue += speedStepUnits) {
+			if (lineValue >= 0) {
 				// Line
+				const auto isBig = lineValue % altitudeStepUnitsBig == 0;
+				const auto lineLength = isBig ? sidebarLineLength1 : sidebarLineLength2;
 				const auto lineX = std::sqrtf(displayRadius * displayRadius - lineY * lineY);
 
 				const auto lineFrom = Point(
 					center.getX() - static_cast<int32_t>(lineX),
 					center.getY() + static_cast<int32_t>(lineY)
 				);
-
-				const auto isBig = lineSpeed % speedStepUnitsBig == 0;
-				const auto lineLength = isBig ? speedLineLength1 : speedLineLength2;
 
 				renderer->renderHorizontalLine(
 					lineFrom,
@@ -45,12 +43,12 @@ namespace pizda {
 				if (isBig) {
 					renderer->renderString(
 						Point(
-							lineFrom.getX() + lineLength + speedLineTextOffset,
+							lineFrom.getX() + lineLength + sidebarLineTextOffset,
 							lineFrom.getY() - Theme::fontSmall.getHeight() / 2
 						),
 						&Theme::fontSmall,
 						&Theme::fg6,
-						std::to_wstring(lineSpeed)
+						std::to_wstring(lineValue)
 					);
 				}
 			}
@@ -62,22 +60,125 @@ namespace pizda {
 		renderer->renderFilledRectangle(
 			Bounds(
 				bounds.getX(),
-				center.getY() - speedValueHeight / 2,
-				speedValueWidth,
-				speedValueHeight
+				center.getY() - sidebarValueHeight / 2,
+				sidebarValueWidth,
+				sidebarValueHeight
 			),
 			&Theme::bg4
 		);
 
 		renderer->renderString(
 			Point(
-				bounds.getX() + speedValueMargin,
+				bounds.getX() + sidebarValueMargin,
 				center.getY() - Theme::fontNormal.getHeight() / 2
 			),
 			&Theme::fontNormal,
 			&Theme::fg1,
-			std::to_wstring(static_cast<uint16_t>(speed))
+			std::format(L"{:03}", static_cast<int16_t>(value))
 		);
+	}
+
+	void Eblo::renderAltitude(Renderer* renderer, const Bounds& bounds, const Point& center) {
+		const auto& rc = RC::getInstance();
+
+		static constexpr auto lineCountPerHalf = static_cast<uint8_t>(static_cast<float>(sidebarHeight) / 2.f / altitudeStepPixels);
+
+		const auto value = rc.altitudeFt;
+
+		float valueSnappedIntPart;
+		const auto valueSnappedFractPart = std::modff(value / altitudeStepUnits, &valueSnappedIntPart);
+
+		auto lineValue = std::max(
+			static_cast<int32_t>(0),
+			(static_cast<int32_t>(valueSnappedIntPart) - lineCountPerHalf) * altitudeStepUnits
+		);
+
+		auto lineY = (valueSnappedIntPart - static_cast<float>(lineValue) / altitudeStepUnits + valueSnappedFractPart) * altitudeStepPixels;
+
+		// ESP_LOGI("pizda", "valueSnappedIntPart: %f, valueSnappedFractPart: %f", valueSnappedIntPart, valueSnappedFractPart);
+		// ESP_LOGI("pizda", "lineValue: %lu, lineY: %f",lineValue, lineY);
+
+		while (center.getY() + static_cast<int32_t>(lineY) > bounds.getY()) {
+			// Line
+			const auto isBig = lineValue % altitudeStepUnitsBig == 0;
+			const auto lineLength = isBig ? sidebarLineLength1 : sidebarLineLength2;
+			const auto lineX = std::sqrtf(displayRadius * displayRadius - lineY * lineY);
+
+			const auto lineFrom = Point(
+				center.getX() + static_cast<int32_t>(lineX) - lineLength,
+				center.getY() + static_cast<int32_t>(lineY)
+			);
+
+			renderer->renderHorizontalLine(
+				lineFrom,
+				lineLength,
+				&Theme::fg6
+			);
+
+			// Text
+			if (isBig) {
+				const auto text = std::to_wstring(lineValue);
+
+				renderer->renderString(
+					Point(
+						lineFrom.getX() - sidebarLineTextOffset - Theme::fontSmall.getWidth(text),
+						lineFrom.getY() - Theme::fontSmall.getHeight() / 2
+					),
+					&Theme::fontSmall,
+					&Theme::fg6,
+					text
+				);
+			}
+
+			lineValue += altitudeStepUnits;
+			lineY -= altitudeStepPixels;
+		}
+
+		// Value
+		renderer->renderFilledRectangle(
+			Bounds(
+				bounds.getX2() - sidebarValueWidth + 1,
+				center.getY() - sidebarValueHeight / 2,
+				sidebarValueWidth,
+				sidebarValueHeight
+			),
+			&Theme::bg4
+		);
+
+		renderer->renderString(
+			Point(
+				bounds.getX2() - sidebarValueMargin - Theme::fontNormal.getWidth(L"8888"),
+				center.getY() - Theme::fontNormal.getHeight() / 2
+			),
+			&Theme::fontNormal,
+			&Theme::fg1,
+			std::format(L"{:04}", static_cast<int16_t>(value))
+		);
+
+		// Pizdulka
+		{
+			renderer->renderFilledRectangle(
+			   Bounds(
+					bounds.getX2() - pizdulkaWidth + 1,
+					bounds.getY() + bounds.getHeight(),
+					pizdulkaWidth,
+					pizdulkaHeight
+			   ),
+			   &Theme::bg3
+		   );
+
+			const auto text = L"1013";
+
+			renderer->renderString(
+				Point(
+					bounds.getX2() - pizdulkaTextMargin - Theme::fontNormal.getWidth(text),
+					bounds.getY() + bounds.getHeight() + pizdulkaHeight / 2 - Theme::fontNormal.getHeight() / 2
+				),
+				&Theme::fontNormal,
+				&Theme::ocean,
+				text
+			);
+		}
 	}
 
 	void Eblo::renderCompass(Renderer* renderer, const Bounds& bounds) {
@@ -136,48 +237,6 @@ namespace pizda {
 			}
 		}
 
-		// Heading value
-		{
-			renderer->renderHorizontalLine(
-				Point(
-					center.getX() - headingValueWidth / 2,
-					bounds.getY() + headingValueHeight - 1
-				),
-				headingValueWidth,
-				&Theme::fg1
-			);
-
-			constexpr static uint8_t triangleSize = 4;
-
-			renderer->renderFilledTriangle(
-				Point(
-					center.getX() - triangleSize / 2,
-					bounds.getY() + headingValueHeight - 1
-				),
-				Point(
-					center.getX() + triangleSize / 2,
-					bounds.getY() + headingValueHeight - 1
-				),
-				Point(
-					center.getX(),
-					bounds.getY() + headingValueHeight - 1 + triangleSize
-				),
-				&Theme::fg1
-			);
-
-			const auto headingValueText = std::to_wstring(static_cast<int16_t>(rc.courseDeg));
-
-			renderer->renderString(
-				Point(
-					center.getX() - Theme::fontNormal.getWidth(headingValueText) / 2,
-					bounds.getY() + headingValueHeight / 2 - Theme::fontNormal.getHeight() / 2
-				),
-				&Theme::fontNormal,
-				&Theme::fg1,
-				headingValueText
-			);
-		}
-
 		// Bearing
 		{
 			const auto bearingRad = toRadians(rc.WPTCourseDeg);
@@ -227,7 +286,7 @@ namespace pizda {
 
 		// HSI
 		{
-			const auto HSIRad = toRadians(rc.HSICourseDeg);
+			const auto HSIRad = toRadians(rc.selectedCourseDeg);
 			const auto HSIVec = Vector2F(0, -HSIRadius).rotate(HSIRad - headingRad);
 			const auto HSIVecNorm = HSIVec.normalize();
 			const auto HSIVecNormPerp = HSIVecNorm.clockwisePerpendicular();
@@ -294,7 +353,7 @@ namespace pizda {
 				point.getY() - Theme::fontNormal.getHeight() - spacing / 2
 			),
 			&Theme::fontNormal,
-			&Theme::purple,
+			&Theme::fg5,
 			text1
 		);
 
@@ -312,9 +371,6 @@ namespace pizda {
 	void Eblo::testBlackBg(Renderer* renderer, const Bounds& bounds) {
 		const auto center = bounds.getCenter();
 
-		// Background
-		renderer->clear(&Theme::bg1);
-
 		// Circle
 		renderer->renderFilledCircle(
 			center,
@@ -325,9 +381,6 @@ namespace pizda {
 
 	void Eblo::testHorizon(Renderer* renderer, const Bounds& bounds) {
 		const auto center = bounds.getCenter();
-
-		// Background
-		renderer->clear(&Theme::bg1);
 
 		// Sky
 		renderer->renderFilledCircle(
@@ -359,7 +412,29 @@ namespace pizda {
 
 		const auto fieldsVec = static_cast<Point>(Vector2F(fieldsRadius, 0).rotate(toRadians(-45)));
 
-		// Distance
+		// WPT
+		renderField(
+			renderer,
+			Point(
+				center.getX() - fieldsVec.getX(),
+				center.getY() + fieldsVec.getY()
+			),
+			L"WPT",
+			L"ULLI"
+		);
+
+		// CRS
+		renderField(
+			renderer,
+			Point(
+				center.getX() + fieldsVec.getX(),
+				center.getY() + fieldsVec.getY()
+			),
+			L"CRS",
+			std::format(L"{:03}", rc.selectedCourseDeg)
+		);
+
+		// DIS
 		renderField(
 			renderer,
 			Point(
@@ -383,15 +458,65 @@ namespace pizda {
 	}
 
 	void Eblo::onRender(Renderer* renderer, const Bounds& bounds) {
-		const auto& rc = RC::getInstance();
+		auto& rc = RC::getInstance();
 		const auto center = bounds.getCenter();
 
-		// testBlack(renderer, bounds);
-		// testBlackBg(renderer, bounds);
-		testHorizon(renderer, bounds);
+		// Background
+		renderer->clear(&Theme::bg1);
 
-		// Compass
-		renderCompass(renderer, bounds);
+		// Course
+		{
+			const auto selectedCourseBounds = Bounds(
+				center.getX() - verticalBarWidth / 2,
+				bounds.getY(),
+				verticalBarWidth,
+				verticalBarHeight
+			);
+
+			renderer->renderFilledRectangle(
+				selectedCourseBounds,
+				&Theme::bg3
+			);
+
+			const auto text = std::format(L"{:03}", static_cast<int16_t>(rc.courseDeg));
+
+			renderer->renderString(
+				Point(
+					selectedCourseBounds.getXCenter() - Theme::fontNormal.getWidth(text) / 2,
+					selectedCourseBounds.getY() + verticalBarTextMargin
+				),
+				&Theme::fontNormal,
+				&Theme::fg1,
+				text
+			);
+		}
+
+		// Time
+		{
+			const auto timeBounds = Bounds(
+				center.getX() - verticalBarWidth / 2,
+				bounds.getY2() - verticalBarHeight + 1,
+				verticalBarWidth,
+				verticalBarHeight
+			);
+
+			renderer->renderFilledRectangle(
+				timeBounds,
+				&Theme::bg3
+			);
+
+			const auto text = std::format(L"{:02}:{:02}", rc.gps.getTimeHours(), rc.gps.getTimeMinutes());
+
+			renderer->renderString(
+				Point(
+					timeBounds.getXCenter() - Theme::fontNormal.getWidth(text) / 2,
+					timeBounds.getY2() - verticalBarTextMargin + 1 - Theme::fontNormal.getHeight()
+				),
+				&Theme::fontNormal,
+				&Theme::fg1,
+				text
+			);
+		}
 
 		// Speed
 		renderSpeed(
@@ -399,10 +524,30 @@ namespace pizda {
 			Bounds(
 				bounds.getX(),
 				center.getY() - sidebarHeight / 2,
-				bounds.getWidth(),
+				sidebarWidth,
 				sidebarHeight
-			)
+			),
+			center
 		);
+
+		// Altitude
+		renderAltitude(
+			renderer,
+			Bounds(
+			   bounds.getX2() - sidebarWidth + 1,
+			   center.getY() - sidebarHeight / 2,
+			   sidebarWidth,
+			   sidebarHeight
+			),
+			center
+		);
+
+		// testBlack(renderer, bounds);
+		// testBlackBg(renderer, bounds);
+		// testHorizon(renderer, bounds);
+
+		// Compass
+		renderCompass(renderer, bounds);
 
 		// Fields
 		renderFields(renderer, bounds);
