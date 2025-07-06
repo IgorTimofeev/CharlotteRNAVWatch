@@ -23,7 +23,7 @@ namespace pizda {
 		gps.setGNSSSystem(GNSSSystem::GPS | GNSSSystem::GLONASS | GNSSSystem::Galileo | GNSSSystem::QZSS | GNSSSystem::SBAS);
 
 		// UI
-		Theme::setup(&renderer);
+		// Theme::setup(&renderer);
 		application.setRenderer(&renderer);
 		application.setBackgroundColor(&Theme::bg1);
 
@@ -31,13 +31,15 @@ namespace pizda {
 
 		// Main loop
 		while (true) {
+			const auto tickTime = esp_timer_get_time();
+
 			application.tick();
 			application.render();
 
 			interpolationTick();
 
 			// Skipping remaining tick time if any
-			const auto deltaTime = esp_timer_get_time() - esp_timer_get_time();
+			const auto deltaTime = esp_timer_get_time() - tickTime;
 
 			if (deltaTime < constants::application::mainTickInterval)
 				vTaskDelay(pdMS_TO_TICKS((constants::application::mainTickInterval - deltaTime) / 1000));

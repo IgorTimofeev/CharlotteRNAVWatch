@@ -1,103 +1,45 @@
 #include "theme.h"
 
 namespace pizda {
-	const Bit8PaletteColor Theme::bg1 = Bit8PaletteColor(0);
-	const Bit8PaletteColor Theme::bg2 = Bit8PaletteColor(1);
-	const Bit8PaletteColor Theme::bg3 = Bit8PaletteColor(2);
-	const Bit8PaletteColor Theme::bg4 = Bit8PaletteColor(3);
-	const Bit8PaletteColor Theme::bg5 = Bit8PaletteColor(4);
-	const Bit8PaletteColor Theme::bg6 = Bit8PaletteColor(5);
-	const Bit8PaletteColor Theme::bg7 = Bit8PaletteColor(6);
+	const RGB565Color Theme::bg1 = RGB888Color(0x000000).toRGB565();
+	const RGB565Color Theme::bg2 = RGB888Color(0x0C0C0C).toRGB565();
+	const RGB565Color Theme::bg3 = RGB888Color(0x181818).toRGB565();
+	const RGB565Color Theme::bg4 = RGB888Color(0x242424).toRGB565();
+	const RGB565Color Theme::bg5 = RGB888Color(0x484848).toRGB565();
+	const RGB565Color Theme::bg6 = RGB888Color(0x545454).toRGB565();
+	const RGB565Color Theme::bg7 = RGB888Color(0x606060).toRGB565();
 
-	const Bit8PaletteColor Theme::fg1 = Bit8PaletteColor(7);
-	const Bit8PaletteColor Theme::fg2 = Bit8PaletteColor(8);
-	const Bit8PaletteColor Theme::fg3 = Bit8PaletteColor(9);
-	const Bit8PaletteColor Theme::fg4 = Bit8PaletteColor(10);
-	const Bit8PaletteColor Theme::fg5 = Bit8PaletteColor(11);
-	const Bit8PaletteColor Theme::fg6 = Bit8PaletteColor(12);
-	const Bit8PaletteColor Theme::fg7 = Bit8PaletteColor(13);
+	const RGB565Color Theme::fg1 = RGB888Color(0xF0F0F0).toRGB565();
+	const RGB565Color Theme::fg2 = RGB888Color(0xCCCCCC).toRGB565();
+	const RGB565Color Theme::fg3 = RGB888Color(0x999999).toRGB565();
+	const RGB565Color Theme::fg4 = RGB888Color(0x888888).toRGB565();
+	const RGB565Color Theme::fg5 = RGB888Color(0x777777).toRGB565();
+	const RGB565Color Theme::fg6 = RGB888Color(0x666666).toRGB565();
+	const RGB565Color Theme::fg7 = RGB888Color(0x555555).toRGB565();
 
-	const Bit8PaletteColor Theme::accent1 = Bit8PaletteColor(14);
-	const Bit8PaletteColor Theme::accent2 = Bit8PaletteColor(15);
+	const RGB565Color Theme::accent1 = RGB888Color(0xffd200).toRGB565();
+	const RGB565Color Theme::accent2 = RGB888Color(0x997e53).toRGB565();
 
-	const Bit8PaletteColor Theme::good1 = Bit8PaletteColor(16);
-	const Bit8PaletteColor Theme::good2 = Bit8PaletteColor(17);
+	const RGB565Color Theme::good1 = RGB888Color(0x1db153).toRGB565();
+	const RGB565Color Theme::good2 = RGB888Color(0x28DA69).toRGB565();
 
-	const Bit8PaletteColor Theme::bad1 = Bit8PaletteColor(18);
-	const Bit8PaletteColor Theme::bad2 = Bit8PaletteColor(19);
+	const RGB565Color Theme::bad1 = RGB888Color(0x9f2d2d).toRGB565();
+	const RGB565Color Theme::bad2 = RGB888Color(0xf24949).toRGB565();
 
-	const Bit8PaletteColor Theme::red = Bit8PaletteColor(20);
-	const Bit8PaletteColor Theme::purple = Bit8PaletteColor(21);
-	const Bit8PaletteColor Theme::green = Bit8PaletteColor(22);
-	const Bit8PaletteColor Theme::greenSpeed = Bit8PaletteColor(23);
-	const Bit8PaletteColor Theme::yellow = Bit8PaletteColor(24);
-	const Bit8PaletteColor Theme::ocean = Bit8PaletteColor(25);
-	const Bit8PaletteColor Theme::ground = Bit8PaletteColor(26);
-	const Bit8PaletteColor Theme::ground2 = Bit8PaletteColor(27);
-	const Bit8PaletteColor Theme::sky = Bit8PaletteColor(28);
-	const Bit8PaletteColor Theme::sky2 = Bit8PaletteColor(29);
+	const RGB565Color Theme::red = RGB888Color(0xff0000).toRGB565();
+	const RGB565Color Theme::purple = RGB888Color(0xff00ff).toRGB565();
+	const RGB565Color Theme::green = RGB888Color(0x00FF00).toRGB565();
+	const RGB565Color Theme::greenSpeed = RGB888Color(0x008100).toRGB565();
+	const RGB565Color Theme::yellow = RGB888Color(0xffd200).toRGB565();
+	const RGB565Color Theme::ocean = RGB888Color(0x00ffff).toRGB565();
+	const RGB565Color Theme::ground = RGB888Color(0x343f15).toRGB565();
+	const RGB565Color Theme::ground2 = RGB888Color(0xdef2a2).toRGB565();
+	const RGB565Color Theme::sky = RGB888Color(0x1d2d3c).toRGB565();
+	const RGB565Color Theme::sky2 = RGB888Color(0xaed1f2).toRGB565();
 
 	const unscii16Font Theme::fontBig {};
 	const PIXY10Font Theme::fontNormal {};
 	const Vaticanus8Font Theme::fontSmall {};
-
-	void Theme::setup(Bit8PaletteRenderer* renderer) {
-		renderer->setPaletteColors({
-			// Background
-			RGB888Color(0x000000),
-			RGB888Color(0x0C0C0C),
-			RGB888Color(0x181818),
-			RGB888Color(0x242424),
-			RGB888Color(0x484848),
-			RGB888Color(0x545454),
-			RGB888Color(0x606060),
-
-			// Foreground
-			RGB888Color(0xF0F0F0),
-			RGB888Color(0xCCCCCC),
-			RGB888Color(0x999999),
-			RGB888Color(0x888888),
-			RGB888Color(0x777777),
-			RGB888Color(0x666666),
-			RGB888Color(0x555555),
-
-			// Accent 1
-			RGB888Color(0xffd200),
-			// Accent 2
-			RGB888Color(0x997e53),
-
-			// Good 1
-			RGB888Color(0x1db153),
-			// Good 2
-			RGB888Color(0x28DA69),
-
-			// Bad 1
-			RGB888Color(0x9f2d2d),
-			// Bad 2
-			RGB888Color(0xf24949),
-
-			// Red
-			RGB888Color(0xff0000),
-			// Purple
-			RGB888Color(0xff00ff),
-			// Green
-			RGB888Color(0x00FF00),
-			// Green speed
-			RGB888Color(0x008100),
-			// Yellow
-			RGB888Color(0xffd200),
-			// Ocean
-			RGB888Color(0x00ffff),
-			// Ground
-			RGB888Color(0x343f15),
-			// Ground 2
-			RGB888Color(0xdef2a2),
-			// Sky
-			RGB888Color(0x1d2d3c),
-			// Sky 2
-			RGB888Color(0xaed1f2),
-		});
-	}
 
 	void Theme::apply(Text* text) {
 		text->setFont(&Theme::fontSmall);

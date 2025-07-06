@@ -38,7 +38,7 @@ namespace pizda {
 				constants::screen::frequency
 			);
 
-			Bit8PaletteRenderer renderer { 32 };
+			RGB565PixelBufferRenderer renderer {  };
 
 			Application application {};
 			Eblo eblo {};
