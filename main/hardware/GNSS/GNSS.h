@@ -72,7 +72,7 @@ namespace pizda {
 				return testAltitude;
 			}
 
-			float getAltitudeTrendKt() const {
+			float getAltitudeTrendFt() const {
 				return altitudeTrend;
 			}
 

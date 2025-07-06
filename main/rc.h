@@ -48,11 +48,13 @@ namespace pizda {
 			float courseDeviationDeg = 5;
 
 			float courseDeg = 0;
+
 			float altitudeFt = 0;
 			float altitudeTrendFt = 0;
+			float altitudeMinimumsFt = 80;
+
 			float speedKt = 0;
 			float speedTrendKt = 0;
-			float altitudeMinimumsFt = 80;
 
 			uint16_t selectedSpeed = 15;
 			uint16_t selectedAltitude = 200;

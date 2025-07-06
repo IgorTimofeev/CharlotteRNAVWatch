@@ -95,8 +95,7 @@ namespace pizda {
 			static void renderUnderlayText(Renderer* renderer, int32_t x, int32_t y, const Color* color, std::wstring_view text);
 			void renderSpeed(Renderer* renderer, const Bounds& sidebarBounds, const Point& center) const;
 			void renderAltitude(Renderer* renderer, const Bounds& sidebarBounds, const Point& center) const;
-			void renderCompass(Renderer* renderer, const Bounds& bounds);
-			void renderField(Renderer* renderer, const Point& point, std::wstring_view text1, std::wstring_view text2);
-			void renderCompassFields(Renderer* renderer, const Bounds& bounds);
+			static void renderCompass(Renderer* renderer, const Bounds& bounds);
+			static void renderField(Renderer* renderer, const Point& point, std::wstring_view text1, std::wstring_view text2);
 	};
 }

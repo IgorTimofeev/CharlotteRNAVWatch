@@ -25,19 +25,31 @@ namespace pizda {
 		if (std::abs(trend) <= 1)
 			return;
 
-		const auto trendAngleRad = std::clamp(trend * radPerTrendUnit, toRadians(-70.f), toRadians(70.f));
+		const auto angleRad = std::clamp(trend * radPerTrendUnit, toRadians(-70.f), toRadians(70.f));
 
-		auto trendFrom = static_cast<int16_t>((offsetRad + trendAngleRad) / toRadians(360.f) * 255.f);
-		auto trendTo = static_cast<int16_t>(offsetRad / toRadians(360.f) * 255.f);
+		auto angleFrom = offsetRad;
+		auto angleTo = offsetRad + angleRad;
 
-		if (trendFrom > trendTo)
-			std::swap(trendFrom, trendTo);
+		while (angleFrom < 0)
+			angleFrom += std::numbers::pi_v<float> * 2;
+
+		while (angleTo < 0)
+			angleTo += std::numbers::pi_v<float> * 2;
+
+		if (std::abs(angleTo - angleFrom) > std::numbers::pi_v<float>) {
+			std::swap(angleFrom, angleTo);
+
+			if (angleTo == 0)
+				angleTo = toRadians(359.99);
+		}
+
+		// ESP_LOGI("pizda", "angleRad: %f, angleFrom: %f, angleTo: %f", toDegrees(angleRad), toDegrees(angleFrom), toDegrees(angleTo));
 
 		renderer->renderArc(
 			center,
-			compassRadius + 1,
-			trendFrom,
-			trendTo,
+			static_cast<uint16_t>(compassRadius + 2),
+			angleFrom,
+			angleTo,
 			&Theme::green
 		);
 	}
@@ -125,9 +137,9 @@ namespace pizda {
 		renderTrendArrow(
 			renderer,
 			center,
-			rc.speedTrendKt,
-			-speedStepRadPerKt,
-			toRadians(180.f)
+			-rc.speedTrendKt,
+			speedStepRadPerKt,
+			toRadians(180)
 		);
 
 		// Value
@@ -339,7 +351,7 @@ namespace pizda {
 		{
 			const auto underlayX = sidebarBounds.getX2() - sidebarUnderlayTextCenterMargin + 1;
 			renderUnderlayText(renderer, underlayX, sidebarBounds.getY() - sidebarUnderlayHeight, &Theme::ocean, std::to_wstring(rc.selectedAltitude));
-			renderUnderlayText(renderer, underlayX, sidebarBounds.getY2() + 1, &Theme::ocean, L"1013");
+			renderUnderlayText(renderer, underlayX, sidebarBounds.getY2() + 1, &Theme::yellow, L"1013");
 		}
 	}
 
@@ -370,7 +382,7 @@ namespace pizda {
 			renderer->renderLine(
 			   static_cast<Point>(centerVec + lineVec),
 			   static_cast<Point>(centerVec + lineVec - lineVecNorm * lineLength),
-			   &Theme::fg1
+			   &Theme::fg2
 		   );
 
 			// Text for big
@@ -504,6 +516,56 @@ namespace pizda {
 				2
 			);
 		}
+
+
+		// Fields
+		{
+			const auto fieldsVec = static_cast<Point>(Vector2F(fieldsRadius, 0).rotate(toRadians(-45)));
+
+			// WPT
+			renderField(
+				renderer,
+				Point(
+					center.getX() - fieldsVec.getX(),
+					center.getY() + fieldsVec.getY()
+				),
+				L"WPT",
+				L"ULLI"
+			);
+
+			// DTK
+			renderField(
+				renderer,
+				Point(
+					center.getX() + fieldsVec.getX(),
+					center.getY() + fieldsVec.getY()
+				),
+				L"DTK",
+				std::format(L"{:03}", rc.selectedCourseDeg)
+			);
+
+			// DIS
+			renderField(
+				renderer,
+				Point(
+					center.getX() - fieldsVec.getX(),
+					center.getY() - fieldsVec.getY()
+				),
+				L"DIS",
+				std::format(L"{} nm", rc.distance)
+			);
+
+			// ETE
+			renderField(
+				renderer,
+				Point(
+					center.getX() + fieldsVec.getX(),
+					center.getY() - fieldsVec.getY()
+				),
+				L"ETE",
+				std::format(L"{:02}:{:02}", rc.ETESec / 60, rc.ETESec % 60)
+			);
+		}
 	}
 
 	void Eblo::renderField(Renderer* renderer, const Point& point, const std::wstring_view text1, const std::wstring_view text2) {
@@ -530,57 +592,6 @@ namespace pizda {
 		);
 	}
 
-	void Eblo::renderCompassFields(Renderer* renderer, const Bounds& bounds) {
-		const auto& rc = RC::getInstance();
-		const auto center = bounds.getCenter();
-
-		const auto fieldsVec = static_cast<Point>(Vector2F(fieldsRadius, 0).rotate(toRadians(-45)));
-
-		// WPT
-		renderField(
-			renderer,
-			Point(
-				center.getX() - fieldsVec.getX(),
-				center.getY() + fieldsVec.getY()
-			),
-			L"WPT",
-			L"ULLI"
-		);
-
-		// DTK
-		renderField(
-			renderer,
-			Point(
-				center.getX() + fieldsVec.getX(),
-				center.getY() + fieldsVec.getY()
-			),
-			L"DTK",
-			std::format(L"{:03}", rc.selectedCourseDeg)
-		);
-
-		// DIS
-		renderField(
-			renderer,
-			Point(
-				center.getX() - fieldsVec.getX(),
-				center.getY() - fieldsVec.getY()
-			),
-			L"DIS",
-			std::format(L"{} nm", rc.distance)
-		);
-
-		// ETE
-		renderField(
-			renderer,
-			Point(
-				center.getX() + fieldsVec.getX(),
-				center.getY() - fieldsVec.getY()
-			),
-			L"ETE",
-			std::format(L"{:02}:{:02}", rc.ETESec / 60, rc.ETESec % 60)
-		);
-	}
-
 	void Eblo::onRender(Renderer* renderer, const Bounds& bounds) {
 		auto& rc = RC::getInstance();
 		const auto center = bounds.getCenter();
@@ -598,7 +609,7 @@ namespace pizda {
 		// Sidebar blackout
 		renderer->renderFilledRectangle(
 			sidebarBounds,
-			&Theme::bg1
+			&Theme::bg2
 		);
 
 		// Sidebar underlay
@@ -624,27 +635,39 @@ namespace pizda {
 
 		// Course
 		{
+			constexpr static uint8_t courseWidth = 42;
+			constexpr static uint8_t courseHeight = 20;
+
 			constexpr static uint8_t triangleWidth = 4;
 			constexpr static uint8_t triangleHeight = 5;
-			constexpr static uint8_t triangleCompassMargin = 3;
-			constexpr static uint8_t textMargin = 2;
 
-			const auto triangleBottom = center.getY() - static_cast<int32_t>(compassRadius) - triangleCompassMargin;
+			const auto courseBounds = Bounds(
+				center.getX() - courseWidth / 2,
+				bounds.getY(),
+				courseWidth,
+				courseHeight
+			);
+
+			renderer->renderFilledRectangle(
+				courseBounds,
+				4,
+				&Theme::bg1
+			);
 
 			renderer->renderFilledTriangle(
 				Point(
 					center.getX() - triangleWidth,
-					triangleBottom - triangleHeight
+					courseBounds.getY2() + 1
 				),
 				Point(
 					center.getX() + triangleWidth,
-					triangleBottom - triangleHeight
+					courseBounds.getY2() + 1
 				),
 				Point(
 					center.getX(),
-					triangleBottom
+					courseBounds.getY2() + 1 + triangleHeight
 				),
-				&Theme::fg1
+				&Theme::bg1
 			);
 
 			const auto text = std::format(L"{:03}", static_cast<int16_t>(rc.courseDeg));
@@ -652,7 +675,7 @@ namespace pizda {
 			renderer->renderString(
 				Point(
 					center.getX() - Theme::fontNormal.getWidth(text) / 2,
-					triangleBottom - triangleHeight - textMargin - Theme::fontNormal.getHeight()
+					courseBounds.getYCenter() - Theme::fontNormal.getHeight() / 2
 				),
 				&Theme::fontNormal,
 				&Theme::fg1,
@@ -698,7 +721,7 @@ namespace pizda {
 			renderer->renderFilledCircle(
 			   center,
 			   compassRadius,
-			   &Theme::bg2
+			   &Theme::bg1
 		   );
 		}
 
@@ -729,7 +752,6 @@ namespace pizda {
 		// }
 
 		renderCompass(renderer, bounds);
-		renderCompassFields(renderer, bounds);
 
 		// Speed
 		renderSpeed(

@@ -73,7 +73,7 @@ namespace pizda {
 		// Trends
 		LPFFactor = 1.0f * deltaTime / 1'000'000.f;
 		LowPassFilter::apply(speedTrendKt, gps.getSpeedTrendKt(), LPFFactor);
-		LowPassFilter::apply(altitudeTrendFt, gps.getAltitudeFt(), LPFFactor);
+		LowPassFilter::apply(altitudeTrendFt, gps.getAltitudeTrendFt(), LPFFactor);
 
 		_interpolationTickTime = esp_timer_get_time() + constants::application::interpolationTickInterval;
 	}
