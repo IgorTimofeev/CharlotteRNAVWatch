@@ -47,20 +47,20 @@ namespace pizda {
 	}
 
 	void RC::interpolationTick() {
-		const uint32_t deltaTime = esp_timer_get_time() - _interpolationTickTime;
+		const auto deltaTime = static_cast<float>(esp_timer_get_time() - _interpolationTickTime);
 
 		if (deltaTime < constants::application::interpolationTickInterval)
 			return;
 
-		// Principle of calculating the interpolation factor:
-		//
+		// Low pass
+
 		// factorPerSecond -> 1'000'000 us
 		// factorPerTick -> deltaTime us
 		//
 		// factorPerTick = factorPerSecond * deltaTime / 1'000'000
 
 		// Slow
-		float LPFFactor = 1.0f * static_cast<float>(deltaTime) / 1'000'000.f;
+		float LPFFactor = 1.0f * deltaTime / 1'000'000.f;
 		LowPassFilter::apply(courseDeg, gps.getCourseDeg(), LPFFactor);
 		LowPassFilter::apply(speedKt, gps.getSpeedKt(), LPFFactor);
 		LowPassFilter::apply(altitudeFt, gps.getAltitudeFt(), LPFFactor);
@@ -69,6 +69,11 @@ namespace pizda {
 
 		if (courseDeviationDeg > 20)
 			courseDeviationDeg = -20;
+
+		// Trends
+		LPFFactor = 1.0f * deltaTime / 1'000'000.f;
+		LowPassFilter::apply(speedTrendKt, gps.getSpeedTrendKt(), LPFFactor);
+		LowPassFilter::apply(altitudeTrendFt, gps.getAltitudeFt(), LPFFactor);
 
 		_interpolationTickTime = esp_timer_get_time() + constants::application::interpolationTickInterval;
 	}

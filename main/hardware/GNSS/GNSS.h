@@ -67,17 +67,25 @@ namespace pizda {
 				return _gps.location.lng();
 			}
 
-			float getAltitudeFt() {
+			float getAltitudeFt() const {
 				// return _gps.altitude.feet();
 				return testAltitude;
 			}
 
-			float getSpeedKt() {
+			float getAltitudeTrendKt() const {
+				return altitudeTrend;
+			}
+
+			float getSpeedKt() const {
 				// return _gps.speed.knots();
 				return testSpeed;
 			}
 
-			float getCourseDeg() {
+			float getSpeedTrendKt() const {
+				return speedTrend;
+			}
+
+			float getCourseDeg() const {
 				// return _gps.course.deg();
 				return testCourse;
 			}
@@ -120,8 +128,14 @@ namespace pizda {
 			QueueHandle_t _uartQueue {};
 
 			float testCourse = 0;
-			float testSpeed = 0;
+
 			float testAltitude = 0;
+			float oldAltitude = 0;
+			float altitudeTrend = 0;
+
+			float testSpeed = 0;
+			float oldSpeed = 0;
+			float speedTrend = 0;
 
 			constexpr static uint16_t _rxBufferSize = 2048;
 			constexpr static uint16_t _txBufferSize = 2048;
@@ -157,6 +171,9 @@ namespace pizda {
 			}
 
 			[[noreturn]] void tick() {
+				constexpr static auto tickInterval = 1'000'000;
+				constexpr static auto trendInterval = 5'000'000;
+
 				const auto data = new uint8_t[_rxBufferSize];
 
 				while (true) {
@@ -196,20 +213,29 @@ namespace pizda {
 						}
 					}
 
-					testCourse += 5;
+					// Course
+					testCourse += YOBA::random(4, 8);
 
 					if (testCourse >= 360)
 						testCourse = 0;
 
-					testSpeed += 2;
+					// Speed
+					testSpeed += YOBA::random(1, 2);
 
 					if (testSpeed >= 20)
 						testSpeed = 0;
 
-					testAltitude += 10;
+					speedTrend = (getSpeedKt() - oldSpeed) * trendInterval / tickInterval;
+					oldSpeed = getSpeedKt();
+
+					// Altitude
+					testAltitude += YOBA::random(6, 12);
 
 					if (testAltitude >= 150)
 						testAltitude = 0;
+
+					altitudeTrend = (getAltitudeFt() - oldAltitude) * trendInterval / tickInterval;
+					oldAltitude = getAltitudeFt();
 
 					// ESP_LOGI("GNSS", "---------------- Processed data ----------------");
 					// ESP_LOGI("GNSS", "Sat / HDOP: %lu, %lf", getSatellites(), getHDOP());
@@ -217,7 +243,7 @@ namespace pizda {
 					// ESP_LOGI("GNSS", "Lat / lon / alt: %f deg, %f deg, %f ft", getLatitude(), getLongitude(), getAltitudeFt());
 					// ESP_LOGI("GNSS", "Speed / Course: %f kt, %f deg", getSpeedKt(), getCourseDeg());
 
-					vTaskDelay(pdMS_TO_TICKS(1000));
+					vTaskDelay(pdMS_TO_TICKS(tickInterval / 1000));
 				}
 			}
 	};

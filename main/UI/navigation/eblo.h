@@ -12,17 +12,7 @@ namespace pizda {
 
 		protected:
 			void onTick() override;
-			void renderSpeedUnderlay(Renderer* renderer, const Bounds& speedBounds);
-			void renderSpeed(Renderer* renderer, const Bounds& bounds, const Point& center);
-			static Vector2F getAltitudeDeg(float altitude);
-			void renderAltitudeUnderlay(Renderer* renderer, const Bounds& altitudeBounds);
-			void renderAltitude(Renderer* renderer, const Bounds& bounds, const Point& center);
-			void renderCompass(Renderer* renderer, const Bounds& bounds);
-			void renderField(Renderer* renderer, const Point& point, std::wstring_view text1,
-							std::wstring_view text2);
-			void testBlackBg(Renderer* renderer, const Bounds& bounds);
-			void testHorizon(Renderer* renderer, const Bounds& bounds);
-			void renderCompassFields(Renderer* renderer, const Bounds& bounds);
+			float getSpeedAngleRad(float speed);
 			void onRender(Renderer* renderer, const Bounds& bounds) override;
 
 		private:
@@ -43,18 +33,17 @@ namespace pizda {
 			constexpr static uint8_t sidebarValueMargin = 3;
 			constexpr static uint8_t sidebarValueTriangleWidth = 10;
 
-			// Pizdulka
-			constexpr static uint8_t pizdulkaWidth = sidebarWidth + 50;
-			constexpr static uint8_t pizdulkaHeight = 18;
-			constexpr static uint8_t pizdulkaTextCenterMargin = 35;
+			// Sidebar underlay
+			constexpr static uint8_t sidebarUnderlayHeight = 18;
+			constexpr static uint8_t sidebarUnderlayTextCenterMargin = 36;
 
 			// Compass
 			constexpr static uint8_t compassDiameter = displayDiameter - sidebarWidth * 2;
 			constexpr static float compassRadius = compassDiameter / 2.f;
-			constexpr static uint8_t compassLineLength1 = 7;
+			constexpr static uint8_t compassLineLength1 = 6;
 			constexpr static uint8_t compassLineLength2 = 4;
 			constexpr static uint8_t compassLineLength3 = 1;
-			constexpr static uint8_t compassLineTexOffset = 12;
+			constexpr static uint8_t compassLineTexOffset = 11;
 
 			// HSI
 			constexpr static uint8_t HSIDiameter = compassDiameter;
@@ -99,5 +88,15 @@ namespace pizda {
 
 			// Fields
 			constexpr static float fieldsRadius = compassRadius / 2.f;
+
+			static Vector2F getSpeedVec(float speed);
+			static Vector2F getAltitudeVec(float altitude);
+			static void renderTrendArrow(Renderer* renderer, const Point& center, float trend, float radPerTrendUnit, float offsetRad);
+			static void renderUnderlayText(Renderer* renderer, int32_t x, int32_t y, const Color* color, std::wstring_view text);
+			void renderSpeed(Renderer* renderer, const Bounds& sidebarBounds, const Point& center) const;
+			void renderAltitude(Renderer* renderer, const Bounds& sidebarBounds, const Point& center) const;
+			void renderCompass(Renderer* renderer, const Bounds& bounds);
+			void renderField(Renderer* renderer, const Point& point, std::wstring_view text1, std::wstring_view text2);
+			void renderCompassFields(Renderer* renderer, const Bounds& bounds);
 	};
 }
