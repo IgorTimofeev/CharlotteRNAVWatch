@@ -71,7 +71,7 @@ namespace pizda {
 			courseDeviationDeg = -20;
 
 		// Trends
-		LPFFactor = 1.0f * deltaTime / 1'000'000.f;
+		LPFFactor = 0.5f * deltaTime / 1'000'000.f;
 		LowPassFilter::apply(speedTrendKt, gps.getSpeedTrendKt(), LPFFactor);
 		LowPassFilter::apply(altitudeTrendFt, gps.getAltitudeTrendFt(), LPFFactor);
 

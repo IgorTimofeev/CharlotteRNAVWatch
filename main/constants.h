@@ -24,7 +24,7 @@ namespace pizda {
 
 			class screen {
 				public:
-					constexpr static gpio_num_t slaveSelect = GPIO_NUM_1;
+					constexpr static gpio_num_t slaveSelect = GPIO_NUM_NC;
 					constexpr static gpio_num_t dataCommand = GPIO_NUM_2;
 					constexpr static gpio_num_t reset = GPIO_NUM_3;
 					constexpr static uint32_t frequency = 60'000'000;
