@@ -4,6 +4,7 @@
 
 #include <YOBA/main.h>
 #include <hardware/GNSS/GNSS.h>
+#include <hardware/korryButton.h>
 #include <settings/settings.h>
 #include <constants.h>
 
@@ -40,6 +41,21 @@ namespace pizda {
 
 			RGB565PixelBufferRenderer renderer {  };
 
+			KorryButton buttonUp {
+				KorryButtonType::up,
+				constants::buttons::up
+			};
+
+			KorryButton buttonMiddle {
+				KorryButtonType::middle,
+				constants::buttons::middle
+			};
+
+			KorryButton buttonDown {
+				KorryButtonType::down,
+				constants::buttons::down
+			};
+
 			Application application {};
 			Eblo eblo {};
 
@@ -65,6 +81,8 @@ namespace pizda {
 			static RC& getInstance();
 
 			[[noreturn]] void run();
+
+
 
 		private:
 			RC() = default;

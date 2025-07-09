@@ -24,9 +24,10 @@ namespace pizda {
 
 			class screen {
 				public:
-					constexpr static gpio_num_t slaveSelect = GPIO_NUM_NC;
-					constexpr static gpio_num_t dataCommand = GPIO_NUM_2;
-					constexpr static gpio_num_t reset = GPIO_NUM_3;
+					constexpr static gpio_num_t slaveSelect = GPIO_NUM_8;
+					constexpr static gpio_num_t dataCommand = GPIO_NUM_9;
+					constexpr static gpio_num_t reset = GPIO_NUM_7;
+
 					constexpr static uint32_t frequency = 60'000'000;
 			};
 
@@ -34,6 +35,14 @@ namespace pizda {
 				public:
 					constexpr static uint32_t mainTickInterval = 1'000'000 / 30;
 					constexpr static uint32_t interpolationTickInterval = 1'000'000 / 30;
+			};
+
+			class buttons {
+				public:
+					constexpr static gpio_num_t up = GPIO_NUM_3;
+					constexpr static gpio_num_t middle = GPIO_NUM_0;
+					constexpr static gpio_num_t down = GPIO_NUM_1;
+
 			};
 	};
 }

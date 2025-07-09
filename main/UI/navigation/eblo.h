@@ -9,11 +9,10 @@ namespace pizda {
 	class Eblo : public Control {
 		public:
 
-
 		protected:
 			void onTick() override;
-			float getSpeedAngleRad(float speed);
 			void onRender(Renderer* renderer, const Bounds& bounds) override;
+			void onEvent(Event* event) override;
 
 		private:
 			// Generic

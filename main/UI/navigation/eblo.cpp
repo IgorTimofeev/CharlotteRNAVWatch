@@ -1,6 +1,7 @@
 #include "eblo.h"
 
 #include "rc.h"
+#include "hardware/korryButton.h"
 #include "UI/theme.h"
 
 namespace pizda {
@@ -766,5 +767,14 @@ namespace pizda {
 			sidebarBounds,
 			center
 		);
+	}
+
+	void Eblo::onEvent(Event* event) {
+		if (event->getTypeID() != KorryButtonEvent::typeID)
+			return;
+
+		const auto korryButtonEvent = reinterpret_cast<KorryButtonEvent*>(event);
+
+		ESP_LOGI("KorryButotnEvent", "type: %d, time: %f", (uint8_t) korryButtonEvent->getType(), (float) korryButtonEvent->getTime());
 	}
 }

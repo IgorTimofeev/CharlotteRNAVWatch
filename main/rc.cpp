@@ -17,6 +17,11 @@ namespace pizda {
 		display.setup();
 		renderer.setTarget(&display);
 
+		// Buttons
+		buttonUp.setup();
+		buttonMiddle.setup();
+		buttonDown.setup();
+
 		// GPS
 		gps.setup();
 		gps.setUpdateInterval(1000);
@@ -26,6 +31,10 @@ namespace pizda {
 		// Theme::setup(&renderer);
 		application.setRenderer(&renderer);
 		application.setBackgroundColor(&Theme::bg1);
+
+		application.addHID(&buttonUp);
+		application.addHID(&buttonMiddle);
+		application.addHID(&buttonDown);
 
 		application += &eblo;
 
