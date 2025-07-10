@@ -36,10 +36,13 @@ namespace pizda {
 		public:
 			explicit WaypointItem(uint16_t waypointIndex);
 
+			static uint16_t getLastWaypointIndex();
+
 		protected:
 			void onKorryEvent(KorryEvent* event) override;
 
 		private:
+			static uint16_t _lastWaypointIndex;
 			uint16_t _waypointIndex;
 	};
 

@@ -5,8 +5,12 @@
 #include "esp_log.h"
 #include "hardware/GNSS/TinyGPS++.h"
 #include <inttypes.h>
+#include <YOBA/main.h>
+#include "utils/units.h"
 
 namespace pizda {
+	using namespace YOBA;
+
 	namespace GNSSSystem {
 		enum : uint8_t {
 			GPS =     0b00000001,
@@ -59,25 +63,24 @@ namespace pizda {
 				delete[] buffer;
 			}
 
-			float getLatitude() {
-				return _gps.location.lat();
+			float getLatitudeRad() const {
+				return testLatitude;
 			}
 
-			float getLongitude() {
-				return _gps.location.lng();
+			float getLongitudeRad() const {
+				return testLongitude;
 			}
 
-			float getAltitudeFt() const {
-				// return _gps.altitude.feet();
+			float getAltitudeM() const {
 				return testAltitude;
 			}
 
-			float getAltitudeTrendFt() const {
+			float getAltitudeTrendM() const {
 				return altitudeTrend;
 			}
 
-			float getSpeedKt() const {
-				// return _gps.speed.knots();
+			float getSpeedMs() const {
+				// return _gps.speed.ms();
 				return testSpeed;
 			}
 
@@ -136,6 +139,9 @@ namespace pizda {
 			float testSpeed = 0;
 			float oldSpeed = 0;
 			float speedTrend = 0;
+
+			float testLatitude = -1;
+			float testLongitude = -1;
 
 			constexpr static uint16_t _rxBufferSize = 2048;
 			constexpr static uint16_t _txBufferSize = 2048;
@@ -213,29 +219,59 @@ namespace pizda {
 						}
 					}
 
-					// Course
-					testCourse += YOBA::random(4, 8);
+					// Lat/lon
+					constexpr static float testLatFrom = toRadians(59.79363656610644);
+					constexpr static float testLonFrom = toRadians(30.56466522806966);
 
-					if (testCourse >= 360)
-						testCourse = 0;
+					constexpr static float testLatTo = toRadians(59.82238390534588);
+					constexpr static float testLonTo = testLonFrom;
+
+					constexpr static float testLatLonTime = 10'000'000.f;
+
+					if (testLatitude < 0) {
+						testLatitude = testLatFrom;
+						testLongitude = testLonFrom;
+					}
+
+					// distance - 10 sec
+					// x - deltaTime
+					testLatitude += (testLatTo - testLatFrom) * static_cast<float>(tickInterval) / testLatLonTime;
+					testLongitude += (testLonTo - testLonFrom) * static_cast<float>(tickInterval) / testLatLonTime;
+
+					if (testLatitude > testLatTo) {
+						testLatitude = testLatFrom;
+						testLongitude = testLonFrom;
+					}
+
+					// Course
+					// testCourse += YOBA::random(4, 8);
+					//
+					// if (testCourse >= 360)
+					// 	testCourse = 0;
 
 					// Speed
-					testSpeed += YOBA::random(1, 2);
+					testSpeed += YOBA::random(
+						static_cast<int32_t>(Units::convertSpeed(1, SpeedUnit::knot, SpeedUnit::meterPerSecond)),
+						static_cast<int32_t>(Units::convertSpeed(2, SpeedUnit::knot, SpeedUnit::meterPerSecond))
+					);
 
-					if (testSpeed >= 20)
+					if (testSpeed >= Units::convertSpeed(20, SpeedUnit::knot, SpeedUnit::meterPerSecond))
 						testSpeed = 0;
 
-					speedTrend = (getSpeedKt() - oldSpeed) * trendInterval / tickInterval;
-					oldSpeed = getSpeedKt();
+					speedTrend = (getSpeedMs() - oldSpeed) * trendInterval / tickInterval;
+					oldSpeed = getSpeedMs();
 
 					// Altitude
-					testAltitude += YOBA::random(6, 12);
+					testAltitude += YOBA::random(
+						static_cast<int32_t>(Units::convertDistance(6, DistanceUnit::foot, DistanceUnit::meter)),
+						static_cast<int32_t>(Units::convertDistance(12, DistanceUnit::foot, DistanceUnit::meter))
+					);
 
-					if (testAltitude >= 150)
+					if (testAltitude >= Units::convertDistance(150, DistanceUnit::foot, DistanceUnit::meter))
 						testAltitude = 0;
 
-					altitudeTrend = (getAltitudeFt() - oldAltitude) * trendInterval / tickInterval;
-					oldAltitude = getAltitudeFt();
+					altitudeTrend = (getAltitudeM() - oldAltitude) * trendInterval / tickInterval;
+					oldAltitude = getAltitudeM();
 
 					// ESP_LOGI("GNSS", "---------------- Processed data ----------------");
 					// ESP_LOGI("GNSS", "Sat / HDOP: %lu, %lf", getSatellites(), getHDOP());

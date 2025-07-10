@@ -67,10 +67,9 @@ namespace pizda {
 			float speedKt = 0;
 			float speedTrendKt = 0;
 
-			float WPFBearingDeg = 60;
-			float WPTCourseDeviationDeg = 5;
-			float WPTDistance = 0.75;
-			uint32_t WPTETESec = 12 * 60;
+			float WPTBearingDeg = 0;
+			float WPTDistanceNm = 0;
+			uint32_t WPTETESec = 0;
 
 			static RC& getInstance();
 
@@ -78,20 +77,22 @@ namespace pizda {
 			void NVSSetup();
 
 			const Route* getRoute() const;
-			const void* getRouteArg() const;
-
-			void setRoute(const Route* route, void* arg = nullptr);
+			void setRoute(const Route* route);
 
 		private:
 			RC() = default;
 
+			constexpr static uint32_t mainTickInterval = 1'000'000 / 30;
+			constexpr static uint32_t computePrimaryTickInterval = 1'000'000 / 30;
+			constexpr static uint32_t computeDelayedTickInterval = 2'000'000;
+
 			const Route* _selectedRoute = nullptr;
 			Element* _selectedPage = nullptr;
-			void* _selectedRouteArg = nullptr;
 
-			int64_t _interpolationTickTime = 0;
+			int64_t _computingPrimaryTickTime = 0;
+			int64_t _computingDelayedTickTime = 0;
 
 			void SPIBusSetup() const;
-			void interpolationTick();
+			void computeStuff();
 	};
 }

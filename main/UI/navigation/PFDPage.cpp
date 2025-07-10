@@ -4,6 +4,7 @@
 #include "hardware/korryButton.h"
 #include "UI/theme.h"
 #include "UI/navigation/routes.h"
+#include "utils/units.h"
 
 namespace pizda {
 	void PFDPage::onTick() {
@@ -280,7 +281,7 @@ namespace pizda {
 
 		// Minimums
 		{
-			const auto minimumsPt = center + static_cast<Point>(getAltitudeVec(rc.altitudeMinimumsFt));
+			const auto minimumsPt = center + static_cast<Point>(getAltitudeVec(rc.settings.PFD.altitudeFt));
 
 			if (minimumsPt.getY() >= sidebarBounds.getY() && minimumsPt.getY() <= sidebarBounds.getY2()) {
 				renderer->renderHorizontalLine(
@@ -417,9 +418,11 @@ namespace pizda {
 			}
 		}
 
+		const auto HSICDIDeg = rc.settings.nav.course - rc.WPTBearingDeg;
+
 		// Bearing
 		{
-			const auto bearingRad = toRadians(rc.WPFBearingDeg);
+			const auto bearingRad = toRadians(rc.WPTBearingDeg);
 			const auto bearingVec = Vector2F(0, -bearingRadius).rotate(bearingRad - headingRad);
 			const auto bearingVecNorm = bearingVec.normalize();
 			const auto bearingVecNormPerp = bearingVecNorm.clockwisePerpendicular();
@@ -472,12 +475,12 @@ namespace pizda {
 			const auto HSIVecNormPerp = HSIVecNorm.clockwisePerpendicular();
 
 			// CDI ellipses
-			for (int16_t angle = -HSICDIAngleMaxDeg; angle <= HSICDIAngleMaxDeg; angle += HSICDIAngleStepDeg) {
-				if (angle == 0)
+			for (int16_t stepIndex = -HSICDIAngleSteps; stepIndex <= HSICDIAngleSteps; stepIndex++) {
+				if (stepIndex == 0)
 					continue;
 
 				renderer->renderCircle(
-					static_cast<Point>(centerVec + HSIVecNormPerp * static_cast<float>(angle * HSICDIAnglePixelsPerDeg)),
+					static_cast<Point>(centerVec + HSIVecNormPerp * static_cast<float>(stepIndex * HSICDIAngleStepDeg * HSICDIAnglePixelsPerDeg)),
 					HSICDIAngleRadius,
 					&Theme::fg1
 				);
@@ -512,7 +515,12 @@ namespace pizda {
 			);
 
 			// CDI
-			const auto HSICDIOffsetPixels = std::min(rc.WPTCourseDeviationDeg, static_cast<float>(HSICDIAngleMaxDeg)) * HSICDIAnglePixelsPerDeg;
+			const auto HSICDIOffsetPixels = std::clamp(
+				HSICDIDeg,
+				-static_cast<float>(HSICDIAngleMaxDeg),
+				static_cast<float>(HSICDIAngleMaxDeg)
+			) * HSICDIAnglePixelsPerDeg;
+
 			const auto HSICDIVec = centerVec + HSIVecNormPerp * HSICDIOffsetPixels;
 
 			renderer->renderLine(
@@ -522,7 +530,6 @@ namespace pizda {
 				2
 			);
 		}
-
 
 		// Fields
 		{
@@ -562,7 +569,7 @@ namespace pizda {
 					center.getY() - fieldsVec.getY()
 				),
 				L"DIS",
-				std::format(L"{} nm", rc.WPTDistance)
+				std::format(L"{:.1f} nm", rc.WPTDistanceNm)
 			);
 
 			// ETE
@@ -573,7 +580,7 @@ namespace pizda {
 					center.getY() - fieldsVec.getY()
 				),
 				L"ETE",
-				std::format(L"{:02}:{:02}", rc.WPTETESec / 60, rc.WPTETESec % 60)
+				std::format(L"{:02}:{:02}", rc.WPTETESec / 3600, rc.WPTETESec % 60)
 			);
 		}
 	}
@@ -789,7 +796,11 @@ namespace pizda {
 				auto& rc = RC::getInstance();
 
 				const uint8_t incrementMagnitude = korryEvent->getEventType() == KorryEventType::tick ? 5 : 1;
-				const uint8_t incrementValue = korryEvent->getButtonType() == KorryButtonType::up ? incrementMagnitude : -incrementMagnitude;
+
+				const auto incrementValue =
+					korryEvent->getButtonType() == KorryButtonType::down
+					? static_cast<int16_t>(incrementMagnitude)
+					: static_cast<int16_t>(-incrementMagnitude);
 
 				rc.settings.nav.course = static_cast<uint16_t>(normalizeAngle360(static_cast<int32_t>(rc.settings.nav.course) + incrementValue));
 				rc.settings.nav.scheduleWrite();

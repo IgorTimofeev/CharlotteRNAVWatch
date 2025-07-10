@@ -1,5 +1,6 @@
 #include <rc.h>
 #include "utils/lowPassFilter.h"
+#include "utils/units.h"
 
 namespace pizda {
 	using namespace YOBA;
@@ -49,13 +50,13 @@ namespace pizda {
 			application.tick();
 			application.render();
 
-			interpolationTick();
+			computeStuff();
 
 			// Skipping remaining tick time if any
 			const auto deltaTime = esp_timer_get_time() - tickTime;
 
-			if (deltaTime < constants::application::mainTickInterval)
-				vTaskDelay(pdMS_TO_TICKS((constants::application::mainTickInterval - deltaTime) / 1000));
+			if (deltaTime < mainTickInterval)
+				vTaskDelay(pdMS_TO_TICKS((mainTickInterval - deltaTime) / 1000));
 		}
 	}
 
@@ -77,30 +78,38 @@ namespace pizda {
 		return _selectedRoute;
 	}
 
-	const void* RC::getRouteArg() const {
-		return _selectedRouteArg;
-	}
-
-	void RC::setRoute(const Route* route, void* arg) {
+	void RC::setRoute(const Route* route) {
 		if (_selectedPage) {
 			application -= _selectedPage;
 			delete _selectedPage;
-
-			_selectedRouteArg = nullptr;
 		}
 
 		_selectedRoute = route;
-		_selectedRouteArg = arg;
-
 		_selectedPage = _selectedRoute->buildElement();
 		application += _selectedPage;
 	}
 
-	void RC::interpolationTick() {
-		const auto deltaTime = static_cast<float>(esp_timer_get_time() - _interpolationTickTime);
+	void RC::computeStuff() {
+		const auto deltaTime = static_cast<float>(esp_timer_get_time() - _computingPrimaryTickTime);
 
-		if (deltaTime < constants::application::interpolationTickInterval)
+		if (deltaTime < computePrimaryTickInterval)
 			return;
+
+		const auto& waypoint = settings.nav.waypoints[settings.nav.waypointIndex];
+
+		const auto aircraftCoordinates = GeographicCoordinates(
+			gps.getLatitudeRad(),
+			gps.getLongitudeRad(),
+			gps.getAltitudeM()
+		).toCartesian();
+
+		const auto waypointCoordinates = waypoint.geographicCoordinates.toCartesian();
+
+		auto coordinatesDelta = waypointCoordinates - aircraftCoordinates;
+		coordinatesDelta = coordinatesDelta.rotateAroundZAxis(-gps.getLongitudeRad());
+		coordinatesDelta = coordinatesDelta.rotateAroundYAxis(gps.getLatitudeRad());
+
+		const auto WPTBearingDegTarget = toDegrees(std::atan2f(coordinatesDelta.getY(), coordinatesDelta.getZ()));
 
 		// Low pass
 
@@ -109,23 +118,35 @@ namespace pizda {
 		//
 		// factorPerTick = factorPerSecond * deltaTime / 1'000'000
 
-		// Slow
-		float LPFFactor = 1.0f * deltaTime / 1'000'000.f;
+		// Fast
+		float LPFFactor = 2.0f * deltaTime / 1'000'000.f;
+		LowPassFilter::apply(WPTBearingDeg, WPTBearingDegTarget, LPFFactor);
+
+		// Normal
+		LPFFactor = 1.0f * deltaTime / 1'000'000.f;
 		LowPassFilter::apply(courseDeg, gps.getCourseDeg(), LPFFactor);
-		LowPassFilter::apply(speedKt, gps.getSpeedKt(), LPFFactor);
-		LowPassFilter::apply(altitudeFt, gps.getAltitudeFt(), LPFFactor);
+		LowPassFilter::apply(speedKt, Units::convertSpeed(gps.getSpeedMs(), SpeedUnit::meterPerSecond, SpeedUnit::knot), LPFFactor);
+		LowPassFilter::apply(altitudeFt, Units::convertDistance(gps.getAltitudeM(), DistanceUnit::meter, DistanceUnit::foot), LPFFactor);
 
-		LowPassFilter::apply(WPTCourseDeviationDeg, WPTCourseDeviationDeg + 2, LPFFactor);
-
-		if (WPTCourseDeviationDeg > 20)
-			WPTCourseDeviationDeg = -20;
-
-		// Trends
+		// Slow
 		LPFFactor = 0.5f * deltaTime / 1'000'000.f;
 		LowPassFilter::apply(speedTrendKt, gps.getSpeedTrendKt(), LPFFactor);
-		LowPassFilter::apply(altitudeTrendFt, gps.getAltitudeTrendFt(), LPFFactor);
+		LowPassFilter::apply(altitudeTrendFt, Units::convertDistance(gps.getAltitudeTrendM(), DistanceUnit::meter, DistanceUnit::foot), LPFFactor);
 
-		_interpolationTickTime = esp_timer_get_time() + constants::application::interpolationTickInterval;
+		// Delayed shit
+		if (esp_timer_get_time() >= _computingDelayedTickTime) {
+			WPTDistanceNm = Units::convertDistance(coordinatesDelta.getLength(), DistanceUnit::meter, DistanceUnit::nauticalMile);
+			WPTETESec = static_cast<uint32_t>(WPTDistanceNm / speedKt * 3600);
+
+			_computingDelayedTickTime = esp_timer_get_time() + computeDelayedTickInterval;
+		}
+
+		// ESP_LOGI("CDI", "gps lat: %f, lon: %f", toDegrees(gps.getLatitudeRad()), toDegrees(gps.getLongitudeRad()));
+		// ESP_LOGI("CDI", "Bearing deg: %f", WPTBearingDeg);
+		// ESP_LOGI("CDI", "dist: %f", WPTDistanceM);
+		// ESP_LOGI("CDI", "WPTCourseDeviationDeg deg: %f", WPTCourseDeviationDeg);
+
+		_computingPrimaryTickTime = esp_timer_get_time() + computePrimaryTickInterval;
 	}
 
 	void RC::SPIBusSetup() const {

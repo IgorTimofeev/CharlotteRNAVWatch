@@ -8,7 +8,7 @@ namespace pizda {
 		directMenuItem(FunctionMenuItem(L"Direct to", [] {
 			auto& rc = RC::getInstance();
 
-			rc.settings.nav.waypointIndex = *static_cast<const uint16_t*>(rc.getRouteArg());
+			rc.settings.nav.waypointIndex = WaypointItem::getLastWaypointIndex();
 			rc.settings.nav.scheduleWrite();
 
 			rc.setRoute(&Routes::PFD);
@@ -16,7 +16,7 @@ namespace pizda {
 		removeMenuItem(FunctionMenuItem(L"Delete", [] {
 			auto& rc = RC::getInstance();
 
-			const auto waypointIndex = *static_cast<const uint16_t*>(rc.getRouteArg());
+			const auto waypointIndex = WaypointItem::getLastWaypointIndex();
 
 			if (waypointIndex <= rc.settings.nav.waypointIndex) {
 				rc.settings.nav.waypointIndex = 0;
@@ -30,8 +30,7 @@ namespace pizda {
 		backMenuItem(RouteMenuItem(L"Back", &Routes::waypoints))
 	{
 		const auto& rc = RC::getInstance();
-		const auto waypointIndex = *static_cast<const uint16_t*>(rc.getRouteArg());
-		const auto& waypoint = rc.settings.nav.waypoints[waypointIndex];
+		const auto& waypoint = rc.settings.nav.waypoints[WaypointItem::getLastWaypointIndex()];
 
 		title.setText(waypoint.name);
 

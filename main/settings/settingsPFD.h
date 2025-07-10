@@ -16,9 +16,10 @@ namespace pizda {
 	class SettingsPFD : public NVSSerializable {
 		public:
 			SettingsPFDScale scale = SettingsPFDScale::bike;
-			uint16_t speedKt = 10;
-			uint16_t altitudeFt = 10;
-			uint16_t pressureHPA = 1013;
+			uint16_t speedKt = 0;
+			uint16_t altitudeFt = 0;
+			uint16_t pressureHPA = 0;
+			uint16_t minimumsFt = 0;
 
 		protected:
 			const char* getNVSNamespace() override {
@@ -30,6 +31,7 @@ namespace pizda {
 				speedKt = stream.getUint16(_speedKt, 10);
 				altitudeFt = stream.getUint16(_altitudeFt, 120);
 				pressureHPA = stream.getUint16(_pressureHPA, 1013);
+				minimumsFt = stream.getUint16(_minimumsFt, 150);
 			}
 
 			void onWrite(const NVSStream& stream) override {
@@ -37,6 +39,7 @@ namespace pizda {
 				stream.setUint16(_speedKt, speedKt);
 				stream.setUint16(_altitudeFt, altitudeFt);
 				stream.setUint16(_pressureHPA, pressureHPA);
+				stream.setUint16(_minimumsFt, minimumsFt);
 			}
 
 		private:
@@ -45,6 +48,7 @@ namespace pizda {
 			constexpr static auto _speedKt = "sp";
 			constexpr static auto _altitudeFt = "al";
 			constexpr static auto _pressureHPA = "pr";
+			constexpr static auto _minimumsFt = "mn";
 
 	};
 }

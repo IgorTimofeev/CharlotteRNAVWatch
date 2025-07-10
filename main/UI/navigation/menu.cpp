@@ -52,9 +52,16 @@ namespace pizda {
 		setText(waypoint.name);
 	}
 
+	uint16_t WaypointItem::_lastWaypointIndex = 0;
+
+	uint16_t WaypointItem::getLastWaypointIndex() {
+		return _lastWaypointIndex;
+	}
+
 	void WaypointItem::onKorryEvent(KorryEvent* event) {
 		if (event->getButtonType() == KorryButtonType::middle && event->getEventType() == KorryEventType::down) {
-			RC::getInstance().setRoute(&Routes::waypoint, &_waypointIndex);
+			_lastWaypointIndex = _waypointIndex;
+			RC::getInstance().setRoute(&Routes::waypoint);
 
 			event->setHandled(true);
 		}

@@ -31,12 +31,6 @@ namespace pizda {
 					constexpr static uint32_t frequency = 60'000'000;
 			};
 
-			class application {
-				public:
-					constexpr static uint32_t mainTickInterval = 1'000'000 / 30;
-					constexpr static uint32_t interpolationTickInterval = 1'000'000 / 30;
-			};
-
 			class buttons {
 				public:
 					constexpr static gpio_num_t up = GPIO_NUM_1;
