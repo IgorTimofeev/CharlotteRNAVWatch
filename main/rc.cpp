@@ -17,6 +17,10 @@ namespace pizda {
 		display.setup();
 		renderer.setTarget(&display);
 
+		// Settings
+		NVSSetup();
+		settings.readAll();
+
 		// Buttons
 		buttonUp.setup();
 		buttonMiddle.setup();
@@ -36,7 +40,7 @@ namespace pizda {
 		application.addHID(&buttonMiddle);
 		application.addHID(&buttonDown);
 
-		application += &eblo;
+		setRoute(&Routes::PFD);
 
 		// Main loop
 		while (true) {
@@ -53,6 +57,43 @@ namespace pizda {
 			if (deltaTime < constants::application::mainTickInterval)
 				vTaskDelay(pdMS_TO_TICKS((constants::application::mainTickInterval - deltaTime) / 1000));
 		}
+	}
+
+	void RC::NVSSetup() {
+		const auto status = nvs_flash_init();
+
+		if (status == ESP_ERR_NVS_NO_FREE_PAGES || status == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+			// NVS partition was truncated and needs to be erased
+			ESP_ERROR_CHECK(nvs_flash_erase());
+			// Retry init
+			ESP_ERROR_CHECK(nvs_flash_init());
+		}
+		else {
+			ESP_ERROR_CHECK(status);
+		}
+	}
+
+	const Route* RC::getRoute() const {
+		return _selectedRoute;
+	}
+
+	const void* RC::getRouteArg() const {
+		return _selectedRouteArg;
+	}
+
+	void RC::setRoute(const Route* route, void* arg) {
+		if (_selectedPage) {
+			application -= _selectedPage;
+			delete _selectedPage;
+
+			_selectedRouteArg = nullptr;
+		}
+
+		_selectedRoute = route;
+		_selectedRouteArg = arg;
+
+		_selectedPage = _selectedRoute->buildElement();
+		application += _selectedPage;
 	}
 
 	void RC::interpolationTick() {
@@ -74,10 +115,10 @@ namespace pizda {
 		LowPassFilter::apply(speedKt, gps.getSpeedKt(), LPFFactor);
 		LowPassFilter::apply(altitudeFt, gps.getAltitudeFt(), LPFFactor);
 
-		LowPassFilter::apply(courseDeviationDeg, courseDeviationDeg + 2, LPFFactor);
+		LowPassFilter::apply(WPTCourseDeviationDeg, WPTCourseDeviationDeg + 2, LPFFactor);
 
-		if (courseDeviationDeg > 20)
-			courseDeviationDeg = -20;
+		if (WPTCourseDeviationDeg > 20)
+			WPTCourseDeviationDeg = -20;
 
 		// Trends
 		LPFFactor = 0.5f * deltaTime / 1'000'000.f;

@@ -7,43 +7,47 @@ namespace pizda {
 	using namespace YOBA;
 
 	enum class KorryButtonType : uint8_t {
-		up,
+		down,
 		middle,
-		down
+		up
 	};
 
-	class KorryButtonEvent : public Event {
+	enum class KorryEventType : uint8_t {
+		down,
+		tick,
+		up
+	};
+
+	class KorryEvent : public Event {
 		public:
-			KorryButtonEvent(KorryButtonType type, uint32_t time);
+			KorryEvent(KorryButtonType buttonType, KorryEventType eventType);
 
 			static uint16_t typeID;
 
-			KorryButtonType getType() const;
-
-			uint32_t getTime() const;
+			KorryButtonType getButtonType() const;
+			KorryEventType getEventType() const;
 
 		private:
-			KorryButtonType _type;
-			uint32_t _time;
+			KorryButtonType _buttonType;
+			KorryEventType _type;
 	};
 
 	class KorryButton : public HID {
 		public:
-			explicit KorryButton(KorryButtonType type, gpio_num_t pin);
+			KorryButton(KorryButtonType buttonType, gpio_num_t pin);
 
-			void setup();
-
+			void setup() const;
 			void tick() override;
+			bool isPressed() const;
 
 		private:
-			KorryButtonType _type;
+			constexpr static uint32_t tickEventDelay = 500'000;
+			constexpr static uint32_t tickEventInterval = 100'000;
+
+			KorryButtonType _buttonType;
 			gpio_num_t _pin;
 
-			// Negative value means press was registered, but not released
-			// 0 means no press or release
-			// Positive value means press deltaTime
-			int64_t _pressTime = 0;
-
-			static void onInterrupt(void* arg);
+			uint64_t _tickTime = 0;
+			bool _oldState = false;
 	};
 }

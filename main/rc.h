@@ -13,7 +13,7 @@
 #include <YOBA/hardware/displays/GC9A01Display.h>
 
 #include "UI/theme.h"
-#include "UI/navigation/eblo.h"
+#include "UI/navigation/routes.h"
 
 #include "constants.h"
 
@@ -57,11 +57,6 @@ namespace pizda {
 			};
 
 			Application application {};
-			Eblo eblo {};
-
-			float selectedCourseDeg = 32;
-			float WPTCourseDeg = 60;
-			float courseDeviationDeg = 5;
 
 			float courseDeg = 0;
 
@@ -72,22 +67,29 @@ namespace pizda {
 			float speedKt = 0;
 			float speedTrendKt = 0;
 
-			uint16_t selectedSpeed = 15;
-			uint16_t selectedAltitude = 200;
-
-			float distance = 0.75;
-			uint32_t ETESec = 12 * 60;
+			float WPFBearingDeg = 60;
+			float WPTCourseDeviationDeg = 5;
+			float WPTDistance = 0.75;
+			uint32_t WPTETESec = 12 * 60;
 
 			static RC& getInstance();
 
 			[[noreturn]] void run();
+			void NVSSetup();
 
+			const Route* getRoute() const;
+			const void* getRouteArg() const;
 
+			void setRoute(const Route* route, void* arg = nullptr);
 
 		private:
 			RC() = default;
 
-			uint64_t _interpolationTickTime = 0;
+			const Route* _selectedRoute = nullptr;
+			Element* _selectedPage = nullptr;
+			void* _selectedRouteArg = nullptr;
+
+			int64_t _interpolationTickTime = 0;
 
 			void SPIBusSetup() const;
 			void interpolationTick();

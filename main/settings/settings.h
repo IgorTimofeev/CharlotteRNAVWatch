@@ -6,15 +6,18 @@
 #include <memory>
 #include <cstring>
 
-#include "settingsInterface.h"
+#include "settingsPFD.h"
+#include "settingsNav.h"
 
 namespace pizda {
 	class Settings {
 		public:
-			SettingsInterface interface {};
+			SettingsPFD PFD {};
+			SettingsNav nav {};
 
 			void readAll() {
-				interface.read();
+				PFD.read();
+				nav.read();
 			}
 	};
 }

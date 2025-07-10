@@ -39,9 +39,9 @@ namespace pizda {
 
 			class buttons {
 				public:
-					constexpr static gpio_num_t up = GPIO_NUM_3;
+					constexpr static gpio_num_t up = GPIO_NUM_1;
 					constexpr static gpio_num_t middle = GPIO_NUM_0;
-					constexpr static gpio_num_t down = GPIO_NUM_1;
+					constexpr static gpio_num_t down = GPIO_NUM_3;
 
 			};
 	};

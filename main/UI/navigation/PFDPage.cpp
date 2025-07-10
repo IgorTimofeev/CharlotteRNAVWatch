@@ -1,28 +1,29 @@
-#include "eblo.h"
+#include "PFDPage.h"
 
 #include "rc.h"
 #include "hardware/korryButton.h"
 #include "UI/theme.h"
+#include "UI/navigation/routes.h"
 
 namespace pizda {
-	void Eblo::onTick() {
+	void PFDPage::onTick() {
 		invalidate();
 	}
 
-	Vector2F Eblo::getSpeedVec(const float speed) {
+	Vector2F PFDPage::getSpeedVec(const float speed) {
 		const auto& rc = RC::getInstance();
 
 		return Vector2F(displayRadius, 0).rotate(toRadians(180) - (rc.speedKt - speed) * speedStepRadPerKt);
 	}
 
-	Vector2F Eblo::getAltitudeVec(const float altitude) {
+	Vector2F PFDPage::getAltitudeVec(const float altitude) {
 		const auto& rc = RC::getInstance();
 		const auto angleRad = (rc.altitudeFt - altitude) * altitudeStepRadPerFt;
 
 		return Vector2F(displayRadius, 0).rotate(angleRad);
 	}
 
-	void Eblo::renderTrendArrow(Renderer* renderer, const Point& center, const float trend, const float radPerTrendUnit, const float offsetRad) {
+	void PFDPage::renderTrendArrow(Renderer* renderer, const Point& center, const float trend, const float radPerTrendUnit, const float offsetRad) {
 		if (std::abs(trend) <= 1)
 			return;
 
@@ -55,7 +56,7 @@ namespace pizda {
 		);
 	}
 
-	void Eblo::renderUnderlayText(Renderer* renderer, const int32_t x, const int32_t y, const Color* color, const std::wstring_view text) {
+	void PFDPage::renderUnderlayText(Renderer* renderer, const int32_t x, const int32_t y, const Color* color, const std::wstring_view text) {
 		renderer->renderString(
 			Point(
 				x - Theme::fontNormal.getWidth(text) / 2,
@@ -67,7 +68,7 @@ namespace pizda {
 		);
 	}
 
-	void Eblo::renderSpeed(Renderer* renderer, const Bounds& sidebarBounds, const Point& center) const {
+	void PFDPage::renderSpeed(Renderer* renderer, const Bounds& sidebarBounds, const Point& center) const {
 		const auto& rc = RC::getInstance();
 
 		const auto value = rc.speedKt;
@@ -109,6 +110,8 @@ namespace pizda {
 		while (true) {
 			computeLineTo();
 
+			// ESP_LOGI("pizda", "DOWN lineValue: %f, linetoY: %f", (float) lineValue, (float) lineTo.getY());
+
 			if (lineTo.getY() > sidebarBounds.getY2())
 				break;
 
@@ -125,6 +128,8 @@ namespace pizda {
 
 		while (true) {
 			computeLineTo();
+
+			// ESP_LOGI("pizda", "UP lineValue: %f, linetoY: %f", (float) lineValue, (float) lineTo.getY());
 
 			if (lineTo.getY() < sidebarBounds.getY())
 				break;
@@ -189,12 +194,12 @@ namespace pizda {
 		// Underlay
 		{
 			const auto underlayX = sidebarBounds.getX() + sidebarUnderlayTextCenterMargin;
-			renderUnderlayText(renderer, underlayX, sidebarBounds.getY() - sidebarUnderlayHeight, &Theme::ocean, std::to_wstring(rc.selectedSpeed));
+			renderUnderlayText(renderer, underlayX, sidebarBounds.getY() - sidebarUnderlayHeight, &Theme::ocean, std::to_wstring(rc.settings.PFD.speedKt));
 			renderUnderlayText(renderer, underlayX, sidebarBounds.getY2() + 1, &Theme::purple, L"GS");
 		}
 	}
 
-	void Eblo::renderAltitude(Renderer* renderer, const Bounds& sidebarBounds, const Point& center) const {
+	void PFDPage::renderAltitude(Renderer* renderer, const Bounds& sidebarBounds, const Point& center) const {
 		const auto& rc = RC::getInstance();
 
 		const auto value = rc.altitudeFt;
@@ -351,12 +356,12 @@ namespace pizda {
 		// Underlay
 		{
 			const auto underlayX = sidebarBounds.getX2() - sidebarUnderlayTextCenterMargin + 1;
-			renderUnderlayText(renderer, underlayX, sidebarBounds.getY() - sidebarUnderlayHeight, &Theme::ocean, std::to_wstring(rc.selectedAltitude));
+			renderUnderlayText(renderer, underlayX, sidebarBounds.getY() - sidebarUnderlayHeight, &Theme::ocean, std::to_wstring(rc.settings.PFD.altitudeFt));
 			renderUnderlayText(renderer, underlayX, sidebarBounds.getY2() + 1, &Theme::yellow, L"1013");
 		}
 	}
 
-	void Eblo::renderCompass(Renderer* renderer, const Bounds& bounds) {
+	void PFDPage::renderCompass(Renderer* renderer, const Bounds& bounds) {
 		const auto& rc = RC::getInstance();
 		const auto center = bounds.getCenter();
 
@@ -414,7 +419,7 @@ namespace pizda {
 
 		// Bearing
 		{
-			const auto bearingRad = toRadians(rc.WPTCourseDeg);
+			const auto bearingRad = toRadians(rc.WPFBearingDeg);
 			const auto bearingVec = Vector2F(0, -bearingRadius).rotate(bearingRad - headingRad);
 			const auto bearingVecNorm = bearingVec.normalize();
 			const auto bearingVecNormPerp = bearingVecNorm.clockwisePerpendicular();
@@ -461,7 +466,7 @@ namespace pizda {
 
 		// HSI
 		{
-			const auto HSIRad = toRadians(rc.selectedCourseDeg);
+			const auto HSIRad = toRadians(rc.settings.nav.course);
 			const auto HSIVec = Vector2F(0, -HSIRadius).rotate(HSIRad - headingRad);
 			const auto HSIVecNorm = HSIVec.normalize();
 			const auto HSIVecNormPerp = HSIVecNorm.clockwisePerpendicular();
@@ -507,7 +512,7 @@ namespace pizda {
 			);
 
 			// CDI
-			const auto HSICDIOffsetPixels = std::min(rc.courseDeviationDeg, static_cast<float>(HSICDIAngleMaxDeg)) * HSICDIAnglePixelsPerDeg;
+			const auto HSICDIOffsetPixels = std::min(rc.WPTCourseDeviationDeg, static_cast<float>(HSICDIAngleMaxDeg)) * HSICDIAnglePixelsPerDeg;
 			const auto HSICDIVec = centerVec + HSIVecNormPerp * HSICDIOffsetPixels;
 
 			renderer->renderLine(
@@ -524,25 +529,29 @@ namespace pizda {
 			const auto fieldsVec = static_cast<Point>(Vector2F(fieldsRadius, 0).rotate(toRadians(-45)));
 
 			// WPT
-			renderField(
-				renderer,
-				Point(
-					center.getX() - fieldsVec.getX(),
-					center.getY() + fieldsVec.getY()
-				),
-				L"WPT",
-				L"ULLI"
-			);
+			{
+				const auto& waypoint = rc.settings.nav.waypoints[rc.settings.nav.waypointIndex];
 
-			// DTK
+				renderField(
+				   renderer,
+				   Point(
+					   center.getX() - fieldsVec.getX(),
+					   center.getY() + fieldsVec.getY()
+				   ),
+				   L"WPT",
+				   waypoint.name
+			   );
+			}
+
+			// CRS
 			renderField(
 				renderer,
 				Point(
 					center.getX() + fieldsVec.getX(),
 					center.getY() + fieldsVec.getY()
 				),
-				L"DTK",
-				std::format(L"{:03}", rc.selectedCourseDeg)
+				L"CRS",
+				std::format(L"{:03}", rc.settings.nav.course)
 			);
 
 			// DIS
@@ -553,7 +562,7 @@ namespace pizda {
 					center.getY() - fieldsVec.getY()
 				),
 				L"DIS",
-				std::format(L"{} nm", rc.distance)
+				std::format(L"{} nm", rc.WPTDistance)
 			);
 
 			// ETE
@@ -564,12 +573,12 @@ namespace pizda {
 					center.getY() - fieldsVec.getY()
 				),
 				L"ETE",
-				std::format(L"{:02}:{:02}", rc.ETESec / 60, rc.ETESec % 60)
+				std::format(L"{:02}:{:02}", rc.WPTETESec / 60, rc.WPTETESec % 60)
 			);
 		}
 	}
 
-	void Eblo::renderField(Renderer* renderer, const Point& point, const std::wstring_view text1, const std::wstring_view text2) {
+	void PFDPage::renderField(Renderer* renderer, const Point& point, const std::wstring_view text1, const std::wstring_view text2) {
 		constexpr static uint8_t spacing = 1;
 
 		renderer->renderString(
@@ -593,7 +602,7 @@ namespace pizda {
 		);
 	}
 
-	void Eblo::onRender(Renderer* renderer, const Bounds& bounds) {
+	void PFDPage::onRender(Renderer* renderer, const Bounds& bounds) {
 		auto& rc = RC::getInstance();
 		const auto center = bounds.getCenter();
 
@@ -769,12 +778,31 @@ namespace pizda {
 		);
 	}
 
-	void Eblo::onEvent(Event* event) {
-		if (event->getTypeID() != KorryButtonEvent::typeID)
+	void PFDPage::onEvent(Event* event) {
+		if (event->getTypeID() != KorryEvent::typeID)
 			return;
 
-		const auto korryButtonEvent = reinterpret_cast<KorryButtonEvent*>(event);
+		const auto korryEvent = reinterpret_cast<KorryEvent*>(event);
 
-		ESP_LOGI("KorryButotnEvent", "type: %d, time: %f", (uint8_t) korryButtonEvent->getType(), (float) korryButtonEvent->getTime());
+		if (korryEvent->getButtonType() == KorryButtonType::up || korryEvent->getButtonType() == KorryButtonType::down) {
+			if (korryEvent->getEventType() == KorryEventType::down || korryEvent->getEventType() == KorryEventType::tick) {
+				auto& rc = RC::getInstance();
+
+				const uint8_t incrementMagnitude = korryEvent->getEventType() == KorryEventType::tick ? 5 : 1;
+				const uint8_t incrementValue = korryEvent->getButtonType() == KorryButtonType::up ? incrementMagnitude : -incrementMagnitude;
+
+				rc.settings.nav.course = static_cast<uint16_t>(normalizeAngle360(static_cast<int32_t>(rc.settings.nav.course) + incrementValue));
+				rc.settings.nav.scheduleWrite();
+
+				event->setHandled(true);
+			}
+		}
+		else {
+			if (korryEvent->getEventType() == KorryEventType::down) {
+				RC::getInstance().setRoute(&Routes::settings);
+
+				event->setHandled(true);
+			}
+		}
 	}
 }

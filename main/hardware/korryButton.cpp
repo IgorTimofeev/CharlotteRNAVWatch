@@ -2,27 +2,27 @@
 #include "rc.h"
 
 namespace pizda {
-	KorryButtonEvent::KorryButtonEvent(const KorryButtonType type, const uint32_t time): Event(typeID), _type(type), _time(time) {
+	KorryEvent::KorryEvent(const KorryButtonType buttonType, const KorryEventType eventType): Event(typeID), _buttonType(buttonType), _type(eventType) {
 
 	}
 
-	KorryButtonType KorryButtonEvent::getType() const {
+	KorryButtonType KorryEvent::getButtonType() const {
+		return _buttonType;
+	}
+
+	KorryEventType KorryEvent::getEventType() const {
 		return _type;
 	}
 
-	uint32_t KorryButtonEvent::getTime() const {
-		return _time;
-	}
+	uint16_t KorryEvent::typeID = registerTypeID();
 
-	uint16_t KorryButtonEvent::typeID = registerTypeID();
-
-	KorryButton::KorryButton(const KorryButtonType type, const gpio_num_t pin) : _type(type), _pin(pin) {
+	KorryButton::KorryButton(const KorryButtonType buttonType, const gpio_num_t pin) : _buttonType(buttonType), _pin(pin) {
 
 	}
 
-	void KorryButton::setup() {
+	void KorryButton::setup() const {
 		// GPIO
-		gpio_config_t config{};
+		gpio_config_t config {};
 		config.pin_bit_mask = 1ULL << _pin;
 		config.mode = GPIO_MODE_INPUT;
 		config.pull_up_en = GPIO_PULLUP_DISABLE;
@@ -30,40 +30,44 @@ namespace pizda {
 		config.intr_type = GPIO_INTR_ANYEDGE;
 
 		gpio_config(&config);
-
-		// Interrupt
-		gpio_install_isr_service(0);
-		gpio_isr_handler_add(_pin, onInterrupt, this);
 	}
 
 	void KorryButton::tick() {
-		if (_pressTime <= 0)
-			return;
+		const auto newState = isPressed();
 
-		auto& rc = RC::getInstance();
+		const auto pushEvent = [this](const KorryEventType eventType) {
+			KorryEvent event(_buttonType, eventType);
+			RC::getInstance().application.pushEvent(&event);;
+		};
 
-		KorryButtonEvent event(_type, _pressTime);
+		if (newState) {
+			if (_oldState) {
+				if (esp_timer_get_time() > _tickTime) {
+					pushEvent(KorryEventType::tick);
 
-		rc.application.pushEvent(&event);
+					_tickTime = esp_timer_get_time() + tickEventInterval;
+				}
+			}
+			else {
+				pushEvent(KorryEventType::down);
 
-		_pressTime = 0;
+				_oldState = newState;
+				_tickTime = esp_timer_get_time() + tickEventDelay;
+			}
+		}
+		else {
+			if (_oldState) {
+				pushEvent(KorryEventType::up);
+
+				_oldState = false;
+				_tickTime = 0;
+			}
+		}
+
+		_oldState = newState;
 	}
 
-	void KorryButton::onInterrupt(void* arg) {
-		const auto instance = static_cast<KorryButton*>(arg);
-		const auto pressed = gpio_get_level(instance->_pin) > 0;
-
-		// Was not pressed or press was not handled in tick()
-		if (instance->_pressTime >= 0) {
-			if (pressed) {
-				instance->_pressTime = -esp_timer_get_time();
-			}
-		}
-		// Was pressed
-		else {
-			if (!pressed) {
-				instance->_pressTime = esp_timer_get_time() - (-instance->_pressTime);
-			}
-		}
+	bool KorryButton::isPressed() const {
+		return gpio_get_level(_pin) == 1;
 	}
 }

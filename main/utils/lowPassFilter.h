@@ -3,7 +3,7 @@
 namespace pizda {
 	class LowPassFilter {
 		public:
-			static void apply(float& value, float targetValue, float factor) {
+			static void apply(float& value, const float targetValue, const float factor) {
 				value = value * (1.f - factor) + targetValue * factor;
 			}
 	};

@@ -6,7 +6,7 @@
 namespace pizda {
 	using namespace YOBA;
 
-	class Eblo : public Control {
+	class PFDPage : public Control {
 		public:
 
 		protected:
