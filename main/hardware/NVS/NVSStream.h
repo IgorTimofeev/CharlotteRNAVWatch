@@ -30,39 +30,47 @@ namespace pizda {
 				nvs_close(_handle);
 			}
 
-			uint8_t getUint8(const char* key, uint8_t defaultValue = 0) const {
+			uint8_t getUint8(const char* key, const uint8_t defaultValue = 0) const {
 				return getValue<uint8_t, uint8_t, nvs_get_u8>(key, defaultValue);
 			}
 
-			void setUint8(const char* key, uint8_t value) const {
+			void setUint8(const char* key, const uint8_t value) const {
 				setValue<uint8_t, nvs_set_u8>(key, value);
 			}
 
-			uint16_t getUint16(const char* key, uint16_t defaultValue = 0) const {
+			uint16_t getUint16(const char* key, const uint16_t defaultValue = 0) const {
 				return getValue<uint16_t, uint16_t, nvs_get_u16>(key, defaultValue);
 			}
 
-			void setUint16(const char* key, uint16_t value) const {
+			void setUint16(const char* key, const uint16_t value) const {
 				setValue<uint16_t, nvs_set_u16>(key, value);
 			}
 
-			uint32_t getUint32(const char* key, uint32_t defaultValue = 0) const {
+			uint16_t getInt16(const char* key, const int16_t defaultValue = 0) const {
+				return getValue<int16_t, int16_t, nvs_get_i16>(key, defaultValue);
+			}
+
+			void setInt16(const char* key, const int16_t value) const {
+				setValue<int16_t, nvs_set_i16>(key, value);
+			}
+
+			uint32_t getUint32(const char* key, const uint32_t defaultValue = 0) const {
 				return getValue<uint32_t, uint32_t, nvs_get_u32>(key, defaultValue);
 			}
 
-			void setUint32(const char* key, uint32_t value) const {
+			void setUint32(const char* key, const uint32_t value) const {
 				setValue<uint32_t, nvs_set_u32>(key, value);
 			}
 
-			uint64_t getUint64(const char* key, uint64_t defaultValue = 0) const {
+			uint64_t getUint64(const char* key, const uint64_t defaultValue = 0) const {
 				return getValue<uint64_t, uint64_t, nvs_get_u64>(key, defaultValue);
 			}
 
-			void setUint64(const char* key, uint64_t value) const {
+			void setUint64(const char* key, const uint64_t value) const {
 				setValue<uint64_t, nvs_set_u64>(key, value);
 			}
 
-			float getFloat(const char* key, float defaultValue = 0) const {
+			float getFloat(const char* key, const float defaultValue = 0) const {
 				const auto u32 = getUint32(key, defaultValue);
 
 				float result;
@@ -70,17 +78,17 @@ namespace pizda {
 				return result;
 			}
 
-			void setFloat(const char* key, float value) const {
+			void setFloat(const char* key, const float value) const {
 				uint32_t u32;
 				std::memcpy(&u32, &value, sizeof(float));
 				setUint32(key, u32);
 			}
 
-			bool getBool(const char* key, bool defaultValue = false) const {
+			bool getBool(const char* key, const bool defaultValue = false) const {
 				return getValue<bool, uint8_t, nvs_get_u8>(key, defaultValue);
 			}
 
-			void setBool(const char* key, bool value) const {
+			void setBool(const char* key, const bool value) const {
 				setValue<bool, nvs_set_u8>(key, value);
 			}
 
@@ -92,17 +100,17 @@ namespace pizda {
 				setStringT<char>(key, value);
 			}
 
-			void getBlob(const char* key, uint8_t* data, size_t length) const {
+			void getBlob(const char* key, uint8_t* data, const size_t length) const {
 				size_t lengthCopy = length;
 				ESP_ERROR_CHECK(nvs_get_blob(_handle, key, data, &lengthCopy));
 			}
 
-			void setBlob(const char* key, const uint8_t* data, size_t length) const {
+			void setBlob(const char* key, const uint8_t* data, const size_t length) const {
 				ESP_ERROR_CHECK(nvs_set_blob(_handle, key, data, length));
 			}
 
 			template<typename T>
-			void getObject(const char* key, T* data, size_t length) const {
+			void getObject(const char* key, T* data, const size_t length) const {
 				getBlob(
 					key,
 					reinterpret_cast<uint8_t*>(data),
@@ -111,7 +119,7 @@ namespace pizda {
 			}
 
 			template<typename T>
-			void setObject(const char* key, const T* data, size_t length) const {
+			void setObject(const char* key, const T* data, const size_t length) const {
 				setBlob(
 					key,
 					reinterpret_cast<const uint8_t*>(data),

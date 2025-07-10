@@ -89,27 +89,42 @@ namespace pizda {
 		application += _selectedPage;
 	}
 
-	void RC::computeStuff() {
-		const auto deltaTime = static_cast<float>(esp_timer_get_time() - _computingPrimaryTickTime);
-
-		if (deltaTime < computePrimaryTickInterval)
-			return;
-
-		const auto& waypoint = settings.nav.waypoints[settings.nav.waypointIndex];
-
+	Vector3F RC::computeWaypointBearingVector(const SettingsNavWaypoint& waypoint) const {
 		const auto aircraftCoordinates = GeographicCoordinates(
 			gps.getLatitudeRad(),
 			gps.getLongitudeRad(),
 			gps.getAltitudeM()
 		).toCartesian();
 
-		const auto waypointCoordinates = waypoint.geographicCoordinates.toCartesian();
-
-		auto coordinatesDelta = waypointCoordinates - aircraftCoordinates;
+		auto coordinatesDelta = waypoint.geographicCoordinates.toCartesian() - aircraftCoordinates;
 		coordinatesDelta = coordinatesDelta.rotateAroundZAxis(-gps.getLongitudeRad());
 		coordinatesDelta = coordinatesDelta.rotateAroundYAxis(gps.getLatitudeRad());
 
-		const auto WPTBearingDegTarget = toDegrees(std::atan2f(coordinatesDelta.getY(), coordinatesDelta.getZ()));
+		return coordinatesDelta;
+	}
+
+	float RC::computeWaypointBearingAngle(const Vector3F& bearingVector) {
+		return std::atan2f(bearingVector.getY(), bearingVector.getZ());
+	}
+
+	float RC::computeWaypointBearingDistance(const Vector3F& bearingVector) {
+		return bearingVector.getLength();
+	}
+
+	void RC::computeStuff() {
+		const auto deltaTime = static_cast<float>(esp_timer_get_time() - _computingPrimaryTickTime);
+
+		if (deltaTime < computePrimaryTickInterval)
+			return;
+
+		const auto& navWaypoint = settings.nav.waypoints[settings.nav.navWaypointIndex];
+		const auto& bearingWaypoint = settings.nav.waypoints[settings.nav.bearingWaypointIndex];
+
+		const auto navWaypointBearingVector = computeWaypointBearingVector(navWaypoint);
+		const auto navWaypointBearingDegTarget = toDegrees(computeWaypointBearingAngle(navWaypointBearingVector));
+
+		const auto bearingWaypointBearingVector = computeWaypointBearingVector(bearingWaypoint);
+		const auto bearingWaypointBearingDegTarget = toDegrees(computeWaypointBearingAngle(bearingWaypointBearingVector));
 
 		// Low pass
 
@@ -120,7 +135,8 @@ namespace pizda {
 
 		// Fast
 		float LPFFactor = 2.0f * deltaTime / 1'000'000.f;
-		LowPassFilter::apply(WPTBearingDeg, WPTBearingDegTarget, LPFFactor);
+		LowPassFilter::apply(navWaypointBearingDeg, navWaypointBearingDegTarget, LPFFactor);
+		LowPassFilter::apply(bearingWaypointBearingDeg, bearingWaypointBearingDegTarget, LPFFactor);
 
 		// Normal
 		LPFFactor = 1.0f * deltaTime / 1'000'000.f;
@@ -135,8 +151,8 @@ namespace pizda {
 
 		// Delayed shit
 		if (esp_timer_get_time() >= _computingDelayedTickTime) {
-			WPTDistanceNm = Units::convertDistance(coordinatesDelta.getLength(), DistanceUnit::meter, DistanceUnit::nauticalMile);
-			WPTETESec = static_cast<uint32_t>(WPTDistanceNm / speedKt * 3600);
+			navWaypointDistanceNm = Units::convertDistance(computeWaypointBearingDistance(bearingWaypointBearingVector), DistanceUnit::meter, DistanceUnit::nauticalMile);
+			navWaypointETESec = static_cast<uint32_t>(navWaypointDistanceNm / speedKt * 3600);
 
 			_computingDelayedTickTime = esp_timer_get_time() + computeDelayedTickInterval;
 		}

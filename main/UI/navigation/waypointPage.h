@@ -12,7 +12,8 @@ namespace pizda {
 		public:
 			WaypointPage();
 
-			FunctionMenuItem directMenuItem;
+			FunctionMenuItem navWaypointItem;
+			FunctionMenuItem bearingWaypointItem;
 			FunctionMenuItem removeMenuItem;
 			RouteMenuItem backMenuItem;
 	};

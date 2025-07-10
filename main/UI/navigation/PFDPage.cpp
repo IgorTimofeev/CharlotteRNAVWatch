@@ -418,11 +418,10 @@ namespace pizda {
 			}
 		}
 
-		const auto HSICDIDeg = rc.settings.nav.course - rc.WPTBearingDeg;
 
 		// Bearing
 		{
-			const auto bearingRad = toRadians(rc.WPTBearingDeg);
+			const auto bearingRad = toRadians(rc.bearingWaypointBearingDeg);
 			const auto bearingVec = Vector2F(0, -bearingRadius).rotate(bearingRad - headingRad);
 			const auto bearingVecNorm = bearingVec.normalize();
 			const auto bearingVecNormPerp = bearingVecNorm.clockwisePerpendicular();
@@ -469,7 +468,8 @@ namespace pizda {
 
 		// HSI
 		{
-			const auto HSIRad = toRadians(rc.settings.nav.course);
+			const auto HSICDIDeg = rc.settings.nav.navWaypointCourse - rc.navWaypointBearingDeg;
+			const auto HSIRad = toRadians(rc.settings.nav.navWaypointCourse);
 			const auto HSIVec = Vector2F(0, -HSIRadius).rotate(HSIRad - headingRad);
 			const auto HSIVecNorm = HSIVec.normalize();
 			const auto HSIVecNormPerp = HSIVecNorm.clockwisePerpendicular();
@@ -537,7 +537,7 @@ namespace pizda {
 
 			// WPT
 			{
-				const auto& waypoint = rc.settings.nav.waypoints[rc.settings.nav.waypointIndex];
+				const auto& waypoint = rc.settings.nav.waypoints[rc.settings.nav.navWaypointIndex];
 
 				renderField(
 				   renderer,
@@ -558,7 +558,7 @@ namespace pizda {
 					center.getY() + fieldsVec.getY()
 				),
 				L"CRS",
-				std::format(L"{:03}", rc.settings.nav.course)
+				std::format(L"{:03}", rc.settings.nav.navWaypointCourse)
 			);
 
 			// DIS
@@ -569,7 +569,7 @@ namespace pizda {
 					center.getY() - fieldsVec.getY()
 				),
 				L"DIS",
-				std::format(L"{:.1f} nm", rc.WPTDistanceNm)
+				std::format(L"{:.1f} nm", rc.navWaypointDistanceNm)
 			);
 
 			// ETE
@@ -580,7 +580,7 @@ namespace pizda {
 					center.getY() - fieldsVec.getY()
 				),
 				L"ETE",
-				std::format(L"{:02}:{:02}", rc.WPTETESec / 3600, rc.WPTETESec % 60)
+				std::format(L"{:02}:{:02}", rc.navWaypointETESec / 3600, rc.navWaypointETESec % 60)
 			);
 		}
 	}
@@ -802,7 +802,7 @@ namespace pizda {
 					? static_cast<int16_t>(incrementMagnitude)
 					: static_cast<int16_t>(-incrementMagnitude);
 
-				rc.settings.nav.course = static_cast<uint16_t>(normalizeAngle360(static_cast<int32_t>(rc.settings.nav.course) + incrementValue));
+				rc.settings.nav.navWaypointCourse = static_cast<uint16_t>(normalizeAngle360(static_cast<int32_t>(rc.settings.nav.navWaypointCourse) + incrementValue));
 				rc.settings.nav.scheduleWrite();
 
 				event->setHandled(true);

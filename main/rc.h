@@ -67,9 +67,11 @@ namespace pizda {
 			float speedKt = 0;
 			float speedTrendKt = 0;
 
-			float WPTBearingDeg = 0;
-			float WPTDistanceNm = 0;
-			uint32_t WPTETESec = 0;
+			float navWaypointBearingDeg = 0;
+			float navWaypointDistanceNm = 0;
+			uint32_t navWaypointETESec = 0;
+
+			float bearingWaypointBearingDeg = 0;
 
 			static RC& getInstance();
 
@@ -78,6 +80,7 @@ namespace pizda {
 
 			const Route* getRoute() const;
 			void setRoute(const Route* route);
+
 
 		private:
 			RC() = default;
@@ -93,6 +96,10 @@ namespace pizda {
 			int64_t _computingDelayedTickTime = 0;
 
 			void SPIBusSetup() const;
+
+			Vector3F computeWaypointBearingVector(const SettingsNavWaypoint& waypoint) const;
+			static float computeWaypointBearingAngle(const Vector3F& bearingVector);
+			static float computeWaypointBearingDistance(const Vector3F& bearingVector);
 			void computeStuff();
 	};
 }
