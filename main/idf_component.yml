@@ -2,3 +2,5 @@ dependencies:
   YOBA:
     path: ../components/YOBA
     #git: https://github.com/IgorTimofeev/YOBA.git
+  YOBAUnits:
+    path: ../components/YOBAUnits
