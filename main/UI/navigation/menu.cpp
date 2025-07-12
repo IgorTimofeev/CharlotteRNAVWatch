@@ -8,16 +8,26 @@ namespace pizda {
 		setHeight(20);
 	}
 
+	MenuItemState MenuItem::getState() const {
+		return state;
+	}
+
+	void MenuItem::setState(const MenuItemState state) {
+		this->state = state;
+
+		invalidate();
+	}
+
 	void MenuItem::onEvent(Event* event) {
-		if (event->getTypeID() != KorryEvent::typeID || !isActive())
+		if (event->getTypeID() != KorryEvent::typeID || getState() == MenuItemState::normal)
 			return;
 
 		onKorryEvent(reinterpret_cast<KorryEvent*>(event));
 	}
 
 	void MenuItem::onRender(Renderer* renderer, const Bounds& bounds) {
-		if (isActive())
-			renderer->renderFilledRectangle(bounds, 3, &Theme::fg1);
+		if (getState() != MenuItemState::normal)
+			renderer->renderFilledRectangle(bounds, &Theme::bg3);
 
 		renderer->renderString(
 			Point(
@@ -25,7 +35,7 @@ namespace pizda {
 				bounds.getYCenter() - Theme::fontNormal.getHeight() / 2
 			),
 			&Theme::fontNormal,
-			isActive() ? &Theme::bg1 : &Theme::fg5,
+			&Theme::fg5,
 			getText()
 		);
 	}
@@ -79,8 +89,49 @@ namespace pizda {
 		}
 	}
 
+	BoolMenuItem::BoolMenuItem(const std::wstring_view text) {
+		setText(text);
+	}
+
+	bool BoolMenuItem::getValue() const {
+		return _value;
+	}
+
+	void BoolMenuItem::setValue(const bool value) {
+		_value = value;
+
+		onValueChanged();
+		valueChanged();
+
+		invalidate();
+	}
+
+	void BoolMenuItem::onRender(Renderer* renderer, const Bounds& bounds) {
+		MenuItem::onRender(renderer, bounds);
+
+		renderer->renderFilledRectangle(
+			Bounds(
+				bounds.getX2() - 8 - 2,
+				bounds.getYCenter() - 2,
+				8,
+				4
+			),
+			getValue() ? &Theme::green : &Theme::red
+		);
+	}
+
+	void BoolMenuItem::onKorryEvent(KorryEvent* event) {
+		if (event->getEventType() == KorryEventType::down && event->getButtonType() == KorryButtonType::middle) {
+			setValue(!getValue());
+		}
+	}
+
+	void BoolMenuItem::onValueChanged() {
+
+	}
+
 	Menu::Menu() {
-		setWidth(100);
+		setWidth(120);
 		setSpacing(5);
 	}
 
@@ -140,7 +191,7 @@ namespace pizda {
 
 	void Menu::updateItemsFromSelection() const {
 		for (int16_t i = 0; i < static_cast<int16_t>(getChildrenCount()); i++) {
-			getItemAt(i)->setActive(i == _selectedIndex);
+			getItemAt(i)->setState(i == _selectedIndex ? MenuItemState::hovered : MenuItemState::normal);
 		}
 	}
 }

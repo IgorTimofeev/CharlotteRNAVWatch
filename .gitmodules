@@ -4,6 +4,6 @@
 [submodule "components/YOBAUnits"]
 	path = components/YOBAUnits
 	url = https://github.com/IgorTimofeev/YOBAUnits.git
-[submodule "components/YOBANVSSettings"]
-	path = components/YOBANVSSettings
-	url = https://github.com/IgorTimofeev/YOBANVSSettings.git
+[submodule "components/YOBANVS"]
+	path = components/YOBANVS
+	url = https://github.com/IgorTimofeev/YOBANVS.git

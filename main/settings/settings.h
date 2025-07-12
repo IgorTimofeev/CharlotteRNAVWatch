@@ -8,11 +8,13 @@
 
 #include "settingsPFD.h"
 #include "settingsNav.h"
+#include "settingsGNSS.h"
 
 namespace pizda {
 	class Settings {
 		public:
 			SettingsPFD PFD {};
 			SettingsNav nav {};
+			SettingsGNSS GNSS {};
 	};
 }

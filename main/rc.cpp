@@ -29,7 +29,7 @@ namespace pizda {
 		display.turnOn();
 
 		// Settings
-		YOBANVSSettings::setup();
+		NVSSettings::setup();
 		settings.PFD.read();
 		settings.nav.read();
 
@@ -41,7 +41,8 @@ namespace pizda {
 		// GNSS
 		gnss.setup();
 		gnss.setUpdateInterval(1000);
-		gnss.setGNSSSystem(GNSSSystem::GPS | GNSSSystem::GLONASS | GNSSSystem::Galileo | GNSSSystem::QZSS | GNSSSystem::SBAS);
+		updateGNSSSimulationFromSettings();
+		updateGNSSSystemsFromSettings();
 
 		// UI
 		// Theme::setup(&renderer);
@@ -72,6 +73,25 @@ namespace pizda {
 			if (deltaTime < mainTickInterval)
 				vTaskDelay(pdMS_TO_TICKS((mainTickInterval - deltaTime) / 1000));
 		}
+	}
+
+	void RC::updateGNSSSystemsFromSettings() const {
+		uint8_t flags = 0;
+
+		if (settings.GNSS.GPS)
+			flags |= GNSSSystem::GPS;
+
+		if (settings.GNSS.BDS)
+			flags |= GNSSSystem::BDS;
+
+		if (settings.GNSS.GLONASS)
+			flags |= GNSSSystem::GLONASS;
+
+		gnss.setSystems(flags);
+	}
+
+	void RC::updateGNSSSimulationFromSettings() {
+		gnss.setSimulationMode(settings.GNSS.simulation);
 	}
 
 	const Route* RC::getRoute() const {
@@ -140,7 +160,23 @@ namespace pizda {
 
 		// Normal
 		LPFFactor = 1.0f * deltaTime / 1'000'000.f;
-		LowPassFilter::apply(courseDeg, gnss.haveCourse() ? gnss.getCourseDeg() : 0, LPFFactor);
+
+		const auto targetCourseDeg = gnss.haveCourse() ? gnss.getCourseDeg() : 0;
+
+		// Clockwise
+		if (courseDeg > 270 && targetCourseDeg < 90) {
+			courseDeg = courseDeg - 360;
+			LowPassFilter::apply(courseDeg, targetCourseDeg, LPFFactor);
+		}
+		// Counter-clockwise
+		else if (targetCourseDeg > 270 && courseDeg < 90) {
+			LowPassFilter::apply(courseDeg, targetCourseDeg - 360, LPFFactor);
+			courseDeg = normalizeAngle360(courseDeg);
+		}
+		else {
+			LowPassFilter::apply(courseDeg, targetCourseDeg, LPFFactor);
+		}
+
 		LowPassFilter::apply(speedKt, gnss.haveSpeed() ? Units::convertSpeed(gnss.getSpeedMps(), SpeedUnit::meterPerSecond, SpeedUnit::knot) : 0, LPFFactor);
 		LowPassFilter::apply(altitudeFt, gnss.haveAltitude() ? Units::convertDistance(gnss.getAltitudeM(), DistanceUnit::meter, DistanceUnit::foot) : 0, LPFFactor);
 

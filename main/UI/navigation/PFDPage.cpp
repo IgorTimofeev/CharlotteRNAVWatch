@@ -151,6 +151,7 @@ namespace pizda {
 		// Value
 		{
 			const auto bg = rc.gnss.haveSpeed() ? &Theme::bg4 : &Theme::bgRed2;
+			const auto fg = rc.gnss.haveSpeed() ? &Theme::fg1 : &Theme::fgRed1;
 			const auto text = rc.gnss.haveSpeed() ? std::format(L"{:03}", static_cast<int16_t>(value)) : L"---";
 
 			const auto valueBounds  = Bounds(
@@ -187,7 +188,7 @@ namespace pizda {
 					center.getY() - Theme::fontNormal.getHeight() / 2
 				),
 				&Theme::fontNormal,
-				&Theme::fg1,
+				fg,
 				text
 			);
 		}
@@ -313,7 +314,8 @@ namespace pizda {
 
 		// Value
 		{
-			const auto bg = rc.gnss.haveSpeed() ? &Theme::bg4 : &Theme::bgRed2;
+			const auto bg = rc.gnss.haveAltitude() ? &Theme::bg4 : &Theme::bgRed2;
+			const auto fg = rc.gnss.haveAltitude() ? &Theme::fg1 : &Theme::fgRed1;
 			const auto text = rc.gnss.haveAltitude() ? std::format(L"{:04}", static_cast<int16_t>(value)) : L"----";
 
 			const auto valueBounds  = Bounds(
@@ -350,7 +352,7 @@ namespace pizda {
 					center.getY() - Theme::fontNormal.getHeight() / 2
 				),
 				&Theme::fontNormal,
-				&Theme::fg1,
+				fg,
 				text
 			);
 		}
@@ -476,10 +478,12 @@ namespace pizda {
 
 			// HSI
 			{
-				const auto HSICDIDeg = rc.settings.nav.navWaypointCourseDeg - rc.navWaypointBearingDeg;
+				const auto HSICDIDeg = normalizeAngle180(static_cast<float>(rc.settings.nav.navWaypointCourseDeg) - rc.navWaypointBearingDeg);
 				const auto HSIVec = Vector2F(0, -HSIRadius).rotate(toRadians(rc.settings.nav.navWaypointCourseDeg) - headingRad);
 				const auto HSIVecNorm = HSIVec.normalize();
 				const auto HSIVecNormPerp = HSIVecNorm.clockwisePerpendicular();
+
+				// ESP_LOGI("HSI", "HSICDIDeg: %f", HSICDIDeg);
 
 				// CDI ellipses
 				for (int16_t stepIndex = -HSICDIAngleSteps; stepIndex <= HSICDIAngleSteps; stepIndex++) {
@@ -530,7 +534,7 @@ namespace pizda {
 
 				// Small arrow
 				{
-					if (std::abs(HSICDIDeg) < 180) {
+					if (std::abs(HSICDIDeg) < 90) {
 						renderer->renderFilledTriangle(
 							static_cast<Point>(HSILineHeadFromVec + HSIVecNormPerp * HSIArrowSmallWidth),
 							static_cast<Point>(HSILineHeadFromVec - HSIVecNormPerp * HSIArrowSmallWidth),
@@ -550,7 +554,7 @@ namespace pizda {
 
 				// CDI
 				const auto HSICDIOffsetPixels = std::clamp(
-					HSICDIDeg,
+					std::abs(HSICDIDeg) > 90 ? (HSICDIDeg > 0 ? 180.f : -180.f) - HSICDIDeg : HSICDIDeg,
 					-static_cast<float>(HSICDIAngleMaxDeg),
 					static_cast<float>(HSICDIAngleMaxDeg)
 				) * HSICDIAnglePixelsPerDeg;
@@ -643,7 +647,7 @@ namespace pizda {
 
 			// 2
 			{
-				const auto text = std::format(L"{:.1f} / {:.1f}", toDegrees(rc.gnss.getLatitudeRad()), toDegrees(rc.gnss.getLongitudeRad()));
+				const auto text = L"KEEP WINGS LEVEL";
 
 				renderer->renderString(
 					Point(
@@ -731,6 +735,10 @@ namespace pizda {
 			constexpr static uint8_t triangleWidth = 4;
 			constexpr static uint8_t triangleHeight = 5;
 
+			const auto bg = rc.gnss.haveCourse() ? &Theme::bg1 : &Theme::bgRed2;
+			const auto fg = rc.gnss.haveCourse() ? &Theme::fg1 : &Theme::fgRed1;
+			const auto text = rc.gnss.haveCourse() ? std::format(L"{:03}", static_cast<int16_t>(rc.courseDeg)) : L"---";
+
 			const auto courseBounds = Bounds(
 				center.getX() - courseWidth / 2,
 				bounds.getY(),
@@ -741,7 +749,7 @@ namespace pizda {
 			renderer->renderFilledRectangle(
 				courseBounds,
 				4,
-				&Theme::bg1
+				bg
 			);
 
 			renderer->renderFilledTriangle(
@@ -757,10 +765,8 @@ namespace pizda {
 					center.getX(),
 					courseBounds.getY2() + 1 + triangleHeight
 				),
-				&Theme::bg1
+				bg
 			);
-
-			const auto text = std::format(L"{:03}", static_cast<int16_t>(rc.courseDeg));
 
 			renderer->renderString(
 				Point(
@@ -768,7 +774,7 @@ namespace pizda {
 					courseBounds.getYCenter() - Theme::fontNormal.getHeight() / 2
 				),
 				&Theme::fontNormal,
-				&Theme::fg1,
+				fg,
 				text
 			);
 		}
@@ -777,6 +783,10 @@ namespace pizda {
 		{
 			constexpr static uint8_t timeWidth = 42;
 			constexpr static uint8_t timeHeight = 20;
+
+			const auto bg = rc.gnss.haveTime() ? &Theme::bg1 : &Theme::bgRed2;
+			const auto fg = rc.gnss.haveTime() ? &Theme::fg1 : &Theme::fgRed1;
+			const auto text = rc.gnss.haveTime() ? std::format(L"{:02}:{:02}", rc.gnss.getTimeHours(), rc.gnss.getTimeMinutes()) : L"--:--";
 
 			const auto timeBounds = Bounds(
 				center.getX() - timeWidth / 2,
@@ -788,10 +798,8 @@ namespace pizda {
 			renderer->renderFilledRectangle(
 				timeBounds,
 				4,
-				&Theme::bg1
+				bg
 			);
-
-			const auto text = rc.gnss.haveTime() ? std::format(L"{:02}:{:02}", rc.gnss.getTimeHours(), rc.gnss.getTimeMinutes()) : L"--:--";
 
 			renderer->renderString(
 				Point(
@@ -799,7 +807,7 @@ namespace pizda {
 					timeBounds.getYCenter() - Theme::fontNormal.getHeight() / 2
 				),
 				&Theme::fontNormal,
-				&Theme::fg1,
+				fg,
 				text
 			);
 		}
@@ -847,7 +855,7 @@ namespace pizda {
 		}
 		else {
 			if (korryEvent->getEventType() == KorryEventType::down) {
-				RC::getInstance().setRoute(&Routes::settings);
+				RC::getInstance().setRoute(&Routes::mainMenu);
 
 				event->setHandled(true);
 			}

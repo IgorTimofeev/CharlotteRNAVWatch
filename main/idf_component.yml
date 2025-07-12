@@ -4,5 +4,5 @@ dependencies:
     #git: https://github.com/IgorTimofeev/YOBA.git
   YOBAUnits:
     path: ../components/YOBAUnits
-  YOBANVSSettings:
-    path: ../components/YOBANVSSettings
+  YOBANVS:
+    path: ../components/YOBANVS

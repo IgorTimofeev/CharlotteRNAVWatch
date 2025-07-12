@@ -80,6 +80,9 @@ namespace pizda {
 			const Route* getRoute() const;
 			void setRoute(const Route* route);
 
+			void updateGNSSSystemsFromSettings() const;
+			void updateGNSSSimulationFromSettings();
+
 		private:
 			RC() = default;
 

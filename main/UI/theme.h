@@ -19,10 +19,6 @@ namespace pizda {
 			static const RGB565Color bg6;
 			static const RGB565Color bg7;
 
-			static const RGB565Color bgRed1;
-			static const RGB565Color bgRed2;
-			static const RGB565Color bgRed3;
-
 			static const RGB565Color fg1;
 			static const RGB565Color fg2;
 			static const RGB565Color fg3;
@@ -30,6 +26,12 @@ namespace pizda {
 			static const RGB565Color fg5;
 			static const RGB565Color fg6;
 			static const RGB565Color fg7;
+
+			static const RGB565Color bgRed1;
+			static const RGB565Color bgRed2;
+			static const RGB565Color bgRed3;
+
+			static const RGB565Color fgRed1;
 
 			static const RGB565Color accent1;
 			static const RGB565Color accent2;

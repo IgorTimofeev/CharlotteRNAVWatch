@@ -9,10 +9,6 @@ namespace pizda {
 	const RGB565Color Theme::bg6 = RGB888Color(0x545454).toRGB565();
 	const RGB565Color Theme::bg7 = RGB888Color(0x606060).toRGB565();
 
-	const RGB565Color Theme::bgRed1 = RGB888Color(0x230000).toRGB565();
-	const RGB565Color Theme::bgRed2 = RGB888Color(0x340000).toRGB565();
-	const RGB565Color Theme::bgRed3 = RGB888Color(0x490000).toRGB565();
-
 	const RGB565Color Theme::fg1 = RGB888Color(0xF0F0F0).toRGB565();
 	const RGB565Color Theme::fg2 = RGB888Color(0xCCCCCC).toRGB565();
 	const RGB565Color Theme::fg3 = RGB888Color(0x999999).toRGB565();
@@ -20,6 +16,12 @@ namespace pizda {
 	const RGB565Color Theme::fg5 = RGB888Color(0x777777).toRGB565();
 	const RGB565Color Theme::fg6 = RGB888Color(0x666666).toRGB565();
 	const RGB565Color Theme::fg7 = RGB888Color(0x555555).toRGB565();
+
+	const RGB565Color Theme::bgRed1 = RGB888Color(0x230000).toRGB565();
+	const RGB565Color Theme::bgRed2 = RGB888Color(0x340000).toRGB565();
+	const RGB565Color Theme::bgRed3 = RGB888Color(0x490000).toRGB565();
+
+	const RGB565Color Theme::fgRed1 = RGB888Color(0xffff00).toRGB565();
 
 	const RGB565Color Theme::accent1 = RGB888Color(0xffd200).toRGB565();
 	const RGB565Color Theme::accent2 = RGB888Color(0x997e53).toRGB565();

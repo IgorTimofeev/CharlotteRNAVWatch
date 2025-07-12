@@ -13,12 +13,9 @@ namespace pizda {
 
 	namespace GNSSSystem {
 		enum : uint8_t {
-			GPS =     0b00000001,
-			GLONASS = 0b00000010,
-			Galileo = 0b00000100,
-			BeiDou =  0b00001000,
-			QZSS =    0b00010000,
-			SBAS =    0b00100000,
+			GPS =     0b000'0001,
+			BDS =     0b000'0010,
+			GLONASS = 0b000'0100
 		};
 	}
 
@@ -57,9 +54,9 @@ namespace pizda {
 				);
 			}
 
-			void setGNSSSystem(const uint8_t flags) const {
+			void setSystems(const uint8_t systems) const {
 				const auto buffer = new char[11];
-				snprintf(buffer, 11, "PCAS04,%d", flags);
+				snprintf(buffer, 11, "PCAS04,%d", systems);
 
 				sendCommand(buffer);
 
@@ -116,7 +113,7 @@ namespace pizda {
 			}
 
 			float getCourseDeg() {
-				return simulationMode ? simulationCourse : gps.course.value();
+				return simulationMode ? simulationCourse : normalizeAngle360(gps.course.value());
 			}
 
 			bool haveTime() const {
@@ -124,38 +121,38 @@ namespace pizda {
 			}
 
 			uint8_t getTimeHours() {
-				return gps.time.hour();
+				return simulationMode ? 12 : gps.time.hour();
 			}
 
 			uint8_t getTimeMinutes() {
-				return gps.time.minute();
+				return simulationMode ? 0 : gps.time.minute();
 			}
 
 			uint8_t getTimeSeconds() {
-				return gps.time.second();
+				return simulationMode ? 0 : gps.time.second();
 			}
 
 			uint8_t getDateDay() {
-				return gps.date.day();
+				return simulationMode ? 18 : gps.date.day();
 			}
 
 			uint8_t getDateMonth() {
-				return gps.date.month();
+				return simulationMode ? 9 : gps.date.month();
 			}
 
 			uint16_t getDateYear() {
-				return gps.date.year();
+				return simulationMode ? 1994 : gps.date.year();
 			}
 
 			uint32_t getSatellites() {
-				return gps.satellites.value();
+				return simulationMode ? 5 : gps.satellites.value();
 			}
 
 			float getHDOP() {
-				return gps.hdop.hdop();
+				return simulationMode ? 10 : gps.hdop.hdop();
 			}
 
-			bool isSimulationMode() const {
+			bool getSimulationMode() const {
 				return simulationMode;
 			}
 			
@@ -173,7 +170,7 @@ namespace pizda {
 			uart_port_t uartPort;
 			TinyGPSPlus gps {};
 			QueueHandle_t uartQueue {};
-			char rxBuffer[rxBufferSize];
+			char rxBuffer[rxBufferSize] {};
 
 			bool simulationMode = false;
 			float simulationCourse = 0;
@@ -218,8 +215,6 @@ namespace pizda {
 
 				if (bytesRead) {
 					rxBuffer[bytesRead] = '\0';
-
-					ESP_LOGI("GNSS", "bytesRead: %d, data \n: %s", bytesRead, rxBuffer);
 
 					const char* NMEAData;
 
@@ -279,10 +274,12 @@ namespace pizda {
 						}
 
 						// Course
-						// simulationCourse += YOBA::random(4, 8);
-						//
-						// if (simulationCourse >= 360)
-						// 	simulationCourse = 0;
+						simulationCourse += YOBA::random(1, 2);
+
+						if (simulationCourse < 180 && simulationCourse >= 20)
+							simulationCourse = 360 - 20;
+
+						simulationCourse = normalizeAngle360(simulationCourse);
 
 						// Speed
 						simulationSpeed += YOBA::random(
@@ -320,11 +317,11 @@ namespace pizda {
 						altitudeTrend = oldAltitude;
 					}
 
-					ESP_LOGI("GNSS", "---------------- Processed data ----------------");
-					ESP_LOGI("GNSS", "Sat / HDOP: %lu, %lf", getSatellites(), getHDOP());
-					ESP_LOGI("GNSS", "Date / time: %d.%d.%d %d:%d:%d", getDateDay(), getDateMonth(), getDateYear(), getTimeHours(), getTimeMinutes(), getTimeSeconds());
-					ESP_LOGI("GNSS", "Lat / lon / alt: %f deg, %f deg, %f m", toDegrees(getLatitudeRad()), toDegrees(getLongitudeRad()), getAltitudeM());
-					ESP_LOGI("GNSS", "Speed / Course: %f mps, %f deg", getSpeedMps(), getCourseDeg());
+					// ESP_LOGI("GNSS", "---------------- Processed data ----------------");
+					// ESP_LOGI("GNSS", "Sat / HDOP: %lu, %lf", getSatellites(), getHDOP());
+					// ESP_LOGI("GNSS", "Date / time: %d.%d.%d %d:%d:%d", getDateDay(), getDateMonth(), getDateYear(), getTimeHours(), getTimeMinutes(), getTimeSeconds());
+					// ESP_LOGI("GNSS", "Lat / lon / alt: %f deg, %f deg, %f m", toDegrees(getLatitudeRad()), toDegrees(getLongitudeRad()), getAltitudeM());
+					// ESP_LOGI("GNSS", "Speed / Course: %f mps, %f deg", getSpeedMps(), getCourseDeg());
 				}
 			}
 	};

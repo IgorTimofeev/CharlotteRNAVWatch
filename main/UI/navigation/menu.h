@@ -11,14 +11,26 @@
 namespace pizda {
 	using namespace YOBA;
 
-	class MenuItem : public Control, public TextElement, public ActiveElement {
+	enum class MenuItemState : uint8_t {
+		normal,
+		hovered,
+		active
+	};
+
+	class MenuItem : public Control, public TextElement {
 		public:
 			MenuItem();
+
+			MenuItemState getState() const;
+			void setState(const MenuItemState state);
 
 		protected:
 			void onEvent(Event* event) override;
 			void onRender(Renderer* renderer, const Bounds& bounds) override;
 			virtual void onKorryEvent(KorryEvent* event);
+
+		private:
+			MenuItemState state = MenuItemState::normal;
 	};
 
 	class RouteMenuItem : public MenuItem {
@@ -55,6 +67,24 @@ namespace pizda {
 
 		private:
 			std::function<void()> _function;
+	};
+
+	class BoolMenuItem : public MenuItem {
+		public:
+			explicit  BoolMenuItem(std::wstring_view text);
+
+			Callback<> valueChanged {};
+
+			bool getValue() const;
+			void setValue(bool value);
+
+		protected:
+			void onRender(Renderer* renderer, const Bounds& bounds) override;
+			void onKorryEvent(KorryEvent* event) override;
+			virtual void onValueChanged();
+
+		private:
+			bool _value = false;
 	};
 
 	class Menu : public StackLayout {

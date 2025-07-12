@@ -5,8 +5,8 @@
 
 namespace pizda {
 	WaypointsPage::WaypointsPage() :
-		addMenuItem(RouteMenuItem(L"Add", &Routes::settings)),
-		backMenuItem(RouteMenuItem(L"Back", &Routes::settings))
+		addMenuItem(RouteMenuItem(L"Add", &Routes::mainMenu)),
+		backMenuItem(RouteMenuItem(L"Back", &Routes::mainMenu))
 	{
 		title.setText(L"Waypoints");
 

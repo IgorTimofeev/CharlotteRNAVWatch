@@ -1,10 +1,7 @@
 #pragma once
 
-#include <cstdint>
-
 #include <YOBA/main.h>
-#include <YOBANVSStream.h>
-#include <YOBANVSSettings.h>
+#include <YOBANVS/main.h>
 
 namespace pizda {
 	class SettingsNavWaypoint {
@@ -24,7 +21,7 @@ namespace pizda {
 			GeographicCoordinates geographicCoordinates;
 	};
 
-	class SettingsNav : public YOBANVSSettings {
+	class SettingsNav : public NVSSettings {
 		public:
 			std::vector<SettingsNavWaypoint> waypoints {};
 
@@ -35,10 +32,10 @@ namespace pizda {
 
 		protected:
 			const char* getNVSNamespace() override {
-				return _namespace;
+				return "nav";
 			}
 
-			void onRead(const YOBANVSStream& stream) override {
+			void onRead(const NVSStream& stream) override {
 				// Waypoints list
 				{
 					const auto waypointsSize = stream.getUint16(_waypointsSize, 0);
@@ -84,7 +81,7 @@ namespace pizda {
 				bearingWaypointIndex = stream.getUint16(_bearingWaypointIndex, 1);
 			}
 
-			void onWrite(const YOBANVSStream& stream) override {
+			void onWrite(const NVSStream& stream) override {
 				stream.setUint16(_navWaypointIndex, navWaypointIndex);
 				stream.setUint16(_navWaypointCourse, navWaypointCourseDeg);
 
@@ -92,8 +89,6 @@ namespace pizda {
 			}
 
 		private:
-			constexpr static auto _namespace = "nav";
-
 			constexpr static auto _navWaypointIndex = "nw";
 			constexpr static auto _navWaypointCourse = "wc";
 
