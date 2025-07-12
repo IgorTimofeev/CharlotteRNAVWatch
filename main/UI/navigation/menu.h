@@ -17,12 +17,11 @@ namespace pizda {
 		active
 	};
 
-	class MenuItem : public Control, public TextElement {
+	class MenuItem : public Control {
 		public:
 			MenuItem();
-
 			MenuItemState getState() const;
-			void setState(const MenuItemState state);
+			void setState(MenuItemState state);
 
 		protected:
 			void onEvent(Event* event) override;
@@ -33,9 +32,21 @@ namespace pizda {
 			MenuItemState state = MenuItemState::normal;
 	};
 
-	class RouteMenuItem : public MenuItem {
+	class TitleMenuItem : public MenuItem {
 		public:
-			RouteMenuItem(std::wstring_view text, const Route* route);
+			void setTitle(std::wstring_view value);
+			std::wstring_view getTitle() const;
+
+		protected:
+			void onRender(Renderer* renderer, const Bounds& bounds) override;
+
+		private:
+			std::wstring title {};
+	};
+
+	class RouteMenuItem : public TitleMenuItem {
+		public:
+			RouteMenuItem(std::wstring_view title, const Route* route);
 
 		protected:
 			void onKorryEvent(KorryEvent* event) override;
@@ -44,23 +55,9 @@ namespace pizda {
 			const Route* _route;
 	};
 
-	class WaypointItem : public MenuItem {
+	class FunctionMenuItem : public TitleMenuItem {
 		public:
-			explicit WaypointItem(uint16_t waypointIndex);
-
-			static uint16_t getLastWaypointIndex();
-
-		protected:
-			void onKorryEvent(KorryEvent* event) override;
-
-		private:
-			static uint16_t _lastWaypointIndex;
-			uint16_t _waypointIndex;
-	};
-
-	class FunctionMenuItem : public MenuItem {
-		public:
-			FunctionMenuItem(std::wstring_view text, const std::function<void()>& function);
+			FunctionMenuItem(std::wstring_view title, const std::function<void()>& function);
 
 		protected:
 			void onKorryEvent(KorryEvent* event) override;
@@ -69,9 +66,29 @@ namespace pizda {
 			std::function<void()> _function;
 	};
 
-	class BoolMenuItem : public MenuItem {
+	class BoolMenuItem : public TitleMenuItem {
 		public:
-			explicit  BoolMenuItem(std::wstring_view text);
+			explicit BoolMenuItem(std::wstring_view title);
+
+			Callback<> valueChanged {};
+
+			bool getValue() const;
+			void setValue(bool value);
+
+		protected:
+			void onRender(Renderer* renderer, const Bounds& bounds) override;
+			void onKorryEvent(KorryEvent* event) override;
+			virtual void onValueChanged();
+
+		private:
+			bool _value = false;
+	};
+
+	class ListMenuItem : public MenuItem {
+		public:
+			explicit ListMenuItem(std::wstring_view title) {
+
+			}
 
 			Callback<> valueChanged {};
 
@@ -93,15 +110,16 @@ namespace pizda {
 
 			void setItems(const std::initializer_list<MenuItem*>& items);
 			void addItem(MenuItem* item);
-			MenuItem* getItemAt(int16_t index) const;
-			int16_t getSelectedIndex() const;
-			void setSelectedIndex(int16_t value);
+			MenuItem* getItemAt(uint16_t index) const;
+			uint16_t getSelectedIndex() const;
+			MenuItem* getSelectedItem() const;
+			void setSelectedIndex(uint16_t value);
 
 		protected:
 			void onEventBeforeChildren(Event* event) override;
 
 		private:
-			int16_t _selectedIndex = -1;
+			uint16_t _selectedIndex = 0;
 
 			void updateItemsFromSelection() const;
 	};

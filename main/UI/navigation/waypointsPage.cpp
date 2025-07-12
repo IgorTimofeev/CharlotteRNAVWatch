@@ -4,6 +4,26 @@
 #include "UI/navigation/routes.h"
 
 namespace pizda {
+	WaypointMenuItem::WaypointMenuItem(const uint16_t waypointIndex) : _waypointIndex(waypointIndex) {
+		const auto& waypoint = RC::getInstance().settings.nav.waypoints[_waypointIndex];
+		setTitle(waypoint.name);
+	}
+
+	uint16_t WaypointMenuItem::_lastWaypointIndex = 0;
+
+	uint16_t WaypointMenuItem::getLastWaypointIndex() {
+		return _lastWaypointIndex;
+	}
+
+	void WaypointMenuItem::onKorryEvent(KorryEvent* event) {
+		if (event->getButtonType() == KorryButtonType::middle && event->getEventType() == KorryEventType::down) {
+			_lastWaypointIndex = _waypointIndex;
+			RC::getInstance().setRoute(&Routes::waypoint);
+
+			event->setHandled(true);
+		}
+	}
+
 	WaypointsPage::WaypointsPage() :
 		addMenuItem(RouteMenuItem(L"Add", &Routes::mainMenu)),
 		backMenuItem(RouteMenuItem(L"Back", &Routes::mainMenu))

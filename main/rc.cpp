@@ -30,8 +30,7 @@ namespace pizda {
 
 		// Settings
 		NVSSettings::setup();
-		settings.PFD.read();
-		settings.nav.read();
+		settings.readAll();
 
 		// Buttons
 		buttonUp.setup();
@@ -41,8 +40,8 @@ namespace pizda {
 		// GNSS
 		gnss.setup();
 		gnss.setUpdateInterval(1000);
-		updateGNSSSimulationFromSettings();
 		updateGNSSSystemsFromSettings();
+		updateGNSSSimulationFromSettings();
 
 		// UI
 		// Theme::setup(&renderer);

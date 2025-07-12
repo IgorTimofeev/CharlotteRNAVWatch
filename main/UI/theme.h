@@ -36,8 +36,7 @@ namespace pizda {
 			static const RGB565Color accent1;
 			static const RGB565Color accent2;
 
-			static const RGB565Color good1;
-			static const RGB565Color good2;
+			static const RGB565Color good;
 
 			static const RGB565Color bad1;
 			static const RGB565Color bad2;

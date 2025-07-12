@@ -26,8 +26,7 @@ namespace pizda {
 	const RGB565Color Theme::accent1 = RGB888Color(0xffd200).toRGB565();
 	const RGB565Color Theme::accent2 = RGB888Color(0x997e53).toRGB565();
 
-	const RGB565Color Theme::good1 = RGB888Color(0x1db153).toRGB565();
-	const RGB565Color Theme::good2 = RGB888Color(0x28DA69).toRGB565();
+	const RGB565Color Theme::good = RGB888Color(0x28DA69).toRGB565();
 
 	const RGB565Color Theme::bad1 = RGB888Color(0x9f2d2d).toRGB565();
 	const RGB565Color Theme::bad2 = RGB888Color(0xf24949).toRGB565();

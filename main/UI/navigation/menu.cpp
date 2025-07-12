@@ -26,26 +26,49 @@ namespace pizda {
 	}
 
 	void MenuItem::onRender(Renderer* renderer, const Bounds& bounds) {
-		if (getState() != MenuItemState::normal)
+		if (getState() != MenuItemState::normal) {
 			renderer->renderFilledRectangle(bounds, &Theme::bg3);
 
-		renderer->renderString(
-			Point(
-				bounds.getXCenter() - Theme::fontNormal.getWidth(getText()) / 2,
-				bounds.getYCenter() - Theme::fontNormal.getHeight() / 2
-			),
-			&Theme::fontNormal,
-			&Theme::fg5,
-			getText()
-		);
+			renderer->renderFilledRectangle(
+				Bounds(
+					bounds.getX(),
+					bounds.getY(),
+					2,
+					bounds.getHeight()
+				),
+				&Theme::fg1
+			);
+		}
 	}
 
 	void MenuItem::onKorryEvent(KorryEvent* event) {
 
 	}
 
-	RouteMenuItem::RouteMenuItem(const std::wstring_view text, const Route* route) : _route(route) {
-		setText(text);
+	void TitleMenuItem::setTitle(const std::wstring_view value) {
+		title = value;
+	}
+
+	std::wstring_view TitleMenuItem::getTitle() const {
+		return title;
+	}
+
+	void TitleMenuItem::onRender(Renderer* renderer, const Bounds& bounds) {
+		MenuItem::onRender(renderer, bounds);
+
+		renderer->renderString(
+			Point(
+				bounds.getXCenter() - Theme::fontNormal.getWidth(getTitle()) / 2,
+				bounds.getYCenter() - Theme::fontNormal.getHeight() / 2
+			),
+			&Theme::fontNormal,
+			&Theme::fg4,
+			getTitle()
+		);
+	}
+
+	RouteMenuItem::RouteMenuItem(const std::wstring_view title, const Route* route) : _route(route) {
+		setTitle(title);
 	}
 
 	void RouteMenuItem::onKorryEvent(KorryEvent* event) {
@@ -56,29 +79,8 @@ namespace pizda {
 		}
 	}
 
-	WaypointItem::WaypointItem(const uint16_t waypointIndex): _waypointIndex(waypointIndex) {
-		const auto& waypoint = RC::getInstance().settings.nav.waypoints[_waypointIndex];
-
-		setText(waypoint.name);
-	}
-
-	uint16_t WaypointItem::_lastWaypointIndex = 0;
-
-	uint16_t WaypointItem::getLastWaypointIndex() {
-		return _lastWaypointIndex;
-	}
-
-	void WaypointItem::onKorryEvent(KorryEvent* event) {
-		if (event->getButtonType() == KorryButtonType::middle && event->getEventType() == KorryEventType::down) {
-			_lastWaypointIndex = _waypointIndex;
-			RC::getInstance().setRoute(&Routes::waypoint);
-
-			event->setHandled(true);
-		}
-	}
-
-	FunctionMenuItem::FunctionMenuItem(const std::wstring_view text, const std::function<void()>& function): _function(function) {
-		setText(text);
+	FunctionMenuItem::FunctionMenuItem(const std::wstring_view title, const std::function<void()>& function) : _function(function) {
+		setTitle(title);
 	}
 
 	void FunctionMenuItem::onKorryEvent(KorryEvent* event) {
@@ -89,8 +91,8 @@ namespace pizda {
 		}
 	}
 
-	BoolMenuItem::BoolMenuItem(const std::wstring_view text) {
-		setText(text);
+	BoolMenuItem::BoolMenuItem(const std::wstring_view title) {
+		setTitle(title);
 	}
 
 	bool BoolMenuItem::getValue() const {
@@ -107,16 +109,17 @@ namespace pizda {
 	}
 
 	void BoolMenuItem::onRender(Renderer* renderer, const Bounds& bounds) {
-		MenuItem::onRender(renderer, bounds);
+		TitleMenuItem::onRender(renderer, bounds);
 
 		renderer->renderFilledRectangle(
 			Bounds(
-				bounds.getX2() - 8 - 2,
-				bounds.getYCenter() - 2,
-				8,
+				bounds.getX2() - 2 - 7,
+				bounds.getYCenter() - 1,
+				7,
 				4
 			),
-			getValue() ? &Theme::green : &Theme::red
+			2,
+			getValue() ? &Theme::green : &Theme::yellow
 		);
 	}
 
@@ -147,15 +150,19 @@ namespace pizda {
 		*this += item;
 	}
 
-	MenuItem* Menu::getItemAt(const int16_t index) const {
+	MenuItem* Menu::getItemAt(const uint16_t index) const {
 		return dynamic_cast<MenuItem*>(getChildAt(index));
 	}
 
-	int16_t Menu::getSelectedIndex() const {
+	uint16_t Menu::getSelectedIndex() const {
 		return _selectedIndex;
 	}
 
-	void Menu::setSelectedIndex(const int16_t value) {
+	MenuItem* Menu::getSelectedItem() const {
+		return getItemAt(_selectedIndex);
+	}
+
+	void Menu::setSelectedIndex(const uint16_t value) {
 		_selectedIndex = value;
 		updateItemsFromSelection();
 
@@ -170,11 +177,14 @@ namespace pizda {
 
 		if (korryEvent->getEventType() == KorryEventType::down || korryEvent->getEventType() == KorryEventType::tick) {
 			if (korryEvent->getButtonType() == KorryButtonType::up || korryEvent->getButtonType() == KorryButtonType::down) {
-				if (getChildrenCount() == 0)
+				const auto selectedItem = getSelectedItem();
+
+				if (selectedItem->getState() == MenuItemState::active)
 					return;
 
 				auto newIndex = static_cast<int16_t>(_selectedIndex + (korryEvent->getButtonType() == KorryButtonType::down ? 1 : -1));
 
+				// Cycling
 				if (newIndex < 0) {
 					newIndex = static_cast<int16_t>(getChildrenCount() - 1);
 				}
@@ -182,7 +192,7 @@ namespace pizda {
 					newIndex = 0;
 				}
 
-				setSelectedIndex(newIndex);
+				setSelectedIndex(static_cast<uint16_t>(newIndex));
 
 				event->setHandled(true);
 			}
@@ -190,7 +200,7 @@ namespace pizda {
 	}
 
 	void Menu::updateItemsFromSelection() const {
-		for (int16_t i = 0; i < static_cast<int16_t>(getChildrenCount()); i++) {
+		for (uint16_t i = 0; i < static_cast<uint16_t>(getChildrenCount()); i++) {
 			getItemAt(i)->setState(i == _selectedIndex ? MenuItemState::hovered : MenuItemState::normal);
 		}
 	}

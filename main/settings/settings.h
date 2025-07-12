@@ -16,5 +16,11 @@ namespace pizda {
 			SettingsPFD PFD {};
 			SettingsNav nav {};
 			SettingsGNSS GNSS {};
+
+			void readAll() {
+				PFD.read();
+				nav.read();
+				GNSS.read();
+			}
 	};
 }

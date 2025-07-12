@@ -4,20 +4,14 @@
 namespace pizda {
 	MainMenuPage::MainMenuPage() :
 		waypointsItem(RouteMenuItem(L"Waypoints", &Routes::waypoints)),
-		PFDSettingsItem(RouteMenuItem(L"PFD", &Routes::PFDSettings)),
-		GNSSSettingsItem(RouteMenuItem(L"GNSS", &Routes::GNSSSettings)),
-		rebootItem(FunctionMenuItem(L"Reboot", [] {
-			esp_restart();
-		})),
+		settingsItem(RouteMenuItem(L"Settings", &Routes::settings)),
 		backItem(RouteMenuItem(L"Back", &Routes::PFD))
 	{
 		title.setText(L"Menu");
 
 		menu.setItems({
 			&waypointsItem,
-			&PFDSettingsItem,
-			&GNSSSettingsItem,
-			&rebootItem,
+			&settingsItem,
 			&backItem,
 		});
 	}

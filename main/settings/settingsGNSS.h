@@ -20,10 +20,12 @@ namespace pizda {
 				BDS = stream.getBool(_BDS, true);
 				GLONASS = stream.getBool(_GLONASS, true);
 				simulation = stream.getBool(_simulation, false);
-
 			}
 
 			void onWrite(const NVSStream& stream) override {
+				stream.setBool(_GPS, GPS);
+				stream.setBool(_BDS, BDS);
+				stream.setBool(_GLONASS, GLONASS);
 				stream.setBool(_simulation, simulation);
 			}
 

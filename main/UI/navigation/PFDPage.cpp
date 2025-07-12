@@ -2,6 +2,7 @@
 
 #include "rc.h"
 #include "hardware/korryButton.h"
+#include "resources/images.h"
 #include "UI/theme.h"
 #include "UI/navigation/routes.h"
 
@@ -782,33 +783,87 @@ namespace pizda {
 		// Time
 		{
 			constexpr static uint8_t timeWidth = 42;
-			constexpr static uint8_t timeHeight = 20;
 
 			const auto bg = rc.gnss.haveTime() ? &Theme::bg1 : &Theme::bgRed2;
 			const auto fg = rc.gnss.haveTime() ? &Theme::fg1 : &Theme::fgRed1;
 			const auto text = rc.gnss.haveTime() ? std::format(L"{:02}:{:02}", rc.gnss.getTimeHours(), rc.gnss.getTimeMinutes()) : L"--:--";
 
-			const auto timeBounds = Bounds(
-				center.getX() - timeWidth / 2,
-				bounds.getY2() - timeHeight + 1,
-				timeWidth,
-				timeHeight
-			);
-
 			renderer->renderFilledRectangle(
-				timeBounds,
-				4,
+				Bounds(
+					center.getX() - timeWidth / 2,
+					bounds.getY2() - sidebarWidth - 5 + 1,
+					timeWidth,
+					sidebarWidth + 5
+				),
 				bg
 			);
 
 			renderer->renderString(
 				Point(
-					timeBounds.getXCenter() - Theme::fontNormal.getWidth(text) / 2,
-					timeBounds.getYCenter() - Theme::fontNormal.getHeight() / 2
+					center.getX() - Theme::fontNormal.getWidth(text) / 2,
+					bounds.getY2() - sidebarWidth / 2 + 1 - Theme::fontNormal.getHeight() / 2
 				),
 				&Theme::fontNormal,
 				fg,
 				text
+			);
+		}
+
+		// Satellites
+		{
+			const auto position = Point(
+				center.getX() - 61,
+				bounds.getY2() - 31
+			);
+
+			renderer->renderImage(
+				position,
+				&resources::Images::satellite
+			);
+
+			renderer->renderString(
+				Point(
+					position.getX() + resources::Images::satellite.getSize().getWidth() + 5,
+					position.getY() + resources::Images::satellite.getSize().getHeight() / 2 - Theme::fontNormal.getHeight() / 2 + 5
+				),
+				&Theme::fontNormal,
+				&Theme::fg3,
+				std::to_wstring(rc.gnss.getSatellites())
+			);
+		}
+
+		// Battery
+		{
+			const auto batteryBounds = Bounds(
+				center.getX() + 42,
+				bounds.getY2() - 26,
+				15,
+				7
+			);
+
+			renderer->renderRectangle(
+				batteryBounds,
+				&Theme::bg6
+			);
+
+			renderer->renderFilledRectangle(
+				Bounds(
+					batteryBounds.getX(),
+					batteryBounds.getY(),
+					batteryBounds.getWidth() * 8 / 10,
+					batteryBounds.getHeight()
+				),
+				&Theme::good
+			);
+
+			renderer->renderRectangle(
+				Bounds(
+					batteryBounds.getX2() + 1,
+					batteryBounds.getYCenter() - 1,
+					3,
+					3
+				),
+				&Theme::bg5
 			);
 		}
 

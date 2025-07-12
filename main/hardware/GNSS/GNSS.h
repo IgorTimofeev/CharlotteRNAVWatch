@@ -73,7 +73,7 @@ namespace pizda {
 			}
 
 			bool haveLocation() const {
-				return gps.location.isValid();
+				return simulationMode || gps.location.isValid();
 			}
 
 			float getLatitudeRad() {
@@ -85,7 +85,7 @@ namespace pizda {
 			}
 
 			bool haveAltitude() const {
-				return gps.altitude.isValid();
+				return simulationMode || gps.altitude.isValid();
 			}
 
 			float getAltitudeM() {
@@ -97,7 +97,7 @@ namespace pizda {
 			}
 
 			bool haveSpeed() const {
-				return gps.speed.isValid();
+				return simulationMode || gps.speed.isValid();
 			}
 
 			float getSpeedMps() {
@@ -109,7 +109,7 @@ namespace pizda {
 			}
 
 			bool haveCourse() const {
-				return gps.course.isValid();
+				return simulationMode || gps.course.isValid();
 			}
 
 			float getCourseDeg() {
@@ -117,7 +117,7 @@ namespace pizda {
 			}
 
 			bool haveTime() const {
-				return gps.time.isValid();
+				return simulationMode || gps.time.isValid();
 			}
 
 			uint8_t getTimeHours() {
@@ -145,7 +145,7 @@ namespace pizda {
 			}
 
 			uint32_t getSatellites() {
-				return simulationMode ? 5 : gps.satellites.value();
+				return simulationMode ? 19 : gps.satellites.value();
 			}
 
 			float getHDOP() {
@@ -216,37 +216,10 @@ namespace pizda {
 				if (bytesRead) {
 					rxBuffer[bytesRead] = '\0';
 
-					const char* NMEAData;
+					auto bufferPtr = rxBuffer;
 
-					if (simulationMode) {
-						NMEAData =
-							"$GPRMC,112019.950,A,5950.225256,N,03035.104663,E,22.9,37.0,250625,,,*2C\r\n"
-							"$IIVHW,37.0,T,37.0,M,22.9,N,42.3,K*59\r\n"
-							"$GPVTG,37.0,T,37.0,M,22.9,N,42.3,K*42\r\n"
-							"$IIHDT,37.0,T*16"
-							"$GPGLL,5950.225256,N,03035.104663,E,112019.950,A*3C\r\n"
-							"$GPGGA,112019.950,5950.225256,N,03035.104663,E,1,4,0.7,630.0,M,,,,*31\r\n"
-							"$GPGSA,A,3,8,11,15,22,,,,,,,,,0.5,0.7,1.1*0C\r\n"
-							"$GPZDA,112019.950,25,06,2025,03,00*57\r\n"
-							"$IIVBW,22.1,22.5,A,22.0,22.8,A,22.4,A,22.6,A*4D\r\n"
-							"!AIVDO,1,1,,A,17PaewhP3TR<0N<R?C;1LQ:V0000,0*27\r\n"
-							"!AIVDM,1,1,,A,17PaewhP3TR<0N<R?C;1LQ:V0000,0*25\r\n"
-							"$INWPL,5949.665751,N,03034.126540,E,wpt*2F\r\n"
-							"!AIVDO,2,1,9,A,57Paewh00001<To7;?@plD5<Tl0000000000000U1@:551dcD2TnA3QF,0*4A\r\n"
-							"!AIVDO,2,2,9,A,@00000000000002,2*5D\r\n"
-							"!AIVDM,2,1,9,A,57Paewh00001<To7;?@plD5<Tl0000000000000U1@:551dcD2TnA3QF,0*48\r\n"
-							"!AIVDM,2,2,9,A,@00000000000002,2*5F\r\n"
-							"$IIRPM,E,1,3450.0,10.5,A*50\r\n"
-							"$IIRPM,E,2,0,10.5,A*7F\r\n"
-							"$IIAPB,V,V,,R,N,,,,T,,,T,,T,N*79\r\n"
-							"$GPRMB,V,,R,,,,,,,,,,,N*00\r\n";
-					}
-					else {
-						NMEAData = rxBuffer;
-					}
-
-					while (*NMEAData)
-						gps.encode(*NMEAData++);
+					while (*bufferPtr)
+						gps.encode(*bufferPtr++);
 
 					if (simulationMode) {
 						// Lat/lon
