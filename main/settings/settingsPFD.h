@@ -2,8 +2,8 @@
 
 #include <cstdint>
 
-#include <hardware/NVS/NVSStream.h>
-#include <hardware/NVS/NVSSerializable.h>
+#include <YOBANVSStream.h>
+#include <YOBANVSSettings.h>
 
 namespace pizda {
 	enum class SettingsPFDScale : uint8_t {
@@ -13,7 +13,7 @@ namespace pizda {
 		airplane
 	};
 
-	class SettingsPFD : public NVSSerializable {
+	class SettingsPFD : public YOBANVSSettings {
 		public:
 			SettingsPFDScale scale = SettingsPFDScale::bike;
 			uint16_t speedKt = 0;
@@ -26,7 +26,7 @@ namespace pizda {
 				return _namespace;
 			}
 
-			void onRead(const NVSStream& stream) override {
+			void onRead(const YOBANVSStream& stream) override {
 				scale = static_cast<SettingsPFDScale>(stream.getUint8(_scale, static_cast<uint8_t>(SettingsPFDScale::bike)));
 				speedKt = stream.getUint16(_speedKt, 10);
 				altitudeFt = stream.getUint16(_altitudeFt, 120);
@@ -34,7 +34,7 @@ namespace pizda {
 				minimumsFt = stream.getUint16(_minimumsFt, 150);
 			}
 
-			void onWrite(const NVSStream& stream) override {
+			void onWrite(const YOBANVSStream& stream) override {
 				stream.setUint8(_scale, static_cast<uint8_t>(scale));
 				stream.setUint16(_speedKt, speedKt);
 				stream.setUint16(_altitudeFt, altitudeFt);

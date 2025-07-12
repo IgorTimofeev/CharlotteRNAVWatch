@@ -76,7 +76,6 @@ namespace pizda {
 			static RC& getInstance();
 
 			[[noreturn]] void run();
-			void NVSSetup();
 
 			const Route* getRoute() const;
 			void setRoute(const Route* route);

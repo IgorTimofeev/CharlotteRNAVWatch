@@ -29,5 +29,6 @@
     <mapping directory="$PROJECT_DIR$/../../../../../../../../Espressif/frameworks/esp-idf-v5.4.1/components/spiffs/spiffs" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/../../../../../../../../Espressif/frameworks/esp-idf-v5.4.1/components/unity/unity" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/components/YOBA" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/components/YOBAUnits" vcs="Git" />
   </component>
 </project>

@@ -3,8 +3,8 @@
 #include <cstdint>
 
 #include <YOBA/main.h>
-#include <hardware/NVS/NVSStream.h>
-#include <hardware/NVS/NVSSerializable.h>
+#include <YOBANVSStream.h>
+#include <YOBANVSSettings.h>
 
 namespace pizda {
 	class SettingsNavWaypoint {
@@ -24,7 +24,7 @@ namespace pizda {
 			GeographicCoordinates geographicCoordinates;
 	};
 
-	class SettingsNav : public NVSSerializable {
+	class SettingsNav : public YOBANVSSettings {
 		public:
 			std::vector<SettingsNavWaypoint> waypoints {};
 
@@ -38,7 +38,7 @@ namespace pizda {
 				return _namespace;
 			}
 
-			void onRead(const NVSStream& stream) override {
+			void onRead(const YOBANVSStream& stream) override {
 				// Waypoints list
 				{
 					const auto waypointsSize = stream.getUint16(_waypointsSize, 0);
@@ -84,7 +84,7 @@ namespace pizda {
 				bearingWaypointIndex = stream.getUint16(_bearingWaypointIndex, 1);
 			}
 
-			void onWrite(const NVSStream& stream) override {
+			void onWrite(const YOBANVSStream& stream) override {
 				stream.setUint16(_navWaypointIndex, navWaypointIndex);
 				stream.setUint16(_navWaypointCourse, navWaypointCourseDeg);
 

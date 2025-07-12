@@ -5,6 +5,12 @@ dependencies:
       path: C:\Users\Igor\Documents\Code\MCU\ESP32\Charlotte\RNAVWatch\components\YOBA
       type: local
     version: 0.0.1
+  YOBANVSSettings:
+    dependencies: []
+    source:
+      path: C:\Users\Igor\Documents\Code\MCU\ESP32\Charlotte\RNAVWatch\components\YOBANVSSettings
+      type: local
+    version: 0.0.1
   YOBAUnits:
     dependencies: []
     source:
@@ -17,7 +23,8 @@ dependencies:
     version: 5.4.1
 direct_dependencies:
 - YOBA
+- YOBANVSSettings
 - YOBAUnits
-manifest_hash: 4779b4a94103fd4f3b917c5fbd2f962bb32bc50f0e793dad07f7d5d9004b18cc
+manifest_hash: b1b55f5566dcd4e19a8ea508ac4e7bb14562f54d6be6945c4f6bc66b753e2d09
 target: esp32c3
 version: 2.0.0

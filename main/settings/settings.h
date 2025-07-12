@@ -14,10 +14,5 @@ namespace pizda {
 		public:
 			SettingsPFD PFD {};
 			SettingsNav nav {};
-
-			void readAll() {
-				PFD.read();
-				nav.read();
-			}
 	};
 }

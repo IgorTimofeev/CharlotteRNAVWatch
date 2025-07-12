@@ -29,8 +29,9 @@ namespace pizda {
 		display.turnOn();
 
 		// Settings
-		NVSSetup();
-		settings.readAll();
+		YOBANVSSettings::setup();
+		settings.PFD.read();
+		settings.nav.read();
 
 		// Buttons
 		buttonUp.setup();
@@ -70,20 +71,6 @@ namespace pizda {
 
 			if (deltaTime < mainTickInterval)
 				vTaskDelay(pdMS_TO_TICKS((mainTickInterval - deltaTime) / 1000));
-		}
-	}
-
-	void RC::NVSSetup() {
-		const auto status = nvs_flash_init();
-
-		if (status == ESP_ERR_NVS_NO_FREE_PAGES || status == ESP_ERR_NVS_NEW_VERSION_FOUND) {
-			// NVS partition was truncated and needs to be erased
-			ESP_ERROR_CHECK(nvs_flash_erase());
-			// Retry init
-			ESP_ERROR_CHECK(nvs_flash_init());
-		}
-		else {
-			ESP_ERROR_CHECK(status);
 		}
 	}
 
