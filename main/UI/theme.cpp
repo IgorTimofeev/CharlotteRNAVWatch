@@ -9,6 +9,10 @@ namespace pizda {
 	const RGB565Color Theme::bg6 = RGB888Color(0x545454).toRGB565();
 	const RGB565Color Theme::bg7 = RGB888Color(0x606060).toRGB565();
 
+	const RGB565Color Theme::bgRed1 = RGB888Color(0x230000).toRGB565();
+	const RGB565Color Theme::bgRed2 = RGB888Color(0x340000).toRGB565();
+	const RGB565Color Theme::bgRed3 = RGB888Color(0x490000).toRGB565();
+
 	const RGB565Color Theme::fg1 = RGB888Color(0xF0F0F0).toRGB565();
 	const RGB565Color Theme::fg2 = RGB888Color(0xCCCCCC).toRGB565();
 	const RGB565Color Theme::fg3 = RGB888Color(0x999999).toRGB565();
@@ -36,6 +40,7 @@ namespace pizda {
 	const RGB565Color Theme::ground2 = RGB888Color(0xdef2a2).toRGB565();
 	const RGB565Color Theme::sky = RGB888Color(0x1d2d3c).toRGB565();
 	const RGB565Color Theme::sky2 = RGB888Color(0xaed1f2).toRGB565();
+
 
 	const unscii16Font Theme::fontBig {};
 	const PIXY10Font Theme::fontNormal {};

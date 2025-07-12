@@ -48,8 +48,11 @@ namespace pizda {
 			constexpr static uint8_t HSIDiameter = compassDiameter;
 			constexpr static float HSIRadius = HSIDiameter / 2.f;
 
-			constexpr static uint8_t HSIArrowWidth = 6;
-			constexpr static uint8_t HSIArrowHeight = 9;
+			constexpr static uint8_t HSIArrowBigWidth = 7;
+			constexpr static uint8_t HSIArrowBigHeight = 9;
+
+			constexpr static uint8_t HSIArrowSmallWidth = 5;
+			constexpr static uint8_t HSIArrowSmallHeight = 8;
 
 			constexpr static uint8_t HSICDIAngleStepDeg = 10;
 			constexpr static uint8_t HSICDIAngleSteps = 2;
@@ -68,8 +71,8 @@ namespace pizda {
 			constexpr static float bearingRadius = bearingDiameter / 2.f;
 
 			constexpr static uint8_t bearingLength = 18;
-			constexpr static uint8_t bearingArrowWidth = HSIArrowWidth;
-			constexpr static uint8_t bearingArrowHeight = HSIArrowHeight;
+			constexpr static uint8_t bearingArrowWidth = HSIArrowBigWidth;
+			constexpr static uint8_t bearingArrowHeight = HSIArrowBigHeight;
 
 			// Speed
 			constexpr static uint8_t speedStep = 1;
@@ -95,7 +98,7 @@ namespace pizda {
 			static void renderUnderlayText(Renderer* renderer, int32_t x, int32_t y, const Color* color, std::wstring_view text);
 			void renderSpeed(Renderer* renderer, const Bounds& sidebarBounds, const Point& center) const;
 			void renderAltitude(Renderer* renderer, const Bounds& sidebarBounds, const Point& center) const;
-			static void renderCompass(Renderer* renderer, const Bounds& bounds);
+			void renderCompass(Renderer* renderer, const Bounds& bounds);
 			static void renderField(Renderer* renderer, const Point& point, std::wstring_view text1, std::wstring_view text2);
 	};
 }

@@ -4,7 +4,6 @@
 #include "hardware/korryButton.h"
 #include "UI/theme.h"
 #include "UI/navigation/routes.h"
-#include "utils/units.h"
 
 namespace pizda {
 	void PFDPage::onTick() {
@@ -151,7 +150,8 @@ namespace pizda {
 
 		// Value
 		{
-			const auto text = std::format(L"{:03}", static_cast<int16_t>(value));
+			const auto bg = rc.gnss.haveSpeed() ? &Theme::bg4 : &Theme::bgRed2;
+			const auto text = rc.gnss.haveSpeed() ? std::format(L"{:03}", static_cast<int16_t>(value)) : L"---";
 
 			const auto valueBounds  = Bounds(
 			   sidebarBounds.getX(),
@@ -162,7 +162,7 @@ namespace pizda {
 
 			renderer->renderFilledRectangle(
 				valueBounds,
-				&Theme::bg4
+				bg
 			);
 
 			renderer->renderFilledTriangle(
@@ -178,7 +178,7 @@ namespace pizda {
 					valueBounds.getX2() + 1 + sidebarValueTriangleWidth - 1,
 					center.getY()
 				),
-				&Theme::bg4
+				bg
 			);
 
 			renderer->renderString(
@@ -313,7 +313,8 @@ namespace pizda {
 
 		// Value
 		{
-			const auto text = std::format(L"{:04}", static_cast<int16_t>(value));
+			const auto bg = rc.gnss.haveSpeed() ? &Theme::bg4 : &Theme::bgRed2;
+			const auto text = rc.gnss.haveAltitude() ? std::format(L"{:04}", static_cast<int16_t>(value)) : L"----";
 
 			const auto valueBounds  = Bounds(
 			   sidebarBounds.getX2() - sidebarValueWidth + 1,
@@ -324,7 +325,7 @@ namespace pizda {
 
 			renderer->renderFilledRectangle(
 				valueBounds,
-				&Theme::bg4
+				bg
 			);
 
 			renderer->renderFilledTriangle(
@@ -340,7 +341,7 @@ namespace pizda {
 					valueBounds.getX() - sidebarValueTriangleWidth + 1,
 					center.getY()
 				),
-				&Theme::bg4
+				bg
 			);
 
 			renderer->renderString(
@@ -358,230 +359,302 @@ namespace pizda {
 		{
 			const auto underlayX = sidebarBounds.getX2() - sidebarUnderlayTextCenterMargin + 1;
 			renderUnderlayText(renderer, underlayX, sidebarBounds.getY() - sidebarUnderlayHeight, &Theme::ocean, std::to_wstring(rc.settings.PFD.altitudeFt));
-			renderUnderlayText(renderer, underlayX, sidebarBounds.getY2() + 1, &Theme::yellow, L"1013");
+			renderUnderlayText(renderer, underlayX, sidebarBounds.getY2() + 1, &Theme::yellow, std::to_wstring(rc.settings.PFD.pressureHPA));
 		}
 	}
 
 	void PFDPage::renderCompass(Renderer* renderer, const Bounds& bounds) {
-		const auto& rc = RC::getInstance();
+		auto& rc = RC::getInstance();
 		const auto center = bounds.getCenter();
 
-		const auto centerVec = static_cast<Vector2F>(center);
-		const auto headingRad = toRadians(rc.courseDeg);
+		// Normal mode
+		if (rc.gnss.haveLocation()) {
+			renderer->renderFilledCircle(
+			   center,
+			   compassRadius,
+			   &Theme::bg1
+			);
 
-		for (uint16_t lineDeg = 0; lineDeg < 360; lineDeg += 5) {
-			const auto lineVec = Vector2F(0, -compassRadius).rotate(toRadians(lineDeg) - headingRad);
-			const auto lineVecNorm = lineVec.normalize();
+			const auto centerVec = static_cast<Vector2F>(center);
+			const auto headingRad = toRadians(rc.courseDeg);
 
-			// Line
-			uint8_t lineLength;
+			for (uint16_t lineDeg = 0; lineDeg < 360; lineDeg += 5) {
+				const auto lineVec = Vector2F(0, -compassRadius).rotate(toRadians(lineDeg) - headingRad);
+				const auto lineVecNorm = lineVec.normalize();
 
-			if (lineDeg % 30 == 0) {
-				lineLength = compassLineLength1;
-			}
-			else if (lineDeg % 10 == 0) {
-				lineLength = compassLineLength2;
-			}
-			else {
-				lineLength = compassLineLength3;
-			}
+				// Line
+				uint8_t lineLength;
 
-			renderer->renderLine(
-			   static_cast<Point>(centerVec + lineVec),
-			   static_cast<Point>(centerVec + lineVec - lineVecNorm * lineLength),
-			   &Theme::fg2
-		   );
-
-			// Text for big
-			if (lineLength == compassLineLength1) {
-				std::wstring text;
-
-				switch (lineDeg) {
-					case 0: text = L"N"; break;
-					case 90: text = L"E"; break;
-					case 180: text = L"S"; break;
-					case 270: text = L"W"; break;
-					default: text = std::to_wstring(lineDeg / 10); break;
+				if (lineDeg % 30 == 0) {
+					lineLength = compassLineLength1;
+				}
+				else if (lineDeg % 10 == 0) {
+					lineLength = compassLineLength2;
+				}
+				else {
+					lineLength = compassLineLength3;
 				}
 
-				const auto textVec = centerVec + lineVec - lineVecNorm * (static_cast<float>(lineLength) + compassLineTexOffset);
+				renderer->renderLine(
+				   static_cast<Point>(centerVec + lineVec),
+				   static_cast<Point>(centerVec + lineVec - lineVecNorm * lineLength),
+				   &Theme::fg2
+			   );
+
+				// Text for big
+				if (lineLength == compassLineLength1) {
+					std::wstring text;
+
+					switch (lineDeg) {
+						case 0: text = L"N"; break;
+						case 90: text = L"E"; break;
+						case 180: text = L"S"; break;
+						case 270: text = L"W"; break;
+						default: text = std::to_wstring(lineDeg / 10); break;
+					}
+
+					const auto textVec = centerVec + lineVec - lineVecNorm * (static_cast<float>(lineLength) + compassLineTexOffset);
+
+					renderer->renderString(
+						Point(
+							static_cast<int32_t>(textVec.getX()) - Theme::fontNormal.getWidth(text) / 2,
+							static_cast<int32_t>(textVec.getY()) - Theme::fontNormal.getHeight() / 2
+						),
+						&Theme::fontNormal,
+						&Theme::fg1,
+						text
+					);
+				}
+			}
+
+			// Bearing
+			{
+				const auto bearingRad = toRadians(rc.bearingWaypointBearingDeg);
+				const auto bearingVec = Vector2F(0, -bearingRadius).rotate(bearingRad - headingRad);
+				const auto bearingVecNorm = bearingVec.normalize();
+				const auto bearingVecNormPerp = bearingVecNorm.clockwisePerpendicular();
+
+				// Line
+				const auto lineFromVec = centerVec - bearingVec;
+				const auto lineToVec = centerVec + bearingVec;
+
+				// Line to
+				renderer->renderLine(
+					static_cast<Point>(lineToVec - bearingVecNorm * bearingLength),
+					static_cast<Point>(lineToVec),
+					&Theme::ocean,
+					2
+				);
+
+				// Line from
+				renderer->renderLine(
+					static_cast<Point>(lineFromVec + bearingVecNorm * bearingLength),
+					static_cast<Point>(lineFromVec),
+					&Theme::ocean,
+					2
+				);
+
+				// Arrow
+				const auto arrowVec = lineToVec - bearingVecNorm * bearingArrowHeight;
+
+				// Arrow left
+				renderer->renderLine(
+					static_cast<Point>(arrowVec - bearingVecNormPerp * bearingArrowWidth),
+					static_cast<Point>(lineToVec),
+					&Theme::ocean,
+					2
+				);
+
+				// Arrow right
+				renderer->renderLine(
+					static_cast<Point>(arrowVec + bearingVecNormPerp * bearingArrowWidth),
+					static_cast<Point>(lineToVec),
+					&Theme::ocean,
+					2
+				);
+			}
+
+			// HSI
+			{
+				const auto HSICDIDeg = rc.settings.nav.navWaypointCourseDeg - rc.navWaypointBearingDeg;
+				const auto HSIVec = Vector2F(0, -HSIRadius).rotate(toRadians(rc.settings.nav.navWaypointCourseDeg) - headingRad);
+				const auto HSIVecNorm = HSIVec.normalize();
+				const auto HSIVecNormPerp = HSIVecNorm.clockwisePerpendicular();
+
+				// CDI ellipses
+				for (int16_t stepIndex = -HSICDIAngleSteps; stepIndex <= HSICDIAngleSteps; stepIndex++) {
+					if (stepIndex == 0)
+						continue;
+
+					renderer->renderCircle(
+						static_cast<Point>(centerVec + HSIVecNormPerp * static_cast<float>(stepIndex * HSICDIAngleStepDeg * HSICDIAnglePixelsPerDeg)),
+						HSICDIAngleRadius,
+						&Theme::fg1
+					);
+				}
+
+				// Line head
+				const auto HSILineHeadToVec = centerVec + HSIVec;
+				const auto HSILineHeadTo = static_cast<Point>(HSILineHeadToVec);
+
+				const auto HSILineHeadFromVec = HSILineHeadToVec - HSIVecNorm * HSIFixedLengthHalf;
+
+				renderer->renderLine(
+					static_cast<Point>(HSILineHeadFromVec),
+					HSILineHeadTo,
+					&Theme::purple,
+					2
+				);
+
+				// Line tail
+				const auto HSILineTailFromVec = centerVec - HSIVec + HSIVecNorm * HSIFixedLengthHalf;
+
+				renderer->renderLine(
+					static_cast<Point>(HSILineTailFromVec),
+					static_cast<Point>(centerVec - HSIVec),
+					&Theme::purple,
+					2
+				);
+
+				// Big arrow
+				{
+					const auto arrowFrom = HSILineHeadToVec - HSIVecNorm * HSIArrowBigHeight;
+
+					renderer->renderFilledTriangle(
+						static_cast<Point>(arrowFrom + HSIVecNormPerp * HSIArrowBigWidth),
+						static_cast<Point>(arrowFrom - HSIVecNormPerp * HSIArrowBigWidth),
+						HSILineHeadTo,
+						&Theme::purple
+					);
+				}
+
+				// Small arrow
+				{
+					if (std::abs(HSICDIDeg) < 180) {
+						renderer->renderFilledTriangle(
+							static_cast<Point>(HSILineHeadFromVec + HSIVecNormPerp * HSIArrowSmallWidth),
+							static_cast<Point>(HSILineHeadFromVec - HSIVecNormPerp * HSIArrowSmallWidth),
+							static_cast<Point>(HSILineHeadFromVec + HSIVecNorm * HSIArrowSmallHeight),
+							&Theme::purple
+						);
+					}
+					else {
+						renderer->renderFilledTriangle(
+							static_cast<Point>(HSILineTailFromVec + HSIVecNormPerp * HSIArrowSmallWidth),
+							static_cast<Point>(HSILineTailFromVec - HSIVecNormPerp * HSIArrowSmallWidth),
+							static_cast<Point>(HSILineTailFromVec - HSIVecNorm * HSIArrowSmallHeight),
+							&Theme::purple
+						);
+					}
+				}
+
+				// CDI
+				const auto HSICDIOffsetPixels = std::clamp(
+					HSICDIDeg,
+					-static_cast<float>(HSICDIAngleMaxDeg),
+					static_cast<float>(HSICDIAngleMaxDeg)
+				) * HSICDIAnglePixelsPerDeg;
+
+				const auto HSICDIVec = centerVec + HSIVecNormPerp * HSICDIOffsetPixels;
+
+				renderer->renderLine(
+					static_cast<Point>(HSICDIVec + HSIVecNorm * HSICDILengthHalf),
+					static_cast<Point>(HSICDIVec - HSIVecNorm * HSICDILengthHalf),
+					&Theme::purple,
+					2
+				);
+			}
+
+			// Fields
+			{
+				const auto fieldsVec = static_cast<Point>(Vector2F(fieldsRadius, 0).rotate(toRadians(-45)));
+
+				// WPT
+				{
+					const auto& waypoint = rc.settings.nav.waypoints[rc.settings.nav.navWaypointIndex];
+
+					renderField(
+					   renderer,
+					   Point(
+						   center.getX() - fieldsVec.getX(),
+						   center.getY() + fieldsVec.getY()
+					   ),
+					   L"WPT",
+					   waypoint.name
+				   );
+				}
+
+				// CRS
+				renderField(
+					renderer,
+					Point(
+						center.getX() + fieldsVec.getX(),
+						center.getY() + fieldsVec.getY()
+					),
+					L"CRS",
+					std::format(L"{:03}", rc.settings.nav.navWaypointCourseDeg)
+				);
+
+				// DIS
+				renderField(
+					renderer,
+					Point(
+						center.getX() - fieldsVec.getX(),
+						center.getY() - fieldsVec.getY()
+					),
+					L"DIS",
+					std::format(L"{:.1f} nm", rc.navWaypointDistanceNm)
+				);
+
+				// ETE
+				renderField(
+					renderer,
+					Point(
+						center.getX() + fieldsVec.getX(),
+						center.getY() - fieldsVec.getY()
+					),
+					L"ETE",
+					std::format(L"{:02}:{:02}", rc.navWaypointETESec / 3600, rc.navWaypointETESec % 60)
+				);
+			}
+		}
+		// AHRS align
+		else {
+			renderer->renderFilledCircle(
+			   center,
+			   compassRadius,
+			   &Theme::bgRed1
+			);
+
+			// 1
+			{
+				const auto text = L"AHRS ALIGN";
 
 				renderer->renderString(
 					Point(
-						static_cast<int32_t>(textVec.getX()) - Theme::fontNormal.getWidth(text) / 2,
-						static_cast<int32_t>(textVec.getY()) - Theme::fontNormal.getHeight() / 2
+						center.getX() - Theme::fontNormal.getWidth(text) / 2,
+						center.getY() - Theme::fontNormal.getHeight()
 					),
 					&Theme::fontNormal,
-					&Theme::fg1,
+					&Theme::yellow,
 					text
 				);
 			}
-		}
 
+			// 2
+			{
+				const auto text = std::format(L"{:.1f} / {:.1f}", toDegrees(rc.gnss.getLatitudeRad()), toDegrees(rc.gnss.getLongitudeRad()));
 
-		// Bearing
-		{
-			const auto bearingRad = toRadians(rc.bearingWaypointBearingDeg);
-			const auto bearingVec = Vector2F(0, -bearingRadius).rotate(bearingRad - headingRad);
-			const auto bearingVecNorm = bearingVec.normalize();
-			const auto bearingVecNormPerp = bearingVecNorm.clockwisePerpendicular();
-
-			// Line
-			const auto lineFromVec = centerVec - bearingVec;
-			const auto lineToVec = centerVec + bearingVec;
-
-			// Line to
-			renderer->renderLine(
-				static_cast<Point>(lineToVec - bearingVecNorm * bearingLength),
-				static_cast<Point>(lineToVec),
-				&Theme::ocean,
-				2
-			);
-
-			// Line from
-			renderer->renderLine(
-				static_cast<Point>(lineFromVec + bearingVecNorm * bearingLength),
-				static_cast<Point>(lineFromVec),
-				&Theme::ocean,
-				2
-			);
-
-			// Arrow
-			const auto arrowVec = lineToVec - bearingVecNorm * bearingArrowHeight;
-
-			// Arrow left
-			renderer->renderLine(
-				static_cast<Point>(arrowVec - bearingVecNormPerp * bearingArrowWidth),
-				static_cast<Point>(lineToVec),
-				&Theme::ocean,
-				2
-			);
-
-			// Arrow right
-			renderer->renderLine(
-				static_cast<Point>(arrowVec + bearingVecNormPerp * bearingArrowWidth),
-				static_cast<Point>(lineToVec),
-				&Theme::ocean,
-				2
-			);
-		}
-
-		// HSI
-		{
-			const auto HSICDIDeg = rc.settings.nav.navWaypointCourse - rc.navWaypointBearingDeg;
-			const auto HSIRad = toRadians(rc.settings.nav.navWaypointCourse);
-			const auto HSIVec = Vector2F(0, -HSIRadius).rotate(HSIRad - headingRad);
-			const auto HSIVecNorm = HSIVec.normalize();
-			const auto HSIVecNormPerp = HSIVecNorm.clockwisePerpendicular();
-
-			// CDI ellipses
-			for (int16_t stepIndex = -HSICDIAngleSteps; stepIndex <= HSICDIAngleSteps; stepIndex++) {
-				if (stepIndex == 0)
-					continue;
-
-				renderer->renderCircle(
-					static_cast<Point>(centerVec + HSIVecNormPerp * static_cast<float>(stepIndex * HSICDIAngleStepDeg * HSICDIAnglePixelsPerDeg)),
-					HSICDIAngleRadius,
-					&Theme::fg1
+				renderer->renderString(
+					Point(
+						center.getX() - Theme::fontNormal.getWidth(text) / 2,
+						center.getY() + 1
+					),
+					&Theme::fontNormal,
+					&Theme::yellow,
+					text
 				);
 			}
-
-			// Line from
-			renderer->renderLine(
-				static_cast<Point>(centerVec - HSIVec),
-				static_cast<Point>(centerVec - HSIVec + HSIVecNorm * HSIFixedLengthHalf),
-				&Theme::purple,
-				2
-			);
-
-			// Line to
-			const auto HSILineTo = static_cast<Point>(centerVec + HSIVec);
-
-			renderer->renderLine(
-				static_cast<Point>(centerVec + HSIVec - HSIVecNorm * HSIFixedLengthHalf),
-				HSILineTo,
-				&Theme::purple,
-				2
-			);
-
-			// Arrow to
-			const auto HSIArrowVec = centerVec + HSIVecNorm * (HSIRadius - HSIArrowHeight);
-
-			renderer->renderFilledTriangle(
-				static_cast<Point>(HSIArrowVec + HSIVecNormPerp * HSIArrowWidth),
-				static_cast<Point>(HSIArrowVec - HSIVecNormPerp * HSIArrowWidth),
-				HSILineTo,
-				&Theme::purple
-			);
-
-			// CDI
-			const auto HSICDIOffsetPixels = std::clamp(
-				HSICDIDeg,
-				-static_cast<float>(HSICDIAngleMaxDeg),
-				static_cast<float>(HSICDIAngleMaxDeg)
-			) * HSICDIAnglePixelsPerDeg;
-
-			const auto HSICDIVec = centerVec + HSIVecNormPerp * HSICDIOffsetPixels;
-
-			renderer->renderLine(
-				static_cast<Point>(HSICDIVec + HSIVecNorm * HSICDILengthHalf),
-				static_cast<Point>(HSICDIVec - HSIVecNorm * HSICDILengthHalf),
-				&Theme::purple,
-				2
-			);
-		}
-
-		// Fields
-		{
-			const auto fieldsVec = static_cast<Point>(Vector2F(fieldsRadius, 0).rotate(toRadians(-45)));
-
-			// WPT
-			{
-				const auto& waypoint = rc.settings.nav.waypoints[rc.settings.nav.navWaypointIndex];
-
-				renderField(
-				   renderer,
-				   Point(
-					   center.getX() - fieldsVec.getX(),
-					   center.getY() + fieldsVec.getY()
-				   ),
-				   L"WPT",
-				   waypoint.name
-			   );
-			}
-
-			// CRS
-			renderField(
-				renderer,
-				Point(
-					center.getX() + fieldsVec.getX(),
-					center.getY() + fieldsVec.getY()
-				),
-				L"CRS",
-				std::format(L"{:03}", rc.settings.nav.navWaypointCourse)
-			);
-
-			// DIS
-			renderField(
-				renderer,
-				Point(
-					center.getX() - fieldsVec.getX(),
-					center.getY() - fieldsVec.getY()
-				),
-				L"DIS",
-				std::format(L"{:.1f} nm", rc.navWaypointDistanceNm)
-			);
-
-			// ETE
-			renderField(
-				renderer,
-				Point(
-					center.getX() + fieldsVec.getX(),
-					center.getY() - fieldsVec.getY()
-				),
-				L"ETE",
-				std::format(L"{:02}:{:02}", rc.navWaypointETESec / 3600, rc.navWaypointETESec % 60)
-			);
 		}
 	}
 
@@ -718,7 +791,7 @@ namespace pizda {
 				&Theme::bg1
 			);
 
-			const auto text = std::format(L"{:02}:{:02}", rc.gps.getTimeHours(), rc.gps.getTimeMinutes());
+			const auto text = rc.gnss.haveTime() ? std::format(L"{:02}:{:02}", rc.gnss.getTimeHours(), rc.gnss.getTimeMinutes()) : L"--:--";
 
 			renderer->renderString(
 				Point(
@@ -732,42 +805,6 @@ namespace pizda {
 		}
 
 		// Compass
-
-		// Solid color
-		{
-			renderer->renderFilledCircle(
-			   center,
-			   compassRadius,
-			   &Theme::bg1
-		   );
-		}
-
-		// // Horizon
-		// {
-		// 	// Sky
-		// 	renderer->renderFilledCircle(
-		// 		center,
-		// 		compassRadius,
-		// 		&Theme::sky
-		// 	);
-		//
-		// 	// Ground
-		// 	const auto oldViewport = renderer->pushViewport(Bounds(
-		// 		bounds.getX(),
-		// 		bounds.getY() + bounds.getHeight() / 2,
-		// 		bounds.getWidth(),
-		// 		bounds.getHeight() / 2
-		// 	));
-		//
-		// 	renderer->renderFilledCircle(
-		// 		center,
-		// 		compassRadius,
-		// 		&Theme::ground
-		// 	);
-		//
-		// 	renderer->popViewport(oldViewport);
-		// }
-
 		renderCompass(renderer, bounds);
 
 		// Speed
@@ -802,7 +839,7 @@ namespace pizda {
 					? static_cast<int16_t>(incrementMagnitude)
 					: static_cast<int16_t>(-incrementMagnitude);
 
-				rc.settings.nav.navWaypointCourse = static_cast<uint16_t>(normalizeAngle360(static_cast<int32_t>(rc.settings.nav.navWaypointCourse) + incrementValue));
+				rc.settings.nav.navWaypointCourseDeg = static_cast<uint16_t>(normalizeAngle360(static_cast<int32_t>(rc.settings.nav.navWaypointCourseDeg) + incrementValue));
 				rc.settings.nav.scheduleWrite();
 
 				event->setHandled(true);

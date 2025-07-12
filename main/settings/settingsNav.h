@@ -29,7 +29,7 @@ namespace pizda {
 			std::vector<SettingsNavWaypoint> waypoints {};
 
 			uint16_t navWaypointIndex = 0;
-			uint16_t navWaypointCourse = 0;
+			uint16_t navWaypointCourseDeg = 0;
 
 			uint16_t bearingWaypointIndex = 0;
 
@@ -79,14 +79,14 @@ namespace pizda {
 				}
 
 				navWaypointIndex = stream.getUint16(_navWaypointIndex, 0);
-				navWaypointCourse = stream.getUint16(_navWaypointCourse, 0);
+				navWaypointCourseDeg = stream.getUint16(_navWaypointCourse, 0);
 
 				bearingWaypointIndex = stream.getUint16(_bearingWaypointIndex, 1);
 			}
 
 			void onWrite(const NVSStream& stream) override {
 				stream.setUint16(_navWaypointIndex, navWaypointIndex);
-				stream.setUint16(_navWaypointCourse, navWaypointCourse);
+				stream.setUint16(_navWaypointCourse, navWaypointCourseDeg);
 
 				stream.setUint16(_bearingWaypointIndex, bearingWaypointIndex);
 			}

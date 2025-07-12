@@ -24,7 +24,7 @@ namespace pizda {
 		public:
 			Settings settings {};
 
-			GNSS gps {
+			GNSS gnss {
 				constants::uart::port
 			};
 
@@ -81,7 +81,6 @@ namespace pizda {
 			const Route* getRoute() const;
 			void setRoute(const Route* route);
 
-
 		private:
 			RC() = default;
 
@@ -97,8 +96,8 @@ namespace pizda {
 
 			void SPIBusSetup() const;
 
-			Vector3F computeWaypointBearingVector(const SettingsNavWaypoint& waypoint) const;
-			static float computeWaypointBearingAngle(const Vector3F& bearingVector);
+			Vector3F computeWaypointBearingVector(const SettingsNavWaypoint& waypoint);
+			static float computeWaypointBearingAngleDeg(const Vector3F& bearingVector);
 			static float computeWaypointBearingDistance(const Vector3F& bearingVector);
 			void computeStuff();
 	};

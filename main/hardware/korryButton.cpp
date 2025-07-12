@@ -25,8 +25,8 @@ namespace pizda {
 		gpio_config_t config {};
 		config.pin_bit_mask = 1ULL << _pin;
 		config.mode = GPIO_MODE_INPUT;
-		config.pull_up_en = GPIO_PULLUP_DISABLE;
-		config.pull_down_en = GPIO_PULLDOWN_ENABLE;
+		config.pull_up_en = GPIO_PULLUP_ENABLE;
+		config.pull_down_en = GPIO_PULLDOWN_DISABLE;
 		config.intr_type = GPIO_INTR_ANYEDGE;
 
 		gpio_config(&config);
@@ -68,6 +68,6 @@ namespace pizda {
 	}
 
 	bool KorryButton::isPressed() const {
-		return gpio_get_level(_pin) == 1;
+		return gpio_get_level(_pin) == 0;
 	}
 }

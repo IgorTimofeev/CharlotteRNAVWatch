@@ -1,4 +1,6 @@
 #include <rc.h>
+
+#include "resources/images.h"
 #include "utils/lowPassFilter.h"
 #include "utils/units.h"
 
@@ -18,6 +20,14 @@ namespace pizda {
 		display.setup();
 		renderer.setTarget(&display);
 
+		// Rendering splash screen
+		renderer.clear(&Theme::bg1);
+		renderer.renderImage(Point(), &resources::Images::splashScreen);
+		renderer.flush();
+
+		// Turning display on
+		display.turnOn();
+
 		// Settings
 		NVSSetup();
 		settings.readAll();
@@ -27,10 +37,10 @@ namespace pizda {
 		buttonMiddle.setup();
 		buttonDown.setup();
 
-		// GPS
-		gps.setup();
-		gps.setUpdateInterval(1000);
-		gps.setGNSSSystem(GNSSSystem::GPS | GNSSSystem::GLONASS | GNSSSystem::Galileo | GNSSSystem::QZSS | GNSSSystem::SBAS);
+		// GNSS
+		gnss.setup();
+		gnss.setUpdateInterval(1000);
+		gnss.setGNSSSystem(GNSSSystem::GPS | GNSSSystem::GLONASS | GNSSSystem::Galileo | GNSSSystem::QZSS | GNSSSystem::SBAS);
 
 		// UI
 		// Theme::setup(&renderer);
@@ -43,14 +53,17 @@ namespace pizda {
 
 		setRoute(&Routes::PFD);
 
+		// This shit is blazingly 🔥 fast 🚀, so letting user enjoy logo for a few moments
+		vTaskDelay(pdMS_TO_TICKS(1000));
+
 		// Main loop
 		while (true) {
 			const auto tickTime = esp_timer_get_time();
 
+			computeStuff();
+
 			application.tick();
 			application.render();
-
-			computeStuff();
 
 			// Skipping remaining tick time if any
 			const auto deltaTime = esp_timer_get_time() - tickTime;
@@ -89,22 +102,22 @@ namespace pizda {
 		application += _selectedPage;
 	}
 
-	Vector3F RC::computeWaypointBearingVector(const SettingsNavWaypoint& waypoint) const {
+	Vector3F RC::computeWaypointBearingVector(const SettingsNavWaypoint& waypoint) {
 		const auto aircraftCoordinates = GeographicCoordinates(
-			gps.getLatitudeRad(),
-			gps.getLongitudeRad(),
-			gps.getAltitudeM()
+			gnss.getLatitudeRad(),
+			gnss.getLongitudeRad(),
+			gnss.getAltitudeM()
 		).toCartesian();
 
 		auto coordinatesDelta = waypoint.geographicCoordinates.toCartesian() - aircraftCoordinates;
-		coordinatesDelta = coordinatesDelta.rotateAroundZAxis(-gps.getLongitudeRad());
-		coordinatesDelta = coordinatesDelta.rotateAroundYAxis(gps.getLatitudeRad());
+		coordinatesDelta = coordinatesDelta.rotateAroundZAxis(-gnss.getLongitudeRad());
+		coordinatesDelta = coordinatesDelta.rotateAroundYAxis(gnss.getLatitudeRad());
 
 		return coordinatesDelta;
 	}
 
-	float RC::computeWaypointBearingAngle(const Vector3F& bearingVector) {
-		return std::atan2f(bearingVector.getY(), bearingVector.getZ());
+	float RC::computeWaypointBearingAngleDeg(const Vector3F& bearingVector) {
+		return normalizeAngle360(toDegrees(std::atan2f(bearingVector.getY(), bearingVector.getZ())));
 	}
 
 	float RC::computeWaypointBearingDistance(const Vector3F& bearingVector) {
@@ -121,10 +134,10 @@ namespace pizda {
 		const auto& bearingWaypoint = settings.nav.waypoints[settings.nav.bearingWaypointIndex];
 
 		const auto navWaypointBearingVector = computeWaypointBearingVector(navWaypoint);
-		const auto navWaypointBearingDegTarget = toDegrees(computeWaypointBearingAngle(navWaypointBearingVector));
+		const auto navWaypointBearingDegTarget = computeWaypointBearingAngleDeg(navWaypointBearingVector);
 
 		const auto bearingWaypointBearingVector = computeWaypointBearingVector(bearingWaypoint);
-		const auto bearingWaypointBearingDegTarget = toDegrees(computeWaypointBearingAngle(bearingWaypointBearingVector));
+		const auto bearingWaypointBearingDegTarget = computeWaypointBearingAngleDeg(bearingWaypointBearingVector);
 
 		// Low pass
 
@@ -140,14 +153,14 @@ namespace pizda {
 
 		// Normal
 		LPFFactor = 1.0f * deltaTime / 1'000'000.f;
-		LowPassFilter::apply(courseDeg, gps.getCourseDeg(), LPFFactor);
-		LowPassFilter::apply(speedKt, Units::convertSpeed(gps.getSpeedMs(), SpeedUnit::meterPerSecond, SpeedUnit::knot), LPFFactor);
-		LowPassFilter::apply(altitudeFt, Units::convertDistance(gps.getAltitudeM(), DistanceUnit::meter, DistanceUnit::foot), LPFFactor);
+		LowPassFilter::apply(courseDeg, gnss.haveCourse() ? gnss.getCourseDeg() : 0, LPFFactor);
+		LowPassFilter::apply(speedKt, gnss.haveSpeed() ? Units::convertSpeed(gnss.getSpeedMps(), SpeedUnit::meterPerSecond, SpeedUnit::knot) : 0, LPFFactor);
+		LowPassFilter::apply(altitudeFt, gnss.haveAltitude() ? Units::convertDistance(gnss.getAltitudeM(), DistanceUnit::meter, DistanceUnit::foot) : 0, LPFFactor);
 
 		// Slow
 		LPFFactor = 0.5f * deltaTime / 1'000'000.f;
-		LowPassFilter::apply(speedTrendKt, gps.getSpeedTrendKt(), LPFFactor);
-		LowPassFilter::apply(altitudeTrendFt, Units::convertDistance(gps.getAltitudeTrendM(), DistanceUnit::meter, DistanceUnit::foot), LPFFactor);
+		LowPassFilter::apply(speedTrendKt, gnss.haveSpeed() ? gnss.getSpeedTrendKt() : 0, LPFFactor);
+		LowPassFilter::apply(altitudeTrendFt, gnss.haveAltitude() ? Units::convertDistance(gnss.getAltitudeTrendM(), DistanceUnit::meter, DistanceUnit::foot) : 0, LPFFactor);
 
 		// Delayed shit
 		if (esp_timer_get_time() >= _computingDelayedTickTime) {
