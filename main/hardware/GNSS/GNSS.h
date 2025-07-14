@@ -113,7 +113,11 @@ namespace pizda {
 			}
 
 			float getCourseDeg() {
-				return simulationMode ? simulationCourse : normalizeAngle360(gps.course.value());
+				return normalizeAngle360(gps.course.value());
+			}
+
+			float getComputedCourseDeg() const {
+				return courseComputed;
 			}
 
 			bool haveTime() const {
@@ -166,6 +170,7 @@ namespace pizda {
 			constexpr static uint16_t queueSize = 10;
 			constexpr static auto tickInterval = 1'000'000;
 			constexpr static auto trendInterval = 5'000'000;
+			constexpr static auto courseTickInterval = 3'000'000;
 
 			uart_port_t uartPort;
 			TinyGPSPlus gps {};
@@ -173,7 +178,12 @@ namespace pizda {
 			char rxBuffer[rxBufferSize] {};
 
 			bool simulationMode = false;
-			float simulationCourse = 0;
+
+			float courseComputed = 0;
+			int64_t courseTickTime = 0;
+			float coursePrevLatitude = 0;
+			float coursePrevLongitude = 0;
+
 			float simulationAltitude = 0;
 			float simulationSpeed = 0;
 			float simulationLatitude = -1;
@@ -223,13 +233,13 @@ namespace pizda {
 
 					if (simulationMode) {
 						// Lat/lon
-						constexpr static float simulationLatFrom = toRadians(59.79363656610644);
-						constexpr static float simulationLonFrom = toRadians(30.56466522806966);
+						constexpr static float simulationLatFrom = toRadians(59.804165104373745);
+						constexpr static float simulationLonFrom = toRadians(30.58331776426169);
 
-						constexpr static float simulationLatTo = toRadians(59.82238390534588);
-						constexpr static float simulationLonTo = simulationLonFrom;
+						constexpr static float simulationLatTo = toRadians(59.80960977788406);
+						constexpr static float simulationLonTo = toRadians(30.59353048681725);
 
-						constexpr static float simulationLatLonTime = 10'000'000.f;
+						constexpr static float simulationLatLonTime = 20'000'000.f;
 
 						if (simulationLatitude < 0) {
 							simulationLatitude = simulationLatFrom;
@@ -245,14 +255,6 @@ namespace pizda {
 							simulationLatitude = simulationLatFrom;
 							simulationLongitude = simulationLonFrom;
 						}
-
-						// Course
-						simulationCourse += YOBA::random(1, 2);
-
-						if (simulationCourse < 180 && simulationCourse >= 20)
-							simulationCourse = 360 - 20;
-
-						simulationCourse = normalizeAngle360(simulationCourse);
 
 						// Speed
 						simulationSpeed += YOBA::random(
@@ -271,6 +273,21 @@ namespace pizda {
 
 						if (simulationAltitude >= Units::convertDistance(150, DistanceUnit::foot, DistanceUnit::meter))
 							simulationAltitude = 0;
+					}
+
+					// Course
+					if (esp_timer_get_time() > courseTickTime) {
+						courseComputed = normalizeAngle360(toDegrees(GeographicCoordinates::getBearing(
+							coursePrevLatitude,
+							coursePrevLongitude,
+							getLatitudeRad(),
+							getLongitudeRad()
+						)));
+
+						coursePrevLatitude = getLatitudeRad();
+						coursePrevLongitude = getLongitudeRad();
+
+						courseTickTime = esp_timer_get_time() + courseTickInterval;
 					}
 
 					// Trends

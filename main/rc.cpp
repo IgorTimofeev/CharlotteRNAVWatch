@@ -122,14 +122,6 @@ namespace pizda {
 		return coordinatesDelta;
 	}
 
-	float RC::computeWaypointBearingAngleDeg(const Vector3F& bearingVector) {
-		return normalizeAngle360(toDegrees(std::atan2f(bearingVector.getY(), bearingVector.getZ())));
-	}
-
-	float RC::computeWaypointBearingDistance(const Vector3F& bearingVector) {
-		return bearingVector.getLength();
-	}
-
 	void RC::computeStuff() {
 		const auto deltaTime = static_cast<float>(esp_timer_get_time() - _computingPrimaryTickTime);
 
@@ -139,11 +131,19 @@ namespace pizda {
 		const auto& navWaypoint = settings.nav.waypoints[settings.nav.navWaypointIndex];
 		const auto& bearingWaypoint = settings.nav.waypoints[settings.nav.bearingWaypointIndex];
 
-		const auto navWaypointBearingVector = computeWaypointBearingVector(navWaypoint);
-		const auto navWaypointBearingDegTarget = computeWaypointBearingAngleDeg(navWaypointBearingVector);
+		const auto navWaypointBearingDegTarget = normalizeAngle360(toDegrees(GeographicCoordinates::getBearing(
+			gnss.getLatitudeRad(),
+			gnss.getLongitudeRad(),
+			navWaypoint.geographicCoordinates.getLatitude(),
+			navWaypoint.geographicCoordinates.getLongitude()
+		)));
 
-		const auto bearingWaypointBearingVector = computeWaypointBearingVector(bearingWaypoint);
-		const auto bearingWaypointBearingDegTarget = computeWaypointBearingAngleDeg(bearingWaypointBearingVector);
+		const auto bearingWaypointBearingDegTarget = normalizeAngle360(toDegrees(GeographicCoordinates::getBearing(
+			gnss.getLatitudeRad(),
+			gnss.getLongitudeRad(),
+			bearingWaypoint.geographicCoordinates.getLatitude(),
+			bearingWaypoint.geographicCoordinates.getLongitude()
+		)));
 
 		// Low pass
 
@@ -160,24 +160,27 @@ namespace pizda {
 		// Normal
 		LPFFactor = 1.0f * deltaTime / 1'000'000.f;
 
-		const auto targetCourseDeg = gnss.haveCourse() ? gnss.getCourseDeg() : 0;
-
-		// Clockwise
-		if (courseDeg > 270 && targetCourseDeg < 90) {
-			courseDeg = courseDeg - 360;
-			LowPassFilter::apply(courseDeg, targetCourseDeg, LPFFactor);
-		}
-		// Counter-clockwise
-		else if (targetCourseDeg > 270 && courseDeg < 90) {
-			LowPassFilter::apply(courseDeg, targetCourseDeg - 360, LPFFactor);
-			courseDeg = normalizeAngle360(courseDeg);
-		}
-		else {
-			LowPassFilter::apply(courseDeg, targetCourseDeg, LPFFactor);
-		}
-
 		LowPassFilter::apply(speedKt, gnss.haveSpeed() ? Units::convertSpeed(gnss.getSpeedMps(), SpeedUnit::meterPerSecond, SpeedUnit::knot) : 0, LPFFactor);
 		LowPassFilter::apply(altitudeFt, gnss.haveAltitude() ? Units::convertDistance(gnss.getAltitudeM(), DistanceUnit::meter, DistanceUnit::foot) : 0, LPFFactor);
+
+		// Course
+		if (speedKt > 2) {
+			const auto targetCourseDeg = gnss.getComputedCourseDeg();
+
+			// Clockwise
+			if (courseDeg > 270 && targetCourseDeg < 90) {
+				courseDeg = courseDeg - 360;
+				LowPassFilter::apply(courseDeg, targetCourseDeg, LPFFactor);
+			}
+			// Counter-clockwise
+			else if (targetCourseDeg > 270 && courseDeg < 90) {
+				LowPassFilter::apply(courseDeg, targetCourseDeg - 360, LPFFactor);
+				courseDeg = normalizeAngle360(courseDeg);
+			}
+			else {
+				LowPassFilter::apply(courseDeg, targetCourseDeg, LPFFactor);
+			}
+		}
 
 		// Slow
 		LPFFactor = 0.5f * deltaTime / 1'000'000.f;
@@ -186,7 +189,17 @@ namespace pizda {
 
 		// Delayed shit
 		if (esp_timer_get_time() >= _computingDelayedTickTime) {
-			navWaypointDistanceNm = Units::convertDistance(computeWaypointBearingDistance(bearingWaypointBearingVector), DistanceUnit::meter, DistanceUnit::nauticalMile);
+			navWaypointDistanceNm = Units::convertDistance(
+				GeographicCoordinates::getDistance(
+					gnss.getLatitudeRad(),
+					gnss.getLongitudeRad(),
+					navWaypoint.geographicCoordinates.getLatitude(),
+					navWaypoint.geographicCoordinates.getLongitude()
+				),
+				DistanceUnit::meter,
+				DistanceUnit::nauticalMile
+			);
+
 			navWaypointETESec = static_cast<uint32_t>(navWaypointDistanceNm / speedKt * 3600);
 
 			_computingDelayedTickTime = esp_timer_get_time() + computeDelayedTickInterval;

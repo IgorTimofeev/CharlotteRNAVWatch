@@ -99,8 +99,6 @@ namespace pizda {
 			void SPIBusSetup() const;
 
 			Vector3F computeWaypointBearingVector(const SettingsNavWaypoint& waypoint);
-			static float computeWaypointBearingAngleDeg(const Vector3F& bearingVector);
-			static float computeWaypointBearingDistance(const Vector3F& bearingVector);
 			void computeStuff();
 	};
 }

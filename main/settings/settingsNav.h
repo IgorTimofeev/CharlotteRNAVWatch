@@ -65,7 +65,7 @@ namespace pizda {
 
 						waypoints.push_back(SettingsNavWaypoint(
 							L"TSRKV",
-							GeographicCoordinates(toRadians(59.80445769221725), toRadians(30.60162419878338), 0)
+							GeographicCoordinates(toRadians(59.8045049291447), toRadians(30.602001249170907), 0)
 						));
 
 						waypoints.push_back(SettingsNavWaypoint(

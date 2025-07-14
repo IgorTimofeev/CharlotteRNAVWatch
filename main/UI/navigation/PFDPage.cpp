@@ -736,9 +736,9 @@ namespace pizda {
 			constexpr static uint8_t triangleWidth = 4;
 			constexpr static uint8_t triangleHeight = 5;
 
-			const auto bg = rc.gnss.haveCourse() ? &Theme::bg1 : &Theme::bgRed2;
-			const auto fg = rc.gnss.haveCourse() ? &Theme::fg1 : &Theme::fgRed1;
-			const auto text = rc.gnss.haveCourse() ? std::format(L"{:03}", static_cast<int16_t>(rc.courseDeg)) : L"---";
+			const auto bg = rc.gnss.haveLocation() ? &Theme::bg1 : &Theme::bgRed2;
+			const auto fg = rc.gnss.haveLocation() ? &Theme::fg1 : &Theme::fgRed1;
+			const auto text = rc.gnss.haveLocation() ? std::format(L"{:03}", static_cast<int16_t>(rc.courseDeg)) : L"---";
 
 			const auto courseBounds = Bounds(
 				center.getX() - courseWidth / 2,

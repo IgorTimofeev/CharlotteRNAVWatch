@@ -13,6 +13,7 @@ namespace pizda {
 			MainMenuPage();
 
 			RouteMenuItem waypointsItem;
+			RouteMenuItem devItem;
 			RouteMenuItem settingsItem;
 			RouteMenuItem backItem;
 	};

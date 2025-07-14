@@ -119,7 +119,7 @@ namespace pizda {
 				4
 			),
 			2,
-			getValue() ? &Theme::green : &Theme::yellow
+			getValue() ? &Theme::green : &Theme::red
 		);
 	}
 

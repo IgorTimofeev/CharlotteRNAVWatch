@@ -4,6 +4,7 @@
 namespace pizda {
 	MainMenuPage::MainMenuPage() :
 		waypointsItem(RouteMenuItem(L"Waypoints", &Routes::waypoints)),
+		devItem(RouteMenuItem(L"Debug", &Routes::dev)),
 		settingsItem(RouteMenuItem(L"Settings", &Routes::settings)),
 		backItem(RouteMenuItem(L"Back", &Routes::PFD))
 	{
@@ -11,6 +12,7 @@ namespace pizda {
 
 		menu.setItems({
 			&waypointsItem,
+			&devItem,
 			&settingsItem,
 			&backItem,
 		});
