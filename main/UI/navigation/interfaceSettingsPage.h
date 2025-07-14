@@ -8,13 +8,11 @@
 namespace pizda {
 	using namespace YOBA;
 
-	class SettingsPage : public MenuPage {
+	class InterfaceSettingsPage : public MenuPage {
 		public:
-			SettingsPage();
+			InterfaceSettingsPage();
 
-			RouteMenuItem PFDSettingsItem;
-			RouteMenuItem GNSSSettingsItem;
-			RouteMenuItem interfaceItem;
+			RouteMenuItem themeItem;
 			RouteMenuItem backItem;
 	};
 }

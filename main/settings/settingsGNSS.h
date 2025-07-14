@@ -3,6 +3,8 @@
 #include <YOBANVS/main.h>
 
 namespace pizda {
+	using namespace YOBA;
+	
 	class SettingsGNSS : public NVSSettings {
 		public:
 			bool GPS = true;

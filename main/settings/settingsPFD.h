@@ -3,6 +3,8 @@
 #include <YOBANVS/main.h>
 
 namespace pizda {
+	using namespace YOBA;
+
 	enum class SettingsPFDScale : uint8_t {
 		foot,
 		bike,

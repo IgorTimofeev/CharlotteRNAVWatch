@@ -82,6 +82,7 @@ namespace pizda {
 
 			void updateGNSSSystemsFromSettings() const;
 			void updateGNSSSimulationFromSettings();
+			void updateThemeFromSettings() const;
 
 		private:
 			RC() = default;

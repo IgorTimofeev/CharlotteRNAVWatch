@@ -18,6 +18,6 @@ namespace pizda {
 
 			BoolMenuItem simulationItem;
 
-			RouteMenuItem backMenuItem;
+			RouteMenuItem backItem;
 	};
 }

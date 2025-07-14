@@ -44,7 +44,7 @@ namespace pizda {
 		updateGNSSSimulationFromSettings();
 
 		// UI
-		// Theme::setup(&renderer);
+		updateThemeFromSettings();
 		application.setRenderer(&renderer);
 		application.setBackgroundColor(&Theme::bg1);
 
@@ -91,6 +91,17 @@ namespace pizda {
 
 	void RC::updateGNSSSimulationFromSettings() {
 		gnss.setSimulationMode(settings.GNSS.simulation);
+	}
+
+	void RC::updateThemeFromSettings() const {
+		switch (settings.interface.theme) {
+			case SettingsInterfaceTheme::dark:
+				Theme::setDark();
+				break;
+			default:
+				Theme::setBright();
+				break;
+		}
 	}
 
 	const Route* RC::getRoute() const {

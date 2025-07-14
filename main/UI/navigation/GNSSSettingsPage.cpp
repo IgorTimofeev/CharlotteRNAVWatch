@@ -10,7 +10,7 @@ namespace pizda {
 		
 		simulationItem(BoolMenuItem(L"Simulation")),
 		
-		backMenuItem(RouteMenuItem(L"Back", &Routes::mainMenu))
+		backItem(RouteMenuItem(L"Back", &Routes::mainMenu))
 	{
 		title.setText(L"GNSS settings");
 
@@ -63,7 +63,7 @@ namespace pizda {
 
 			&GLONASSSystemItem,
 			
-			&backMenuItem,
+			&backItem,
 		});
 	}
 }

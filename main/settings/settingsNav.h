@@ -4,6 +4,8 @@
 #include <YOBANVS/main.h>
 
 namespace pizda {
+	using namespace YOBA;
+
 	class SettingsNavWaypoint {
 		public:
 			SettingsNavWaypoint() = default;
