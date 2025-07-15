@@ -39,10 +39,16 @@ namespace pizda {
 			static RGB565Color bad2;
 
 			static RGB565Color red;
+			static RGB565Color redBright;
 			static RGB565Color purple;
 			static RGB565Color green;
 			static RGB565Color yellow;
 			static RGB565Color ocean;
+
+			static RGB565Color speedBarWhite;
+			static RGB565Color speedBarGreen;
+			static RGB565Color speedBarYellow;
+			static RGB565Color speedBarRed;
 
 			static const unscii16Font fontBig;
 			static const PIXY10Font fontNormal;

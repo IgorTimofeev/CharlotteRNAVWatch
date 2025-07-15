@@ -11,15 +11,9 @@ namespace pizda {
 		invalidate();
 	}
 
-	Vector2F PFDPage::getSpeedVec(const float speed) {
-		const auto& rc = RC::getInstance();
-
-		return Vector2F(displayRadius, 0).rotate(toRadians(180) - (rc.speedKt - speed) * speedStepRadPerKt);
-	}
-
 	Vector2F PFDPage::getAltitudeVec(const float altitude) {
 		const auto& rc = RC::getInstance();
-		const auto angleRad = (rc.altitudeFt - altitude) * altitudeStepRadPerFt;
+		const auto angleRad = (rc.altitudeFt - altitude) * rc.performanceProfile.altitudeStepRadPerFt;
 
 		return Vector2F(displayRadius, 0).rotate(angleRad);
 	}
@@ -73,17 +67,21 @@ namespace pizda {
 		const auto& rc = RC::getInstance();
 
 		const auto value = rc.speedKt;
-		const auto snappedLineValue = static_cast<int32_t>(value / speedStep) * speedStep;
+		const auto snappedLineValue = static_cast<int32_t>(value / rc.performanceProfile.speedStep) * rc.performanceProfile.speedStep;
 
 		auto lineValue = snappedLineValue;
 		Point lineTo;
 
-		const auto computeLineTo = [&lineValue, &lineTo, &center, this] {
-			lineTo = center + static_cast<Point>(getSpeedVec(static_cast<float>(lineValue)));
+		const auto computeLineTo = [&lineValue, &lineTo, &center, this, &rc] {
+			lineTo =
+				center + static_cast<Point>(
+					Vector2F(displayRadius - speedBarWidth, 0)
+					.rotate(std::numbers::pi_v<float> - (rc.speedKt - static_cast<float>(lineValue)) * rc.performanceProfile.speedStepRadPerKt)
+				);
 		};
 
-		const auto renderLine = [&lineValue, &lineTo, renderer, this] {
-			const auto isBig = lineValue % speedStepBig == 0;
+		const auto renderLine = [&lineValue, &lineTo, renderer, this, &rc] {
+			const auto isBig = lineValue % rc.performanceProfile.speedStepBig == 0;
 			const auto lineLength = isBig ? sidebarLineLength1 : sidebarLineLength2;
 
 			renderer->renderHorizontalLine(
@@ -118,14 +116,14 @@ namespace pizda {
 
 			renderLine();
 
-			lineValue -= speedStep;
+			lineValue -= rc.performanceProfile.speedStep;
 
 			if (lineValue < 0)
 				break;
 		}
 
 		// Up
-		lineValue = snappedLineValue + speedStep;
+		lineValue = snappedLineValue + rc.performanceProfile.speedStep;
 
 		while (true) {
 			computeLineTo();
@@ -137,7 +135,45 @@ namespace pizda {
 
 			renderLine();
 
-			lineValue += speedStep;
+			lineValue += rc.performanceProfile.speedStep;
+		}
+
+		// Bars
+		{
+			constexpr static uint8_t diffAngle = 50;
+			constexpr static float minAngle = toRadians(180 - diffAngle);
+			constexpr static float maxAngle = toRadians(180 + diffAngle);
+
+			for (const auto& [from, to, color] : rc.performanceProfile.speedBars) {
+				const auto radFrom = std::clamp(
+					std::numbers::pi_v<float> - (from - value) * rc.performanceProfile.speedStepRadPerKt,
+					minAngle,
+					maxAngle
+				);
+
+				const auto radTo = std::clamp(
+					std::numbers::pi_v<float> - (to - value) * rc.performanceProfile.speedStepRadPerKt,
+					minAngle,
+					maxAngle
+				);
+
+				// ESP_LOGI("SPD BARS", "from: %f, to: %f", toDegrees(radFrom), toDegrees(radTo));
+
+				if (radFrom == radTo)
+					continue;
+
+				// Thicc bars
+				for (uint8_t i = 0; i < speedBarWidth; i++) {
+					// To always > from
+					renderer->renderArc(
+						center,
+						displayRadius - i,
+						radTo,
+						radFrom,
+						color
+					);
+				}
+			}
 		}
 
 		// Trend
@@ -145,8 +181,8 @@ namespace pizda {
 			renderer,
 			center,
 			-rc.speedTrendKt,
-			speedStepRadPerKt,
-			toRadians(180)
+			rc.performanceProfile.speedStepRadPerKt,
+			std::numbers::pi_v<float>
 		);
 
 		// Value
@@ -206,7 +242,7 @@ namespace pizda {
 		const auto& rc = RC::getInstance();
 
 		const auto value = rc.altitudeFt;
-		const auto snappedLineValue = static_cast<int32_t>(value / altitudeStep) * altitudeStep;
+		const auto snappedLineValue = static_cast<int32_t>(value / rc.performanceProfile.altitudeStep) * rc.performanceProfile.altitudeStep;
 
 		auto lineValue = snappedLineValue;
 		Point lineTo;
@@ -215,8 +251,8 @@ namespace pizda {
 			lineTo = center + static_cast<Point>(getAltitudeVec(static_cast<float>(lineValue)));
 		};
 
-		const auto renderLine = [&lineValue, &lineTo, renderer, this] {
-			const auto isBig = lineValue % altitudeStepBig == 0;
+		const auto renderLine = [&lineValue, &lineTo, renderer, this, &rc] {
+			const auto isBig = lineValue % rc.performanceProfile.altitudeStepBig == 0;
 			const auto lineLength = isBig ? sidebarLineLength1 : sidebarLineLength2;
 
 			renderer->renderHorizontalLine(
@@ -252,14 +288,14 @@ namespace pizda {
 
 			renderLine();
 
-			lineValue -= altitudeStep;
+			lineValue -= rc.performanceProfile.altitudeStep;
 
 			if (lineValue < 0)
 				break;
 		}
 
 		// Up
-		lineValue = snappedLineValue + altitudeStep;
+		lineValue = snappedLineValue + rc.performanceProfile.altitudeStep;
 
 		while (true) {
 			computeLineTo();
@@ -269,7 +305,7 @@ namespace pizda {
 
 			renderLine();
 
-			lineValue += altitudeStep;
+			lineValue += rc.performanceProfile.altitudeStep;
 		}
 
 		// Trend
@@ -277,7 +313,7 @@ namespace pizda {
 			renderer,
 			center,
 			rc.altitudeTrendFt,
-			altitudeStepRadPerFt,
+			rc.performanceProfile.altitudeStepRadPerFt,
 			0
 		);
 
@@ -401,19 +437,35 @@ namespace pizda {
 				renderer->renderLine(
 				   static_cast<Point>(centerVec + lineVec),
 				   static_cast<Point>(centerVec + lineVec - lineVecNorm * lineLength),
-				   &Theme::fg2
+				   lineDeg == 0 ? &Theme::redBright : &Theme::fg2
 			   );
 
 				// Text for big
 				if (lineLength == compassLineLength1) {
 					std::wstring text;
+					const Color* color;
 
 					switch (lineDeg) {
-						case 0: text = L"N"; break;
-						case 90: text = L"E"; break;
-						case 180: text = L"S"; break;
-						case 270: text = L"W"; break;
-						default: text = std::to_wstring(lineDeg / 10); break;
+						case 0:
+							text = L"N";
+							color = &Theme::redBright;
+							break;
+						case 90:
+							text = L"E";
+							color = &Theme::fg1;
+							break;
+						case 180:
+							text = L"S";
+							color = &Theme::fg1;
+							break;
+						case 270:
+							text = L"W";
+							color = &Theme::fg1;
+							break;
+						default:
+							text = std::to_wstring(lineDeg / 10);
+							color = &Theme::fg1;
+							break;
 					}
 
 					const auto textVec = centerVec + lineVec - lineVecNorm * (static_cast<float>(lineLength) + compassLineTexOffset);
@@ -424,7 +476,7 @@ namespace pizda {
 							static_cast<int32_t>(textVec.getY()) - Theme::fontNormal.getHeight() / 2
 						),
 						&Theme::fontNormal,
-						&Theme::fg1,
+						color,
 						text
 					);
 				}

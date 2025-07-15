@@ -3,7 +3,7 @@
 #include <YOBA/main.h>
 #include <YOBA/UI.h>
 
-#include "settings/settingsInterface.h"
+#include "types/settingsInterface.h"
 #include "UI/navigation/page.h"
 
 namespace pizda {

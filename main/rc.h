@@ -5,8 +5,10 @@
 #include <YOBA/main.h>
 #include <hardware/GNSS/GNSS.h>
 #include <hardware/korryButton.h>
-#include <settings/settings.h>
 #include <constants.h>
+
+#include <types/settings.h>
+#include <types/performanceProfile.h>
 
 #include <YOBA/main.h>
 #include <YOBA/UI.h>
@@ -39,7 +41,7 @@ namespace pizda {
 				constants::screen::frequency
 			);
 
-			RGB565PixelBufferRenderer renderer {  };
+			RGB565PixelBufferRenderer renderer {};
 
 			KorryButton buttonUp {
 				KorryButtonType::up,
@@ -57,6 +59,7 @@ namespace pizda {
 			};
 
 			Application application {};
+			PerformanceProfile performanceProfile {};
 
 			float courseDeg = 0;
 
@@ -83,6 +86,7 @@ namespace pizda {
 			void updateGNSSSystemsFromSettings() const;
 			void updateGNSSSimulationFromSettings();
 			void updateThemeFromSettings() const;
+			void updatePerformanceProfileFromSettings();
 
 		private:
 			RC() = default;
@@ -99,7 +103,6 @@ namespace pizda {
 
 			void SPIBusSetup() const;
 
-			Vector3F computeWaypointBearingVector(const SettingsNavWaypoint& waypoint);
 			void computeStuff();
 	};
 }

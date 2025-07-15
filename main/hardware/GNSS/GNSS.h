@@ -38,11 +38,13 @@ namespace pizda {
 
 				ESP_ERROR_CHECK(uart_param_config(uartPort, &config));
 				ESP_ERROR_CHECK(uart_set_pin(uartPort, constants::uart::tx, constants::uart::rx, GPIO_NUM_NC, GPIO_NUM_NC));
+			}
 
+			void startReading() {
 				xTaskCreate(
 					[](void* arg) {
 						while (true) {
-							static_cast<GNSS*>(arg)->tick();
+							static_cast<GNSS*>(arg)->readAndParse();
 							vTaskDelay(pdMS_TO_TICKS(tickInterval / 1000));
 						}
 					},
@@ -76,12 +78,12 @@ namespace pizda {
 				return simulationMode || gps.location.isValid();
 			}
 
-			float getLatitudeRad() {
-				return simulationMode ? simulationLatitude : gps.location.lat();
+			float getLatitudeRad() const {
+				return simulationMode ? simulationLatRad : latitudeRad;
 			}
 
-			float getLongitudeRad() {
-				return simulationMode ? simulationLongitude : gps.location.lng();
+			float getLongitudeRad() const {
+				return simulationMode ? simulationLonRad : longitudeRad;
 			}
 
 			bool haveAltitude() const {
@@ -93,7 +95,7 @@ namespace pizda {
 			}
 
 			float getAltitudeTrendM() const {
-				return altitudeTrend;
+				return altitudeTrendM;
 			}
 
 			bool haveSpeed() const {
@@ -104,7 +106,7 @@ namespace pizda {
 				return simulationMode ? simulationSpeed : gps.speed.mps();
 			}
 
-			float getSpeedTrendKt() const {
+			float getSpeedTrendMps() const {
 				return speedTrend;
 			}
 
@@ -170,7 +172,7 @@ namespace pizda {
 			constexpr static uint16_t queueSize = 10;
 			constexpr static auto tickInterval = 1'000'000;
 			constexpr static auto trendInterval = 5'000'000;
-			constexpr static auto courseTickInterval = 3'000'000;
+			constexpr static auto courseTickInterval = 2'500'000;
 
 			uart_port_t uartPort;
 			TinyGPSPlus gps {};
@@ -181,16 +183,28 @@ namespace pizda {
 
 			float courseComputed = 0;
 			int64_t courseTickTime = 0;
-			float coursePrevLatitude = 0;
-			float coursePrevLongitude = 0;
+			float coursePrevLatitudeRad = 0;
+			float coursePrevLongitudeRad = 0;
+
+			// Simulation
+			constexpr static float simulationLatRadFrom = toRadians(59.804165104373745);
+			constexpr static float simulationLonRadFrom = toRadians(30.58331776426169);
+
+			constexpr static float simulationLatRadTo = toRadians(59.80960977788406);
+			constexpr static float simulationLonRadTo = toRadians(30.59353048681725);
+
+			constexpr static float simulationLatLonTime = 20'000'000.f;
 
 			float simulationAltitude = 0;
 			float simulationSpeed = 0;
-			float simulationLatitude = -1;
-			float simulationLongitude = -1;
+			float simulationLatRad = simulationLatRadFrom;
+			float simulationLonRad = simulationLonRadFrom;
 
-			float oldAltitude = 0;
-			float altitudeTrend = 0;
+			float latitudeRad = 0;
+			float longitudeRad = 0;
+
+			float oldAltitudeM = 0;
+			float altitudeTrendM = 0;
 
 			float oldSpeed = 0;
 			float speedTrend = 0;
@@ -220,7 +234,7 @@ namespace pizda {
 				delete[] buffer;
 			}
 
-			void tick() {
+			void readAndParse() {
 				const auto bytesRead = uart_read_bytes(uartPort, rxBuffer, rxBufferSize - 1, pdMS_TO_TICKS(100));
 
 				if (bytesRead) {
@@ -231,29 +245,20 @@ namespace pizda {
 					while (*bufferPtr)
 						gps.encode(*bufferPtr++);
 
+					// Location
+					latitudeRad = toRadians(gps.location.lat());
+					longitudeRad = toRadians(gps.location.lng());
+
 					if (simulationMode) {
 						// Lat/lon
-						constexpr static float simulationLatFrom = toRadians(59.804165104373745);
-						constexpr static float simulationLonFrom = toRadians(30.58331776426169);
-
-						constexpr static float simulationLatTo = toRadians(59.80960977788406);
-						constexpr static float simulationLonTo = toRadians(30.59353048681725);
-
-						constexpr static float simulationLatLonTime = 20'000'000.f;
-
-						if (simulationLatitude < 0) {
-							simulationLatitude = simulationLatFrom;
-							simulationLongitude = simulationLonFrom;
-						}
-
 						// distance - 10 sec
 						// x - deltaTime
-						simulationLatitude += (simulationLatTo - simulationLatFrom) * static_cast<float>(tickInterval) / simulationLatLonTime;
-						simulationLongitude += (simulationLonTo - simulationLonFrom) * static_cast<float>(tickInterval) / simulationLatLonTime;
+						simulationLatRad += (simulationLatRadTo - simulationLatRadFrom) * static_cast<float>(tickInterval) / simulationLatLonTime;
+						simulationLonRad += (simulationLonRadTo - simulationLonRadFrom) * static_cast<float>(tickInterval) / simulationLatLonTime;
 
-						if (simulationLatitude > simulationLatTo) {
-							simulationLatitude = simulationLatFrom;
-							simulationLongitude = simulationLonFrom;
+						if (simulationLatRad > simulationLatRadTo) {
+							simulationLatRad = simulationLatRadFrom;
+							simulationLonRad = simulationLonRadFrom;
 						}
 
 						// Speed
@@ -278,14 +283,14 @@ namespace pizda {
 					// Course
 					if (esp_timer_get_time() > courseTickTime) {
 						courseComputed = normalizeAngle360(toDegrees(GeographicCoordinates::getBearing(
-							coursePrevLatitude,
-							coursePrevLongitude,
+							coursePrevLatitudeRad,
+							coursePrevLongitudeRad,
 							getLatitudeRad(),
 							getLongitudeRad()
 						)));
 
-						coursePrevLatitude = getLatitudeRad();
-						coursePrevLongitude = getLongitudeRad();
+						coursePrevLatitudeRad = getLatitudeRad();
+						coursePrevLongitudeRad = getLongitudeRad();
 
 						courseTickTime = esp_timer_get_time() + courseTickInterval;
 					}
@@ -300,11 +305,11 @@ namespace pizda {
 					}
 
 					if (haveAltitude()) {
-						altitudeTrend = (getAltitudeM() - oldAltitude) * trendInterval / tickInterval;
-						oldAltitude = getAltitudeM();
+						altitudeTrendM = (getAltitudeM() - oldAltitudeM) * trendInterval / tickInterval;
+						oldAltitudeM = getAltitudeM();
 					}
 					else {
-						altitudeTrend = oldAltitude;
+						altitudeTrendM = oldAltitudeM;
 					}
 
 					// ESP_LOGI("GNSS", "---------------- Processed data ----------------");

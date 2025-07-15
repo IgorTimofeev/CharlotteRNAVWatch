@@ -12,10 +12,7 @@ namespace pizda {
 		public:
 			PFDSettingsPage();
 
-			RouteMenuItem autopilotSpeedMenuItem;
-			RouteMenuItem autopilotAltitudeMenuItem;
-			RouteMenuItem minimumsMenuItem;
-			RouteMenuItem scaleMenuItem;
+			RouteMenuItem performanceProfileMenuItem;
 			RouteMenuItem backMenuItem;
 	};
 }

@@ -29,10 +29,17 @@ namespace pizda {
 	RGB565Color Theme::bad2 { 0 };
 
 	RGB565Color Theme::red { 0 };
+	RGB565Color Theme::redBright { 0 };
+
 	RGB565Color Theme::purple { 0 };
 	RGB565Color Theme::green { 0 };
 	RGB565Color Theme::yellow { 0 };
 	RGB565Color Theme::ocean { 0 };
+
+	RGB565Color Theme::speedBarWhite { 0 };
+	RGB565Color Theme::speedBarGreen { 0 };
+	RGB565Color Theme::speedBarYellow { 0 };
+	RGB565Color Theme::speedBarRed { 0 };
 
 	const unscii16Font Theme::fontBig {};
 	const PIXY10Font Theme::fontNormal {};
@@ -45,10 +52,16 @@ namespace pizda {
 		bad2 = RGB888Color(0xf24949).toRGB565();
 
 		red = RGB888Color(0xff0000).toRGB565();
+		redBright = RGB888Color(0xFF555555).toRGB565();
 		purple = RGB888Color(0xff00ff).toRGB565();
 		green = RGB888Color(0x00FF00).toRGB565();
 		yellow = RGB888Color(0xffd200).toRGB565();
 		ocean = RGB888Color(0x00ffff).toRGB565();
+
+		speedBarWhite = RGB888Color(0xFFFFFF).toRGB565();
+		speedBarGreen = RGB888Color(0x008100).toRGB565();
+		speedBarYellow = RGB888Color(0xffd200).toRGB565();
+		speedBarRed = RGB888Color(0xff3333).toRGB565();
 	}
 
 	void Theme::setDark() {

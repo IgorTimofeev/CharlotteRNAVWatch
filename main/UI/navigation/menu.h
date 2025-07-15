@@ -6,7 +6,7 @@
 #include "hardware/korryButton.h"
 #include "UI/navigation/route.h"
 #include "UI/theme.h"
-#include "settings/settingsNav.h"
+#include "types/settingsNav.h"
 
 namespace pizda {
 	using namespace YOBA;

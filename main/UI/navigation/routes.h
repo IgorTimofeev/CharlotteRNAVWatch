@@ -13,6 +13,7 @@
 #include "UI/navigation/GNSSSettingsPage.h"
 #include "UI/navigation/interfaceSettingsPage.h"
 #include "UI/navigation/themeSettingsPage.h"
+#include "UI/navigation/performanceProfileSettingsPage.h"
 
 namespace pizda {
 	class Routes {
@@ -27,6 +28,7 @@ namespace pizda {
 			constexpr static ElementRoute<SettingsPage> settings {};
 			constexpr static ElementRoute<InterfaceSettingsPage> interfaceSettings {};
 			constexpr static ElementRoute<ThemeSettingsPage> themeSettings {};
+			constexpr static ElementRoute<PerformanceProfileSettingsPage> performanceProfile {};
 			constexpr static ElementRoute<PFDSettingsPage> PFDSettings {};
 			constexpr static ElementRoute<GNSSSettingsPage> GNSSSettings {};
 	};

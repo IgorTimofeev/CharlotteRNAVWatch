@@ -42,15 +42,18 @@ namespace pizda {
 		gnss.setUpdateInterval(1000);
 		updateGNSSSystemsFromSettings();
 		updateGNSSSimulationFromSettings();
+		gnss.startReading();
 
 		// UI
 		updateThemeFromSettings();
+		updatePerformanceProfileFromSettings();
 		application.setRenderer(&renderer);
 		application.setBackgroundColor(&Theme::bg1);
 
 		application.addHID(&buttonUp);
 		application.addHID(&buttonMiddle);
 		application.addHID(&buttonDown);
+
 
 		setRoute(&Routes::PFD);
 
@@ -104,6 +107,17 @@ namespace pizda {
 		}
 	}
 
+	void RC::updatePerformanceProfileFromSettings() {
+		switch (settings.nav.performanceProfile) {
+			case SettingsNavPerformanceProfile::cycling:
+				performanceProfile.setCycling();
+				break;
+			case SettingsNavPerformanceProfile::diamondDA40:
+				performanceProfile.setDiamondDA40();
+				break;
+		}
+	}
+
 	const Route* RC::getRoute() const {
 		return _selectedRoute;
 	}
@@ -117,20 +131,6 @@ namespace pizda {
 		_selectedRoute = route;
 		_selectedPage = _selectedRoute->buildElement();
 		application += _selectedPage;
-	}
-
-	Vector3F RC::computeWaypointBearingVector(const SettingsNavWaypoint& waypoint) {
-		const auto aircraftCoordinates = GeographicCoordinates(
-			gnss.getLatitudeRad(),
-			gnss.getLongitudeRad(),
-			gnss.getAltitudeM()
-		).toCartesian();
-
-		auto coordinatesDelta = waypoint.geographicCoordinates.toCartesian() - aircraftCoordinates;
-		coordinatesDelta = coordinatesDelta.rotateAroundZAxis(-gnss.getLongitudeRad());
-		coordinatesDelta = coordinatesDelta.rotateAroundYAxis(gnss.getLatitudeRad());
-
-		return coordinatesDelta;
 	}
 
 	void RC::computeStuff() {
@@ -177,25 +177,26 @@ namespace pizda {
 		// Course
 		if (speedKt > 2) {
 			const auto targetCourseDeg = gnss.getComputedCourseDeg();
+			const auto courseLPFFactor = 1.0f * deltaTime / 2'500'000.f;
 
 			// Clockwise
 			if (courseDeg > 270 && targetCourseDeg < 90) {
 				courseDeg = courseDeg - 360;
-				LowPassFilter::apply(courseDeg, targetCourseDeg, LPFFactor);
+				LowPassFilter::apply(courseDeg, targetCourseDeg, courseLPFFactor);
 			}
 			// Counter-clockwise
 			else if (targetCourseDeg > 270 && courseDeg < 90) {
-				LowPassFilter::apply(courseDeg, targetCourseDeg - 360, LPFFactor);
+				LowPassFilter::apply(courseDeg, targetCourseDeg - 360, courseLPFFactor);
 				courseDeg = normalizeAngle360(courseDeg);
 			}
 			else {
-				LowPassFilter::apply(courseDeg, targetCourseDeg, LPFFactor);
+				LowPassFilter::apply(courseDeg, targetCourseDeg, courseLPFFactor);
 			}
 		}
 
 		// Slow
 		LPFFactor = 0.5f * deltaTime / 1'000'000.f;
-		LowPassFilter::apply(speedTrendKt, gnss.haveSpeed() ? gnss.getSpeedTrendKt() : 0, LPFFactor);
+		LowPassFilter::apply(speedTrendKt, gnss.haveSpeed() ? Units::convertSpeed(gnss.getSpeedTrendMps(), SpeedUnit::meterPerSecond, SpeedUnit::knot) : 0, LPFFactor);
 		LowPassFilter::apply(altitudeTrendFt, gnss.haveAltitude() ? Units::convertDistance(gnss.getAltitudeTrendM(), DistanceUnit::meter, DistanceUnit::foot) : 0, LPFFactor);
 
 		// Delayed shit

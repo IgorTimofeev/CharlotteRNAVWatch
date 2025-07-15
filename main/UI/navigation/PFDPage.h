@@ -74,16 +74,6 @@ namespace pizda {
 			constexpr static uint8_t bearingArrowWidth = HSIArrowBigWidth;
 			constexpr static uint8_t bearingArrowHeight = HSIArrowBigHeight;
 
-			// Speed
-			constexpr static uint8_t speedStep = 1;
-			constexpr static uint8_t speedStepBig = 5;
-			constexpr static float speedStepRadPerKt = toRadians(4.0f);
-
-			// Altitude
-			constexpr static uint16_t altitudeStep = 10;
-			constexpr static uint16_t altitudeStepBig = 50;
-			constexpr static float altitudeStepRadPerFt = toRadians(0.5f);
-
 			// Minimums
 			constexpr static uint8_t minimumsLineWidth = sidebarWidth + 2;
 			constexpr static uint8_t minimumsTriangleWidth = 2;
@@ -92,7 +82,9 @@ namespace pizda {
 			// Fields
 			constexpr static float fieldsRadius = compassRadius / 2.f;
 
-			static Vector2F getSpeedVec(float speed);
+			// Speed bars
+			constexpr static uint8_t speedBarWidth = 1;
+
 			static Vector2F getAltitudeVec(float altitude);
 			static void renderTrendArrow(Renderer* renderer, const Point& center, float trend, float radPerTrendUnit, float offsetRad);
 			static void renderUnderlayText(Renderer* renderer, int32_t x, int32_t y, const Color* color, std::wstring_view text);

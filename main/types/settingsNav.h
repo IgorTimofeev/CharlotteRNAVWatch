@@ -23,14 +23,19 @@ namespace pizda {
 			GeographicCoordinates geographicCoordinates;
 	};
 
+	enum class SettingsNavPerformanceProfile : uint8_t {
+		cycling,
+		diamondDA40
+	};
+
 	class SettingsNav : public NVSSettings {
 		public:
 			std::vector<SettingsNavWaypoint> waypoints {};
 
 			uint16_t navWaypointIndex = 0;
 			uint16_t navWaypointCourseDeg = 0;
-
 			uint16_t bearingWaypointIndex = 0;
+			SettingsNavPerformanceProfile performanceProfile = SettingsNavPerformanceProfile::cycling;
 
 		protected:
 			const char* getNVSNamespace() override {
@@ -81,6 +86,8 @@ namespace pizda {
 				navWaypointCourseDeg = stream.getUint16(_navWaypointCourse, 0);
 
 				bearingWaypointIndex = stream.getUint16(_bearingWaypointIndex, 1);
+
+				performanceProfile = static_cast<SettingsNavPerformanceProfile>(stream.getUint8(_performanceProfile, static_cast<uint8_t>(SettingsNavPerformanceProfile::cycling)));
 			}
 
 			void onWrite(const NVSStream& stream) override {
@@ -88,6 +95,8 @@ namespace pizda {
 				stream.setUint16(_navWaypointCourse, navWaypointCourseDeg);
 
 				stream.setUint16(_bearingWaypointIndex, bearingWaypointIndex);
+
+				stream.setUint8(_performanceProfile, static_cast<uint8_t>(performanceProfile));
 			}
 
 		private:
@@ -98,5 +107,7 @@ namespace pizda {
 
 			constexpr static auto _waypointsSize = "ws";
 			constexpr static auto _waypointsList = "wl";
+
+			constexpr static auto _performanceProfile = "pp";
 	};
 }
