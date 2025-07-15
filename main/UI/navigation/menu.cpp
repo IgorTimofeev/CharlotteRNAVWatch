@@ -133,6 +133,29 @@ namespace pizda {
 
 	}
 
+	void ListMenuItem::onRender(Renderer* renderer, const Bounds& bounds) {
+		TitleMenuItem::onRender(renderer, bounds);
+
+		if (isSelected()) {
+			renderer->renderFilledRectangle(
+				Bounds(
+					bounds.getX2() - 2 - 7,
+					bounds.getYCenter() - 1,
+					7,
+					4
+				),
+				2,
+				&Theme::green
+			);
+		}
+	}
+
+	void ListMenuItem::onKorryEvent(KorryEvent* event) {
+		if (event->getEventType() == KorryEventType::down && event->getButtonType() == KorryButtonType::middle) {
+			onSelectionRequested();
+		}
+	}
+
 	Menu::Menu() {
 		setWidth(120);
 		setSpacing(5);

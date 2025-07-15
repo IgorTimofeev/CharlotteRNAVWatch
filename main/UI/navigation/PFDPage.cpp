@@ -11,13 +11,6 @@ namespace pizda {
 		invalidate();
 	}
 
-	Vector2F PFDPage::getAltitudeVec(const float altitude) {
-		const auto& rc = RC::getInstance();
-		const auto angleRad = (rc.altitudeFt - altitude) * rc.performanceProfile.altitudeStepRadPerFt;
-
-		return Vector2F(displayRadius, 0).rotate(angleRad);
-	}
-
 	void PFDPage::renderTrendArrow(Renderer* renderer, const Point& center, const float trend, const float radPerTrendUnit, const float offsetRad) {
 		if (std::abs(trend) <= 1)
 			return;
@@ -63,20 +56,19 @@ namespace pizda {
 		);
 	}
 
-	void PFDPage::renderSpeed(Renderer* renderer, const Bounds& sidebarBounds, const Point& center) const {
+	void PFDPage::renderSpeedLines(Renderer* renderer, const Bounds& sidebarBounds, const Point& center, const float value) const {
 		const auto& rc = RC::getInstance();
 
-		const auto value = rc.speedKt;
-		const auto snappedLineValue = static_cast<int32_t>(value / rc.performanceProfile.speedStep) * rc.performanceProfile.speedStep;
+		const auto snappedLineValue = static_cast<int32_t>(value / static_cast<float>(rc.performanceProfile.speedStep)) * rc.performanceProfile.speedStep;
 
 		auto lineValue = snappedLineValue;
 		Point lineTo;
 
-		const auto computeLineTo = [&lineValue, &lineTo, &center, this, &rc] {
+		const auto computeLineTo = [&lineValue, &lineTo, &center, this, &rc, value] {
 			lineTo =
 				center + static_cast<Point>(
 					Vector2F(displayRadius - speedBarWidth, 0)
-					.rotate(std::numbers::pi_v<float> - (rc.speedKt - static_cast<float>(lineValue)) * rc.performanceProfile.speedStepRadPerKt)
+					.rotate(std::numbers::pi_v<float> - (value - static_cast<float>(lineValue)) * rc.performanceProfile.speedRadPerUnit)
 				);
 		};
 
@@ -137,118 +129,156 @@ namespace pizda {
 
 			lineValue += rc.performanceProfile.speedStep;
 		}
+	}
+
+	void PFDPage::renderSpeedBars(Renderer* renderer, const Point& center, const float value) {
+		const auto& rc = RC::getInstance();
 
 		// Bars
-		{
-			constexpr static uint8_t diffAngle = 50;
-			constexpr static float minAngle = toRadians(180 - diffAngle);
-			constexpr static float maxAngle = toRadians(180 + diffAngle);
+		constexpr static uint8_t diffAngle = 50;
+		constexpr static float minAngle = toRadians(180 - diffAngle);
+		constexpr static float maxAngle = toRadians(180 + diffAngle);
 
-			for (const auto& [from, to, color] : rc.performanceProfile.speedBars) {
-				const auto radFrom = std::clamp(
-					std::numbers::pi_v<float> - (from - value) * rc.performanceProfile.speedStepRadPerKt,
-					minAngle,
-					maxAngle
+		for (const auto& [from, to, color] : rc.performanceProfile.speedBars) {
+			const auto radFrom = std::clamp(
+				std::numbers::pi_v<float> - (from - value) * rc.performanceProfile.speedRadPerUnit,
+				minAngle,
+				maxAngle
+			);
+
+			const auto radTo = std::clamp(
+				std::numbers::pi_v<float> - (to - value) * rc.performanceProfile.speedRadPerUnit,
+				minAngle,
+				maxAngle
+			);
+
+			// ESP_LOGI("SPD BARS", "from: %f, to: %f", toDegrees(radFrom), toDegrees(radTo));
+
+			if (radFrom == radTo)
+				continue;
+
+			// Thicc bars
+			for (uint8_t i = 0; i < speedBarWidth; i++) {
+				// To always > from
+				renderer->renderArc(
+					center,
+					displayRadius - i,
+					radTo,
+					radFrom,
+					color
 				);
-
-				const auto radTo = std::clamp(
-					std::numbers::pi_v<float> - (to - value) * rc.performanceProfile.speedStepRadPerKt,
-					minAngle,
-					maxAngle
-				);
-
-				// ESP_LOGI("SPD BARS", "from: %f, to: %f", toDegrees(radFrom), toDegrees(radTo));
-
-				if (radFrom == radTo)
-					continue;
-
-				// Thicc bars
-				for (uint8_t i = 0; i < speedBarWidth; i++) {
-					// To always > from
-					renderer->renderArc(
-						center,
-						displayRadius - i,
-						radTo,
-						radFrom,
-						color
-					);
-				}
 			}
 		}
+	}
 
-		// Trend
+	void PFDPage::renderSpeedValue(Renderer* renderer, const Bounds& sidebarBounds, const Point& center, const float value) {
+		const auto& rc = RC::getInstance();
+
+		const auto bg = rc.gnss.haveSpeed() ? &Theme::bg4 : &Theme::bgRed2;
+		const auto fg = rc.gnss.haveSpeed() ? &Theme::fg1 : &Theme::fgRed1;
+		const auto text = rc.gnss.haveSpeed() ? std::format(L"{:03}", static_cast<int16_t>(value)) : L"---";
+
+		const auto valueBounds  = Bounds(
+		   sidebarBounds.getX(),
+		   center.getY() - sidebarValueHeight / 2,
+		   sidebarValueWidth,
+		   sidebarValueHeight
+	   );
+
+		renderer->renderFilledRectangle(
+			valueBounds,
+			bg
+		);
+
+		renderer->renderFilledTriangle(
+			Point(
+				valueBounds.getX2() + 1,
+				valueBounds.getY()
+			),
+			Point(
+				valueBounds.getX2() + 1,
+				valueBounds.getY2()
+			),
+			Point(
+				valueBounds.getX2() + 1 + sidebarValueTriangleWidth - 1,
+				center.getY()
+			),
+			bg
+		);
+
+		renderer->renderString(
+			Point(
+				valueBounds.getX() + sidebarValueMargin,
+				center.getY() - Theme::fontNormal.getHeight() / 2
+			),
+			&Theme::fontNormal,
+			fg,
+			text
+		);
+	}
+
+	void PFDPage::renderSpeedUnderlayText(Renderer* renderer, const Bounds& sidebarBounds) {
+		const auto& rc = RC::getInstance();
+
+		const auto underlayX = sidebarBounds.getX() + sidebarUnderlayTextCenterMargin;
+		renderUnderlayText(renderer, underlayX, sidebarBounds.getY() - sidebarUnderlayHeight, &Theme::ocean, std::to_wstring(rc.settings.PFD.speedKt));
+		renderUnderlayText(renderer, underlayX, sidebarBounds.getY2() + 1, &Theme::purple, L"GS");
+	}
+
+	void PFDPage::renderSpeedTrendArrow(Renderer* renderer, const Point& center) {
+		const auto& rc = RC::getInstance();
+
 		renderTrendArrow(
 			renderer,
 			center,
 			-rc.speedTrendKt,
-			rc.performanceProfile.speedStepRadPerKt,
+			rc.performanceProfile.speedRadPerUnit,
 			std::numbers::pi_v<float>
 		);
+	}
 
-		// Value
-		{
-			const auto bg = rc.gnss.haveSpeed() ? &Theme::bg4 : &Theme::bgRed2;
-			const auto fg = rc.gnss.haveSpeed() ? &Theme::fg1 : &Theme::fgRed1;
-			const auto text = rc.gnss.haveSpeed() ? std::format(L"{:03}", static_cast<int16_t>(value)) : L"---";
+	void PFDPage::renderSpeedBugs(Renderer* renderer, const Point& center, const float value) {
+		const auto& rc = RC::getInstance();
 
-			const auto valueBounds  = Bounds(
-			   sidebarBounds.getX(),
-			   center.getY() - sidebarValueHeight / 2,
-			   sidebarValueWidth,
-			   sidebarValueHeight
-		   );
+		for (const auto& [name, speed] : rc.performanceProfile.speedBugs) {
+			const auto angleRad = (value - static_cast<float>(speed)) * rc.performanceProfile.speedRadPerUnit;
 
-			renderer->renderFilledRectangle(
-				valueBounds,
-				bg
-			);
+			if (std::abs(angleRad) > 50)
+				continue;
 
-			renderer->renderFilledTriangle(
-				Point(
-					valueBounds.getX2() + 1,
-					valueBounds.getY()
-				),
-				Point(
-					valueBounds.getX2() + 1,
-					valueBounds.getY2()
-				),
-				Point(
-					valueBounds.getX2() + 1 + sidebarValueTriangleWidth - 1,
-					center.getY()
-				),
-				bg
+			const auto pos = center + static_cast<Point>(Vector2F(displayRadius - speedBarWidth, 0).rotate(std::numbers::pi_v<float> - angleRad));
+
+			renderer->renderHorizontalLine(
+				pos,
+				speedBugLineWidth,
+				&Theme::green
 			);
 
 			renderer->renderString(
 				Point(
-					valueBounds.getX() + sidebarValueMargin,
-					center.getY() - Theme::fontNormal.getHeight() / 2
+					pos.getX() + speedBugLineWidth + speedBugTextMargin,
+					pos.getY() - Theme::fontNormal.getHeight() / 2
 				),
 				&Theme::fontNormal,
-				fg,
-				text
+				&Theme::green,
+				name
 			);
-		}
-
-		// Underlay
-		{
-			const auto underlayX = sidebarBounds.getX() + sidebarUnderlayTextCenterMargin;
-			renderUnderlayText(renderer, underlayX, sidebarBounds.getY() - sidebarUnderlayHeight, &Theme::ocean, std::to_wstring(rc.settings.PFD.speedKt));
-			renderUnderlayText(renderer, underlayX, sidebarBounds.getY2() + 1, &Theme::purple, L"GS");
 		}
 	}
 
-	void PFDPage::renderAltitude(Renderer* renderer, const Bounds& sidebarBounds, const Point& center) const {
+	void PFDPage::renderAltitudeLines(Renderer* renderer, const Bounds& sidebarBounds, const Point& center, const float value) const {
 		const auto& rc = RC::getInstance();
 
-		const auto value = rc.altitudeFt;
-		const auto snappedLineValue = static_cast<int32_t>(value / rc.performanceProfile.altitudeStep) * rc.performanceProfile.altitudeStep;
+		const auto snappedLineValue = static_cast<int32_t>(value / static_cast<float>(rc.performanceProfile.altitudeStep)) * rc.performanceProfile.altitudeStep;
 
 		auto lineValue = snappedLineValue;
 		Point lineTo;
 
-		const auto computeLineTo = [&lineValue, &lineTo, &center, this] {
-			lineTo = center + static_cast<Point>(getAltitudeVec(static_cast<float>(lineValue)));
+		const auto computeLineTo = [&lineValue, &lineTo, &center, this, &rc, value] {
+			lineTo =
+				center +
+				static_cast<Point>(Vector2F(displayRadius, 0)
+				.rotate((value - static_cast<float>(lineValue)) * rc.performanceProfile.altitudeRadPerUnit));
 		};
 
 		const auto renderLine = [&lineValue, &lineTo, renderer, this, &rc] {
@@ -289,9 +319,6 @@ namespace pizda {
 			renderLine();
 
 			lineValue -= rc.performanceProfile.altitudeStep;
-
-			if (lineValue < 0)
-				break;
 		}
 
 		// Up
@@ -307,99 +334,105 @@ namespace pizda {
 
 			lineValue += rc.performanceProfile.altitudeStep;
 		}
+	}
 
-		// Trend
+	void PFDPage::renderAltitudeMinimums(Renderer* renderer, const Bounds& sidebarBounds, const Point& center, const float value) {
+		const auto& rc = RC::getInstance();
+
+		const auto minimumsPt = center + static_cast<Point>(Vector2F(displayRadius, 0).rotate((value - static_cast<float>(rc.settings.PFD.altitudeFt)) * rc.performanceProfile.altitudeRadPerUnit));
+
+		if (minimumsPt.getY() >= sidebarBounds.getY() && minimumsPt.getY() <= sidebarBounds.getY2()) {
+			renderer->renderHorizontalLine(
+				Point(
+					minimumsPt.getX() - minimumsLineWidth,
+					minimumsPt.getY()
+				),
+				minimumsLineWidth,
+				&Theme::yellow
+			);
+
+			renderer->renderTriangle(
+				Point(
+					minimumsPt.getX() - minimumsLineWidth - minimumsTriangleWidth,
+					minimumsPt.getY() - minimumsTriangleHeight
+				),
+				Point(
+					minimumsPt.getX() - minimumsLineWidth - minimumsTriangleWidth,
+					minimumsPt.getY() + minimumsTriangleHeight
+				),
+				Point(
+					minimumsPt.getX() - minimumsLineWidth,
+					minimumsPt.getY()
+				),
+				&Theme::yellow
+			);
+		}
+	}
+
+	void PFDPage::renderAltitudeValue(Renderer* renderer, const Bounds& sidebarBounds, const Point& center, const float value) {
+		const auto& rc = RC::getInstance();
+
+		const auto bg = rc.gnss.haveAltitude() ? &Theme::bg4 : &Theme::bgRed2;
+		const auto fg = rc.gnss.haveAltitude() ? &Theme::fg1 : &Theme::fgRed1;
+		const auto text = rc.gnss.haveAltitude() ? std::format(L"{:04}", static_cast<int16_t>(value)) : L"----";
+
+		const auto valueBounds  = Bounds(
+		   sidebarBounds.getX2() - sidebarValueWidth + 1,
+		   center.getY() - sidebarValueHeight / 2,
+		   sidebarValueWidth,
+		   sidebarValueHeight
+	   );
+
+		renderer->renderFilledRectangle(
+			valueBounds,
+			bg
+		);
+
+		renderer->renderFilledTriangle(
+			Point(
+				valueBounds.getX() - 1,
+				valueBounds.getY()
+			),
+			Point(
+				valueBounds.getX() - 1,
+				valueBounds.getY2()
+			),
+			Point(
+				valueBounds.getX() - sidebarValueTriangleWidth + 1,
+				center.getY()
+			),
+			bg
+		);
+
+		renderer->renderString(
+			Point(
+				valueBounds.getX2() - sidebarValueMargin + 2 - Theme::fontNormal.getWidth(text),
+				center.getY() - Theme::fontNormal.getHeight() / 2
+			),
+			&Theme::fontNormal,
+			fg,
+			text
+		);
+	}
+
+	void PFDPage::renderAltitudeUnderlayText(Renderer* renderer, const Bounds& sidebarBounds) {
+		const auto& rc = RC::getInstance();
+
+		const auto underlayX = sidebarBounds.getX2() - sidebarUnderlayTextCenterMargin + 1;
+		renderUnderlayText(renderer, underlayX, sidebarBounds.getY() - sidebarUnderlayHeight, &Theme::ocean, std::to_wstring(rc.settings.PFD.altitudeFt));
+		renderUnderlayText(renderer, underlayX, sidebarBounds.getY2() + 1, &Theme::yellow, std::to_wstring(rc.settings.PFD.pressureHPA));
+	}
+
+	void PFDPage::renderAltitudeTrendArrow(Renderer* renderer, const Point& center) {
+		const auto& rc = RC::getInstance();
+
 		renderTrendArrow(
 			renderer,
 			center,
 			rc.altitudeTrendFt,
-			rc.performanceProfile.altitudeStepRadPerFt,
+			rc.performanceProfile.altitudeRadPerUnit,
 			0
 		);
-
-		// Minimums
-		{
-			const auto minimumsPt = center + static_cast<Point>(getAltitudeVec(rc.settings.PFD.altitudeFt));
-
-			if (minimumsPt.getY() >= sidebarBounds.getY() && minimumsPt.getY() <= sidebarBounds.getY2()) {
-				renderer->renderHorizontalLine(
-					Point(
-						minimumsPt.getX() - minimumsLineWidth,
-						minimumsPt.getY()
-					),
-					minimumsLineWidth,
-					&Theme::yellow
-				);
-
-				renderer->renderTriangle(
-					Point(
-						minimumsPt.getX() - minimumsLineWidth - minimumsTriangleWidth,
-						minimumsPt.getY() - minimumsTriangleHeight
-					),
-					Point(
-						minimumsPt.getX() - minimumsLineWidth - minimumsTriangleWidth,
-						minimumsPt.getY() + minimumsTriangleHeight
-					),
-					Point(
-						minimumsPt.getX() - minimumsLineWidth,
-						minimumsPt.getY()
-					),
-					&Theme::yellow
-				);
-			}
-		}
-
-		// Value
-		{
-			const auto bg = rc.gnss.haveAltitude() ? &Theme::bg4 : &Theme::bgRed2;
-			const auto fg = rc.gnss.haveAltitude() ? &Theme::fg1 : &Theme::fgRed1;
-			const auto text = rc.gnss.haveAltitude() ? std::format(L"{:04}", static_cast<int16_t>(value)) : L"----";
-
-			const auto valueBounds  = Bounds(
-			   sidebarBounds.getX2() - sidebarValueWidth + 1,
-			   center.getY() - sidebarValueHeight / 2,
-			   sidebarValueWidth,
-			   sidebarValueHeight
-		   );
-
-			renderer->renderFilledRectangle(
-				valueBounds,
-				bg
-			);
-
-			renderer->renderFilledTriangle(
-				Point(
-					valueBounds.getX() - 1,
-					valueBounds.getY()
-				),
-				Point(
-					valueBounds.getX() - 1,
-					valueBounds.getY2()
-				),
-				Point(
-					valueBounds.getX() - sidebarValueTriangleWidth + 1,
-					center.getY()
-				),
-				bg
-			);
-
-			renderer->renderString(
-				Point(
-					valueBounds.getX2() - sidebarValueMargin + 2 - Theme::fontNormal.getWidth(text),
-					center.getY() - Theme::fontNormal.getHeight() / 2
-				),
-				&Theme::fontNormal,
-				fg,
-				text
-			);
-		}
-
-		// Underlay
-		{
-			const auto underlayX = sidebarBounds.getX2() - sidebarUnderlayTextCenterMargin + 1;
-			renderUnderlayText(renderer, underlayX, sidebarBounds.getY() - sidebarUnderlayHeight, &Theme::ocean, std::to_wstring(rc.settings.PFD.altitudeFt));
-			renderUnderlayText(renderer, underlayX, sidebarBounds.getY2() + 1, &Theme::yellow, std::to_wstring(rc.settings.PFD.pressureHPA));
-		}
 	}
 
 	void PFDPage::renderCompass(Renderer* renderer, const Bounds& bounds) {
@@ -742,6 +775,8 @@ namespace pizda {
 	void PFDPage::onRender(Renderer* renderer, const Bounds& bounds) {
 		auto& rc = RC::getInstance();
 		const auto center = bounds.getCenter();
+		const auto speed = rc.speedKt;
+		const auto altitude = rc.altitudeFt;
 
 		const auto sidebarBounds = Bounds(
 			bounds.getX(),
@@ -751,34 +786,69 @@ namespace pizda {
 		);
 
 		// Background
-		renderer->clear(&Theme::bg3);
+		renderer->clear(&Theme::bg1);
 
-		// Sidebar blackout
-		renderer->renderFilledRectangle(
-			sidebarBounds,
-			&Theme::bg2
-		);
+		// Sidebars
+		renderSpeedLines(renderer, sidebarBounds, center, speed);
+		renderSpeedBars(renderer, center, speed);
+		renderSpeedBugs(renderer, center, speed);
 
-		// Sidebar underlay
-		renderer->renderFilledRectangle(
-			Bounds(
-				sidebarBounds.getX(),
-				sidebarBounds.getY2() + 1,
-				sidebarBounds.getWidth(),
-				sidebarUnderlayHeight
-			),
-			&Theme::bg4
-		);
+		renderAltitudeLines(renderer, sidebarBounds, center, altitude);
 
-		renderer->renderFilledRectangle(
-			Bounds(
-				sidebarBounds.getX(),
-				sidebarBounds.getY() - sidebarUnderlayHeight,
-				sidebarBounds.getWidth(),
-				sidebarUnderlayHeight
-			),
-			&Theme::bg4
-		);
+		// Vertical panels
+		{
+			// Top
+			renderer->renderFilledRectangle(
+				Bounds(
+					bounds.getX(),
+					bounds.getY(),
+					bounds.getWidth(),
+					sidebarBounds.getY() - sidebarUnderlayHeight
+				),
+				&Theme::bg3
+			);
+
+			// Bottom
+			renderer->renderFilledRectangle(
+				Bounds(
+					bounds.getX(),
+					sidebarBounds.getY2() + 1 + sidebarUnderlayHeight,
+					bounds.getWidth(),
+					bounds.getHeight() - sidebarBounds.getY2() + 1
+				),
+				&Theme::bg3
+			);
+		}
+
+		// Underlays
+		{
+			// Top
+			renderer->renderFilledRectangle(
+				Bounds(
+					sidebarBounds.getX(),
+					sidebarBounds.getY() - sidebarUnderlayHeight,
+					sidebarBounds.getWidth(),
+					sidebarUnderlayHeight
+				),
+				&Theme::bg4
+			);
+
+			// Bottom
+			renderer->renderFilledRectangle(
+				Bounds(
+					sidebarBounds.getX(),
+					sidebarBounds.getY2() + 1,
+					sidebarBounds.getWidth(),
+					sidebarUnderlayHeight
+				),
+				&Theme::bg4
+			);
+
+			// Texts
+			renderSpeedUnderlayText(renderer, sidebarBounds);
+
+			renderAltitudeUnderlayText(renderer, sidebarBounds);
+		}
 
 		// Course
 		{
@@ -861,6 +931,17 @@ namespace pizda {
 			);
 		}
 
+		// Compass
+		renderCompass(renderer, bounds);
+
+		// Over compass
+		renderSpeedTrendArrow(renderer, center);
+		renderSpeedValue(renderer, sidebarBounds, center, speed);
+
+		renderAltitudeTrendArrow(renderer, center);
+		renderAltitudeMinimums(renderer, sidebarBounds, center, altitude);
+		renderAltitudeValue(renderer, sidebarBounds, center, altitude);
+
 		// Satellites
 		{
 			const auto position = Point(
@@ -918,23 +999,6 @@ namespace pizda {
 				&Theme::bg5
 			);
 		}
-
-		// Compass
-		renderCompass(renderer, bounds);
-
-		// Speed
-		renderSpeed(
-			renderer,
-			sidebarBounds,
-			center
-		);
-
-		// Altitude
-		renderAltitude(
-			renderer,
-			sidebarBounds,
-			center
-		);
 	}
 
 	void PFDPage::onEvent(Event* event) {

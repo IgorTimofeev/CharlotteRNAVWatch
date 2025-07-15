@@ -84,21 +84,15 @@ namespace pizda {
 			bool _value = false;
 	};
 
-	class ListMenuItem : public MenuItem {
+	class ListMenuItem : public TitleMenuItem {
 		public:
-			explicit ListMenuItem(std::wstring_view title) {
-
-			}
-
-			Callback<> valueChanged {};
-
-			bool getValue() const;
-			void setValue(bool value);
 
 		protected:
 			void onRender(Renderer* renderer, const Bounds& bounds) override;
 			void onKorryEvent(KorryEvent* event) override;
-			virtual void onValueChanged();
+
+			virtual bool isSelected() const = 0;
+			virtual void onSelectionRequested() = 0;
 
 		private:
 			bool _value = false;

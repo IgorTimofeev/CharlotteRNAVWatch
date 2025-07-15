@@ -24,12 +24,12 @@ namespace pizda {
 			// Speed
 			uint8_t speedStep = 0;
 			uint8_t speedStepBig = 0;
-			float speedStepRadPerKt = 0;
+			float speedRadPerUnit = 0;
 
 			// Altitude
 			uint16_t altitudeStep = 0;
 			uint16_t altitudeStepBig = 0;
-			float altitudeStepRadPerFt = 0;
+			float altitudeRadPerUnit = 0;
 
 			constexpr static uint16_t speedFlapsMin = 40;
 			constexpr static uint16_t speedFlapsMax = 85;
@@ -49,30 +49,30 @@ namespace pizda {
 			void setCycling() {
 				speedStep = 1;
 				speedStepBig = 5;
-				speedStepRadPerKt = toRadians(4.0f);
+				speedRadPerUnit = toRadians(4.0f);
 
 				altitudeStep = 10;
 				altitudeStepBig = 50;
-				altitudeStepRadPerFt = toRadians(0.5f);
+				altitudeRadPerUnit = toRadians(0.5f);
 
 				speedBars.clear();
-				speedBars.push_back(SpeedBar { 4, 9, &Theme::speedBarWhite });
+				speedBars.push_back(SpeedBar { 0, 5, &Theme::speedBarWhite });
 				speedBars.push_back(SpeedBar { 5, 10, &Theme::speedBarGreen });
-				speedBars.push_back(SpeedBar { 10, 14, &Theme::speedBarYellow });
-				speedBars.push_back(SpeedBar { 14, 40, &Theme::speedBarRed });
+				speedBars.push_back(SpeedBar { 10, 15, &Theme::speedBarYellow });
+				speedBars.push_back(SpeedBar { 15, 40, &Theme::speedBarRed });
 
 				speedBugs.clear();
-				speedBugs.push_back(SpeedBug { L"Y", 13 });
+				speedBugs.push_back(SpeedBug { L"X", 13 });
 			}
 
 			void setDiamondDA40() {
 				speedStep = 5;
 				speedStepBig = 10;
-				speedStepRadPerKt = toRadians(0.8f);
+				speedRadPerUnit = toRadians(0.8f);
 
 				altitudeStep = 50;
 				altitudeStepBig = 100;
-				altitudeStepRadPerFt = toRadians(0.1f);
+				altitudeRadPerUnit = toRadians(0.1f);
 
 				speedBars.clear();
 				speedBars.push_back(SpeedBar { 0, 49, &Theme::speedBarRed });

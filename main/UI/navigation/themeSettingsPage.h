@@ -9,12 +9,13 @@
 namespace pizda {
 	using namespace YOBA;
 
-	class ThemeMenuItem : public TitleMenuItem {
+	class ThemeMenuItem : public ListMenuItem {
 		public:
 			explicit ThemeMenuItem(SettingsInterfaceTheme theme);
 
 		protected:
-			void onKorryEvent(KorryEvent* event) override;
+			bool isSelected() const override;
+			void onSelectionRequested() override;
 
 		private:
 			SettingsInterfaceTheme theme;

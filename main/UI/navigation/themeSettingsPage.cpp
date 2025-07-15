@@ -8,10 +8,11 @@ namespace pizda {
 		setTitle(theme == SettingsInterfaceTheme::dark ? L"Dark" : L"Bright");
 	}
 
-	void ThemeMenuItem::onKorryEvent(KorryEvent* event) {
-		if (event->getButtonType() != KorryButtonType::middle || event->getEventType() != KorryEventType::down)
-			return;
+	bool ThemeMenuItem::isSelected() const {
+		return RC::getInstance().settings.interface.theme == theme;
+	}
 
+	void ThemeMenuItem::onSelectionRequested() {
 		auto& rc = RC::getInstance();
 		rc.settings.interface.theme = theme;
 		rc.settings.interface.scheduleWrite();

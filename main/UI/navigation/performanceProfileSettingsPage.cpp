@@ -15,10 +15,11 @@ namespace pizda {
 		}
 	}
 
-	void PerformanceProfileMenuItem::onKorryEvent(KorryEvent* event) {
-		if (event->getButtonType() != KorryButtonType::middle || event->getEventType() != KorryEventType::down)
-			return;
+	bool PerformanceProfileMenuItem::isSelected() const {
+		return RC::getInstance().settings.nav.performanceProfile == performanceProfile;
+	}
 
+	void PerformanceProfileMenuItem::onSelectionRequested() {
 		auto& rc = RC::getInstance();
 		rc.settings.nav.performanceProfile = performanceProfile;
 		rc.settings.nav.scheduleWrite();

@@ -9,12 +9,13 @@
 namespace pizda {
 	using namespace YOBA;
 
-	class PerformanceProfileMenuItem : public TitleMenuItem {
+	class PerformanceProfileMenuItem : public ListMenuItem {
 		public:
 			explicit PerformanceProfileMenuItem(SettingsNavPerformanceProfile performanceProfile);
 
 		protected:
-			void onKorryEvent(KorryEvent* event) override;
+			bool isSelected() const override;
+			void onSelectionRequested() override;
 
 		private:
 			SettingsNavPerformanceProfile performanceProfile;
