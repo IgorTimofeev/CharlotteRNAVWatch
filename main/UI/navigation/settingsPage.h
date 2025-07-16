@@ -14,7 +14,6 @@ namespace pizda {
 
 			RouteMenuItem PFDSettingsItem;
 			RouteMenuItem GNSSSettingsItem;
-			RouteMenuItem interfaceItem;
 			RouteMenuItem backItem;
 	};
 }

@@ -52,7 +52,6 @@ namespace pizda {
 		bad2 = RGB888Color(0xf24949).toRGB565();
 
 		red = RGB888Color(0xff0000).toRGB565();
-		redBright = RGB888Color(0xFF555555).toRGB565();
 		purple = RGB888Color(0xff00ff).toRGB565();
 		green = RGB888Color(0x00FF00).toRGB565();
 		yellow = RGB888Color(0xffd200).toRGB565();

@@ -23,6 +23,8 @@ namespace pizda {
 			MenuItemState getState() const;
 			void setState(MenuItemState state);
 
+			constexpr static uint8_t height = 20;
+
 		protected:
 			void onEvent(Event* event) override;
 			void onRender(Renderer* renderer, const Bounds& bounds) override;
@@ -52,7 +54,7 @@ namespace pizda {
 			void onKorryEvent(KorryEvent* event) override;
 
 		private:
-			const Route* _route;
+			const Route* route;
 	};
 
 	class FunctionMenuItem : public TitleMenuItem {
@@ -63,7 +65,7 @@ namespace pizda {
 			void onKorryEvent(KorryEvent* event) override;
 
 		private:
-			std::function<void()> _function;
+			std::function<void()> function;
 	};
 
 	class BoolMenuItem : public TitleMenuItem {
@@ -81,7 +83,7 @@ namespace pizda {
 			virtual void onValueChanged();
 
 		private:
-			bool _value = false;
+			bool value = false;
 	};
 
 	class ListMenuItem : public TitleMenuItem {
@@ -95,14 +97,16 @@ namespace pizda {
 			virtual void onSelectionRequested() = 0;
 
 		private:
-			bool _value = false;
 	};
 
-	class Menu : public StackLayout {
+	class Menu : public ScrollView {
 		public:
 			explicit Menu();
 
+			constexpr static uint8_t itemSpacing = 5;
+
 			void setItems(const std::initializer_list<MenuItem*>& items);
+			uint16_t getItemsCount() const;
 			void addItem(MenuItem* item);
 			MenuItem* getItemAt(uint16_t index) const;
 			uint16_t getSelectedIndex() const;
@@ -113,7 +117,8 @@ namespace pizda {
 			void onEventBeforeChildren(Event* event) override;
 
 		private:
-			uint16_t _selectedIndex = 0;
+			uint16_t selectedIndex = 0;
+			StackLayout itemsLayout {};
 
 			void updateItemsFromSelection() const;
 	};

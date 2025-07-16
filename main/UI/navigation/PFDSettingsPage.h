@@ -13,6 +13,7 @@ namespace pizda {
 			PFDSettingsPage();
 
 			RouteMenuItem performanceProfileMenuItem;
+			RouteMenuItem themeItem;
 			RouteMenuItem backMenuItem;
 	};
 }

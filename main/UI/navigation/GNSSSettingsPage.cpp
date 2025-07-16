@@ -10,7 +10,7 @@ namespace pizda {
 		
 		simulationItem(BoolMenuItem(L"Simulation")),
 		
-		backItem(RouteMenuItem(L"Back", &Routes::mainMenu))
+		backItem(RouteMenuItem(L"Back", &Routes::settings))
 	{
 		title.setText(L"GNSS settings");
 

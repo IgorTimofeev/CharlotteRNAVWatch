@@ -5,7 +5,7 @@
 
 namespace pizda {
 	MenuItem::MenuItem() {
-		setHeight(20);
+		setHeight(height);
 	}
 
 	MenuItemState MenuItem::getState() const {
@@ -67,25 +67,25 @@ namespace pizda {
 		);
 	}
 
-	RouteMenuItem::RouteMenuItem(const std::wstring_view title, const Route* route) : _route(route) {
+	RouteMenuItem::RouteMenuItem(const std::wstring_view title, const Route* route) : route(route) {
 		setTitle(title);
 	}
 
 	void RouteMenuItem::onKorryEvent(KorryEvent* event) {
 		if (event->getButtonType() == KorryButtonType::middle && event->getEventType() == KorryEventType::down) {
-			RC::getInstance().setRoute(_route);
+			RC::getInstance().setRoute(route);
 
 			event->setHandled(true);
 		}
 	}
 
-	FunctionMenuItem::FunctionMenuItem(const std::wstring_view title, const std::function<void()>& function) : _function(function) {
+	FunctionMenuItem::FunctionMenuItem(const std::wstring_view title, const std::function<void()>& function) : function(function) {
 		setTitle(title);
 	}
 
 	void FunctionMenuItem::onKorryEvent(KorryEvent* event) {
 		if (event->getButtonType() == KorryButtonType::middle && event->getEventType() == KorryEventType::down) {
-			_function();
+			function();
 
 			event->setHandled(true);
 		}
@@ -96,11 +96,11 @@ namespace pizda {
 	}
 
 	bool BoolMenuItem::getValue() const {
-		return _value;
+		return value;
 	}
 
 	void BoolMenuItem::setValue(const bool value) {
-		_value = value;
+		this->value = value;
 
 		onValueChanged();
 		valueChanged();
@@ -157,36 +157,47 @@ namespace pizda {
 	}
 
 	Menu::Menu() {
-		setWidth(120);
-		setSpacing(5);
+		setScrollBarSize(3);
+		setScrollBarCornerRadius(1);
+		setScrollBarOffset(0);
+		setScrollBarThumbColor(&Theme::bg3);
+		setHorizontalScrollMode(ScrollMode::disabled);
+		setVerticalScrollMode(ScrollMode::computed);
+
+		itemsLayout.setMargin({ 8, 0, 8, 0 });
+		itemsLayout.setSpacing(itemSpacing);
+		*this += &itemsLayout;
+	}
+
+	void Menu::addItem(MenuItem* item) {
+		itemsLayout += item;
 	}
 
 	void Menu::setItems(const std::initializer_list<MenuItem*>& items) {
-		for (const auto item : items) {
+		for (const auto item : items)
 			addItem(item);
-		}
 
 		setSelectedIndex(0);
 	}
 
-	void Menu::addItem(MenuItem* item) {
-		*this += item;
+	uint16_t Menu::getItemsCount() const {
+		return itemsLayout.getChildrenCount();
 	}
 
 	MenuItem* Menu::getItemAt(const uint16_t index) const {
-		return dynamic_cast<MenuItem*>(getChildAt(index));
+		return dynamic_cast<MenuItem*>(itemsLayout.getChildAt(index));
 	}
 
 	uint16_t Menu::getSelectedIndex() const {
-		return _selectedIndex;
+		return selectedIndex;
 	}
 
 	MenuItem* Menu::getSelectedItem() const {
-		return getItemAt(_selectedIndex);
+		return getItemAt(selectedIndex);
 	}
 
 	void Menu::setSelectedIndex(const uint16_t value) {
-		_selectedIndex = value;
+		selectedIndex = value;
 		updateItemsFromSelection();
 
 		invalidate();
@@ -198,33 +209,33 @@ namespace pizda {
 
 		const auto korryEvent = reinterpret_cast<KorryEvent*>(event);
 
-		if (korryEvent->getEventType() == KorryEventType::down || korryEvent->getEventType() == KorryEventType::tick) {
-			if (korryEvent->getButtonType() == KorryButtonType::up || korryEvent->getButtonType() == KorryButtonType::down) {
-				const auto selectedItem = getSelectedItem();
+		if (
+			(korryEvent->getButtonType() == KorryButtonType::up || korryEvent->getButtonType() == KorryButtonType::down)
+			&& (korryEvent->getEventType() == KorryEventType::down || korryEvent->getEventType() == KorryEventType::tick)
+		) {
+			if (getSelectedItem()->getState() == MenuItemState::active)
+				return;
 
-				if (selectedItem->getState() == MenuItemState::active)
-					return;
+			auto newIndex = static_cast<int16_t>(selectedIndex + (korryEvent->getButtonType() == KorryButtonType::down ? 1 : -1));
 
-				auto newIndex = static_cast<int16_t>(_selectedIndex + (korryEvent->getButtonType() == KorryButtonType::down ? 1 : -1));
-
-				// Cycling
-				if (newIndex < 0) {
-					newIndex = static_cast<int16_t>(getChildrenCount() - 1);
-				}
-				else if (newIndex >= getChildrenCount()) {
-					newIndex = 0;
-				}
-
-				setSelectedIndex(static_cast<uint16_t>(newIndex));
-
-				event->setHandled(true);
+			// Cycling
+			if (newIndex < 0) {
+				newIndex = static_cast<int16_t>(getItemsCount() - 1);
 			}
+			else if (newIndex >= getItemsCount()) {
+				newIndex = 0;
+			}
+
+			setSelectedIndex(static_cast<uint16_t>(newIndex));
+			scrollTo(getSelectedItem());
+
+			event->setHandled(true);
 		}
 	}
 
 	void Menu::updateItemsFromSelection() const {
-		for (uint16_t i = 0; i < static_cast<uint16_t>(getChildrenCount()); i++) {
-			getItemAt(i)->setState(i == _selectedIndex ? MenuItemState::hovered : MenuItemState::normal);
+		for (uint16_t i = 0; i < getItemsCount(); i++) {
+			getItemAt(i)->setState(i == selectedIndex ? MenuItemState::hovered : MenuItemState::normal);
 		}
 	}
 }

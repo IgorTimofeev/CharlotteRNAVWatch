@@ -11,6 +11,15 @@ namespace pizda {
 		title.setText(L"Menu");
 
 		menu.setItems({
+			&testItem1,
+			&testItem2,
+			&testItem3,
+			&testItem4,
+			&testItem5,
+			&testItem6,
+			&testItem7,
+			&testItem8,
+
 			&waypointsItem,
 			&devItem,
 			&settingsItem,

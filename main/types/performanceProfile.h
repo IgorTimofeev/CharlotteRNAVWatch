@@ -58,8 +58,8 @@ namespace pizda {
 				speedBars.clear();
 				speedBars.push_back(SpeedBar { 0, 5, &Theme::speedBarWhite });
 				speedBars.push_back(SpeedBar { 5, 10, &Theme::speedBarGreen });
-				speedBars.push_back(SpeedBar { 10, 15, &Theme::speedBarYellow });
-				speedBars.push_back(SpeedBar { 15, 40, &Theme::speedBarRed });
+				speedBars.push_back(SpeedBar { 10, 18, &Theme::speedBarYellow });
+				speedBars.push_back(SpeedBar { 18, 40, &Theme::speedBarRed });
 
 				speedBugs.clear();
 				speedBugs.push_back(SpeedBug { L"X", 13 });

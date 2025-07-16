@@ -470,7 +470,7 @@ namespace pizda {
 				renderer->renderLine(
 				   static_cast<Point>(centerVec + lineVec),
 				   static_cast<Point>(centerVec + lineVec - lineVecNorm * lineLength),
-				   lineDeg == 0 ? &Theme::redBright : &Theme::fg2
+				   lineDeg == 0 ? &Theme::speedBarRed : &Theme::fg2
 			   );
 
 				// Text for big
@@ -481,7 +481,7 @@ namespace pizda {
 					switch (lineDeg) {
 						case 0:
 							text = L"N";
-							color = &Theme::redBright;
+							color = &Theme::speedBarRed;
 							break;
 						case 90:
 							text = L"E";
@@ -853,48 +853,27 @@ namespace pizda {
 		// Course
 		{
 			constexpr static uint8_t courseWidth = 42;
-			constexpr static uint8_t courseHeight = 20;
-
-			constexpr static uint8_t triangleWidth = 4;
-			constexpr static uint8_t triangleHeight = 5;
+			constexpr static uint8_t courseHeight = sidebarWidth + 5;
 
 			const auto bg = rc.gnss.haveLocation() ? &Theme::bg1 : &Theme::bgRed2;
 			const auto fg = rc.gnss.haveLocation() ? &Theme::fg1 : &Theme::fgRed1;
 			const auto text = rc.gnss.haveLocation() ? std::format(L"{:03}", static_cast<int16_t>(rc.courseDeg)) : L"---";
 
-			const auto courseBounds = Bounds(
-				center.getX() - courseWidth / 2,
-				bounds.getY(),
-				courseWidth,
-				courseHeight
-			);
-
 			renderer->renderFilledRectangle(
-				courseBounds,
+				Bounds(
+					center.getX() - courseWidth / 2,
+					bounds.getY(),
+					courseWidth,
+					courseHeight
+				),
 				4,
-				bg
-			);
-
-			renderer->renderFilledTriangle(
-				Point(
-					center.getX() - triangleWidth,
-					courseBounds.getY2() + 1
-				),
-				Point(
-					center.getX() + triangleWidth,
-					courseBounds.getY2() + 1
-				),
-				Point(
-					center.getX(),
-					courseBounds.getY2() + 1 + triangleHeight
-				),
 				bg
 			);
 
 			renderer->renderString(
 				Point(
 					center.getX() - Theme::fontNormal.getWidth(text) / 2,
-					courseBounds.getYCenter() - Theme::fontNormal.getHeight() / 2
+					courseHeight / 2 - Theme::fontNormal.getHeight() / 2 - 2
 				),
 				&Theme::fontNormal,
 				fg,
@@ -905,6 +884,7 @@ namespace pizda {
 		// Time
 		{
 			constexpr static uint8_t timeWidth = 42;
+			constexpr static uint8_t timeHeight = sidebarWidth + 5;
 
 			const auto bg = rc.gnss.haveTime() ? &Theme::bg1 : &Theme::bgRed2;
 			const auto fg = rc.gnss.haveTime() ? &Theme::fg1 : &Theme::fgRed1;
@@ -915,7 +895,7 @@ namespace pizda {
 					center.getX() - timeWidth / 2,
 					bounds.getY2() - sidebarWidth - 5 + 1,
 					timeWidth,
-					sidebarWidth + 5
+					timeHeight
 				),
 				bg
 			);
@@ -923,7 +903,7 @@ namespace pizda {
 			renderer->renderString(
 				Point(
 					center.getX() - Theme::fontNormal.getWidth(text) / 2,
-					bounds.getY2() - sidebarWidth / 2 + 1 - Theme::fontNormal.getHeight() / 2
+					bounds.getY2() - timeHeight / 2 - Theme::fontNormal.getHeight() / 2 + 3
 				),
 				&Theme::fontNormal,
 				fg,
@@ -945,8 +925,8 @@ namespace pizda {
 		// Satellites
 		{
 			const auto position = Point(
-				center.getX() - 61,
-				bounds.getY2() - 31
+				center.getX() - 59,
+				bounds.getY2() - 30
 			);
 
 			renderer->renderImage(
@@ -968,10 +948,10 @@ namespace pizda {
 		// Battery
 		{
 			const auto batteryBounds = Bounds(
-				center.getX() + 42,
-				bounds.getY2() - 26,
+				center.getX() + 39,
+				bounds.getY2() - 25,
 				15,
-				7
+				8
 			);
 
 			renderer->renderRectangle(
@@ -981,10 +961,10 @@ namespace pizda {
 
 			renderer->renderFilledRectangle(
 				Bounds(
-					batteryBounds.getX(),
-					batteryBounds.getY(),
-					batteryBounds.getWidth() * 8 / 10,
-					batteryBounds.getHeight()
+					batteryBounds.getX() + 1,
+					batteryBounds.getY() + 1,
+					(batteryBounds.getWidth() - 2) * 8 / 10,
+					batteryBounds.getHeight() - 2
 				),
 				&Theme::good
 			);

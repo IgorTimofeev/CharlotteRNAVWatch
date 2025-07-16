@@ -21,20 +21,20 @@ namespace pizda {
 
 			// Sidebar
 			constexpr static uint8_t sidebarWidth = 28;
-			constexpr static uint8_t sidebarHeight = 120;
+			constexpr static uint8_t sidebarHeight = 128;
 
 			constexpr static uint8_t sidebarLineLength1 = 2;
 			constexpr static uint8_t sidebarLineLength2 = 1;
 			constexpr static uint8_t sidebarLineTextOffset = 4;
 
 			constexpr static uint8_t sidebarValueWidth = sidebarWidth;
-			constexpr static uint8_t sidebarValueHeight = 24;
+			constexpr static uint8_t sidebarValueHeight = 20;
 			constexpr static uint8_t sidebarValueMargin = 3;
-			constexpr static uint8_t sidebarValueTriangleWidth = 10;
+			constexpr static uint8_t sidebarValueTriangleWidth = 8;
 
 			// Sidebar underlay
 			constexpr static uint8_t sidebarUnderlayHeight = 18;
-			constexpr static uint8_t sidebarUnderlayTextCenterMargin = 36;
+			constexpr static uint8_t sidebarUnderlayTextCenterMargin = 38;
 
 			// Compass
 			constexpr static uint8_t compassDiameter = displayDiameter - sidebarWidth * 2;
