@@ -32,10 +32,12 @@ namespace pizda {
 		public:
 			std::vector<SettingsNavWaypoint> waypoints {};
 
-			uint16_t navWaypointIndex = 0;
-			uint16_t navWaypointCourseDeg = 0;
-			uint16_t bearingWaypointIndex = 0;
+			uint16_t waypoint1Index = 0;
+			uint16_t waypoint1CourseDeg = 0;
+			uint16_t waypoint2Index = 0;
+
 			SettingsNavPerformanceProfile performanceProfile = SettingsNavPerformanceProfile::cycling;
+			uint16_t samplingDistanceM = 0;
 
 		protected:
 			const char* getNVSNamespace() override {
@@ -82,21 +84,23 @@ namespace pizda {
 					}
 				}
 
-				navWaypointIndex = stream.getUint16(_navWaypointIndex, 0);
-				navWaypointCourseDeg = stream.getUint16(_navWaypointCourse, 0);
+				waypoint1Index = stream.getUint16(_navWaypointIndex, 0);
+				waypoint1CourseDeg = stream.getUint16(_navWaypointCourse, 0);
 
-				bearingWaypointIndex = stream.getUint16(_bearingWaypointIndex, 1);
+				waypoint2Index = stream.getUint16(_bearingWaypointIndex, 1);
 
 				performanceProfile = static_cast<SettingsNavPerformanceProfile>(stream.getUint8(_performanceProfile, static_cast<uint8_t>(SettingsNavPerformanceProfile::cycling)));
+				samplingDistanceM = stream.getUint16(_samplingDistanceM, 10);
 			}
 
 			void onWrite(const NVSStream& stream) override {
-				stream.setUint16(_navWaypointIndex, navWaypointIndex);
-				stream.setUint16(_navWaypointCourse, navWaypointCourseDeg);
+				stream.setUint16(_navWaypointIndex, waypoint1Index);
+				stream.setUint16(_navWaypointCourse, waypoint1CourseDeg);
 
-				stream.setUint16(_bearingWaypointIndex, bearingWaypointIndex);
+				stream.setUint16(_bearingWaypointIndex, waypoint2Index);
 
 				stream.setUint8(_performanceProfile, static_cast<uint8_t>(performanceProfile));
+				stream.setUint16(_samplingDistanceM, samplingDistanceM);
 			}
 
 		private:
@@ -109,5 +113,6 @@ namespace pizda {
 			constexpr static auto _waypointsList = "wl";
 
 			constexpr static auto _performanceProfile = "pp";
+			constexpr static auto _samplingDistanceM = "sd";
 	};
 }

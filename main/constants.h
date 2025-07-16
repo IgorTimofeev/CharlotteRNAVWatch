@@ -15,7 +15,7 @@ namespace pizda {
 					constexpr static gpio_num_t sck = GPIO_NUM_4;
 			};
 
-			class uart {
+			class gnss {
 				public:
 					constexpr static uart_port_t port = UART_NUM_1;
 					constexpr static gpio_num_t rx = GPIO_NUM_20;

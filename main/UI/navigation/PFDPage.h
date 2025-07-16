@@ -27,10 +27,9 @@ namespace pizda {
 			constexpr static uint8_t sidebarLineLength2 = 1;
 			constexpr static uint8_t sidebarLineTextOffset = 4;
 
-			constexpr static uint8_t sidebarValueWidth = sidebarWidth;
-			constexpr static uint8_t sidebarValueHeight = 20;
-			constexpr static uint8_t sidebarValueMargin = 3;
+			constexpr static uint8_t sidebarValueHeight = 23;
 			constexpr static uint8_t sidebarValueTriangleWidth = 8;
+			constexpr static uint8_t sidebarValueTextMargin = 2;
 
 			// Sidebar underlay
 			constexpr static uint8_t sidebarUnderlayHeight = 18;

@@ -12,7 +12,8 @@ namespace pizda {
 		public:
 			SettingsPage();
 
-			RouteMenuItem PFDSettingsItem;
+			RouteMenuItem performanceProfileMenuItem;
+			RouteMenuItem themeItem;
 			RouteMenuItem GNSSSettingsItem;
 			RouteMenuItem backItem;
 	};

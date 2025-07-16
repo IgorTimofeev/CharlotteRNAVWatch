@@ -25,10 +25,7 @@ namespace pizda {
 	class RC {
 		public:
 			Settings settings {};
-
-			GNSS gnss {
-				constants::uart::port
-			};
+			GNSS gnss {};
 
 			GC9A01Display display = GC9A01Display(
 				constants::spi::mosi,
@@ -70,11 +67,8 @@ namespace pizda {
 			float speedKt = 0;
 			float speedTrendKt = 0;
 
-			float navWaypointBearingDeg = 0;
-			float navWaypointDistanceNm = 0;
-			uint32_t navWaypointETESec = 0;
-
-			float bearingWaypointBearingDeg = 0;
+			float waypoint1BearingDeg = 0;
+			float waypoint2BearingDeg = 0;
 
 			static RC& getInstance();
 
@@ -83,8 +77,6 @@ namespace pizda {
 			const Route* getRoute() const;
 			void setRoute(const Route* route);
 
-			void updateGNSSSystemsFromSettings() const;
-			void updateGNSSSimulationFromSettings();
 			void updateThemeFromSettings() const;
 			void updatePerformanceProfileFromSettings();
 
@@ -93,13 +85,11 @@ namespace pizda {
 
 			constexpr static uint32_t mainTickInterval = 1'000'000 / 30;
 			constexpr static uint32_t computePrimaryTickInterval = 1'000'000 / 30;
-			constexpr static uint32_t computeDelayedTickInterval = 2'000'000;
 
 			const Route* _selectedRoute = nullptr;
 			Element* _selectedPage = nullptr;
 
 			int64_t _computingPrimaryTickTime = 0;
-			int64_t _computingDelayedTickTime = 0;
 
 			void SPIBusSetup() const;
 

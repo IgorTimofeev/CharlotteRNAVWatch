@@ -21,170 +21,85 @@ namespace pizda {
 
 	class GNSS {
 		public:
-			explicit GNSS(const uart_port_t uartPort) : uartPort(uartPort) {
+			void setup();
+			void startReading();
+			void updateSystemsFromSettings() const;
 
-			}
+			uint16_t getDataUpdatingDistanceM() const;
+			void setDataUpdatingDistanceM(uint16_t value);
 
-			void setup() {
-				ESP_ERROR_CHECK(uart_driver_install(uartPort, rxBufferSize, txBufferSize, queueSize, &uartQueue, 0));
+			void setSystems(uint8_t systems) const;
+			void setUpdateInterval(uint16_t intervalMs) const;
 
-				uart_config_t config {};
-				config.baud_rate = 9600;
-				config.data_bits = UART_DATA_8_BITS;
-				config.parity  = UART_PARITY_DISABLE;
-				config.stop_bits = UART_STOP_BITS_1;
-				config.flow_ctrl = UART_HW_FLOWCTRL_DISABLE;
-				config.source_clk = UART_SCLK_DEFAULT;
+			bool haveLocation() const;
+			float getLatitudeRad() const;
+			float getLongitudeRad() const;
 
-				ESP_ERROR_CHECK(uart_param_config(uartPort, &config));
-				ESP_ERROR_CHECK(uart_set_pin(uartPort, constants::uart::tx, constants::uart::rx, GPIO_NUM_NC, GPIO_NUM_NC));
-			}
+			bool haveAltitude() const;
+			float getAltitudeM();
+			float getAltitudeTrendM() const;
 
-			void startReading() {
-				xTaskCreate(
-					[](void* arg) {
-						while (true) {
-							static_cast<GNSS*>(arg)->readAndParse();
-							vTaskDelay(pdMS_TO_TICKS(tickInterval / 1000));
-						}
-					},
-					"GPS task",
-					4096,
-					this,
-					1,
-					nullptr
-				);
-			}
+			bool haveSpeed() const;
+			float getSpeedMps() const;
 
-			void setSystems(const uint8_t systems) const {
-				const auto buffer = new char[11];
-				snprintf(buffer, 11, "PCAS04,%d", systems);
+			float getSpeedTrendMps() const;
+			bool haveCourse() const;
 
-				sendCommand(buffer);
+			float getCourseDeg();
+			float getComputedCourseDeg() const;
 
-				delete[] buffer;
-			}
+			bool haveTime() const;
+			uint8_t getTimeHours();
+			uint8_t getTimeMinutes();
+			uint8_t getTimeSeconds();
 
-			void setUpdateInterval(const uint16_t intervalMs) const {
-				const auto buffer = new char[13];
-				snprintf(buffer, 13, "MTK220,%d", intervalMs);
+			uint32_t getSatellitesCount();
+			bool isSatellitesCountEnough();
 
-				sendCommand(buffer);
+			float getWaypoint1BearingDeg() const;
+			float getWaypoint1DistanceM() const;
+			uint32_t getWaypoint1ETESec() const;
+			float getWaypoint2BearingDeg() const;
 
-				delete[] buffer;
-			}
-
-			bool haveLocation() const {
-				return simulationMode || gps.location.isValid();
-			}
-
-			float getLatitudeRad() const {
-				return simulationMode ? simulationLatRad : latitudeRad;
-			}
-
-			float getLongitudeRad() const {
-				return simulationMode ? simulationLonRad : longitudeRad;
-			}
-
-			bool haveAltitude() const {
-				return simulationMode || gps.altitude.isValid();
-			}
-
-			float getAltitudeM() {
-				return simulationMode ? simulationAltitude : gps.altitude.meters();
-			}
-
-			float getAltitudeTrendM() const {
-				return altitudeTrendM;
-			}
-
-			bool haveSpeed() const {
-				return simulationMode || gps.speed.isValid();
-			}
-
-			float getSpeedMps() {
-				return simulationMode ? simulationSpeed : gps.speed.mps();
-			}
-
-			float getSpeedTrendMps() const {
-				return speedTrend;
-			}
-
-			bool haveCourse() const {
-				return simulationMode || gps.course.isValid();
-			}
-
-			float getCourseDeg() {
-				return normalizeAngle360(gps.course.value());
-			}
-
-			float getComputedCourseDeg() const {
-				return courseComputed;
-			}
-
-			bool haveTime() const {
-				return simulationMode || gps.time.isValid();
-			}
-
-			uint8_t getTimeHours() {
-				return simulationMode ? 12 : gps.time.hour();
-			}
-
-			uint8_t getTimeMinutes() {
-				return simulationMode ? 0 : gps.time.minute();
-			}
-
-			uint8_t getTimeSeconds() {
-				return simulationMode ? 0 : gps.time.second();
-			}
-
-			uint8_t getDateDay() {
-				return simulationMode ? 18 : gps.date.day();
-			}
-
-			uint8_t getDateMonth() {
-				return simulationMode ? 9 : gps.date.month();
-			}
-
-			uint16_t getDateYear() {
-				return simulationMode ? 1994 : gps.date.year();
-			}
-
-			uint32_t getSatellites() {
-				return simulationMode ? 19 : gps.satellites.value();
-			}
-
-			float getHDOP() {
-				return simulationMode ? 10 : gps.hdop.hdop();
-			}
-
-			bool getSimulationMode() const {
-				return simulationMode;
-			}
-			
-			void setSimulationMode(const bool value) {
-				simulationMode = value;
-			}
+			float getHDOP();
 
 		private:
 			constexpr static uint16_t rxBufferSize = 2048;
 			constexpr static uint16_t txBufferSize = 2048;
 			constexpr static uint16_t queueSize = 10;
-			constexpr static auto tickInterval = 1'000'000;
 			constexpr static auto trendInterval = 5'000'000;
-			constexpr static auto courseTickInterval = 2'500'000;
-
-			uart_port_t uartPort;
+			
 			TinyGPSPlus gps {};
 			QueueHandle_t uartQueue {};
 			char rxBuffer[rxBufferSize] {};
 
-			bool simulationMode = false;
+			// Location
+			float latitudeRad = 0;
+			float longitudeRad = 0;
 
-			float courseComputed = 0;
-			int64_t courseTickTime = 0;
-			float coursePrevLatitudeRad = 0;
-			float coursePrevLongitudeRad = 0;
+			// Altitude
+			float oldAltitudeM = 0;
+			float altitudeTrendM = 0;
+
+			// Waypoints
+			float waypoint1BearingDeg = 0;
+			float waypoint1DistanceM = 0;
+			uint32_t waypoint1ETESec = 0;
+
+			float waypoint2BearingDeg = 0;
+
+			// Data updating
+			uint16_t dataUpdatingDistanceM = 0;
+			float dataUpdatingPrevLatRad = -1;
+			float dataUpdatingPrevLonRad = -1;
+
+			// Speed
+			float speedMps = 0;
+			float oldSpeedMps = 0;
+			float speedTrendMps = 0;
+
+			// Course
+			float course = 0;
 
 			// Simulation
 			constexpr static float simulationLatRadFrom = toRadians(59.804165104373745);
@@ -193,131 +108,16 @@ namespace pizda {
 			constexpr static float simulationLatRadTo = toRadians(59.80960977788406);
 			constexpr static float simulationLonRadTo = toRadians(30.59353048681725);
 
-			constexpr static float simulationLatLonTime = 20'000'000.f;
+			constexpr static float simulationLatLonInterval = 20'000'000.f;
 
+			bool simulationLatLonRev = false;
 			float simulationAltitude = 0;
-			float simulationSpeed = 0;
 			float simulationLatRad = simulationLatRadFrom;
 			float simulationLonRad = simulationLonRadFrom;
 
-			float latitudeRad = 0;
-			float longitudeRad = 0;
-
-			float oldAltitudeM = 0;
-			float altitudeTrendM = 0;
-
-			float oldSpeed = 0;
-			float speedTrend = 0;
-
-			static uint8_t computeCommandCRC(const char* data) {
-				uint8_t crc = 0;
-
-				while (*data != '\0') {
-					crc ^= *data;
-					data++;
-				}
-
-				return crc;
-			}
-
-			void sendCommand(const char* command) const {
-				const auto crc = computeCommandCRC(command);
-				const auto targetLen = 1 + strlen(command) + 1 + 2 + 2;
-
-				const auto buffer = new char[targetLen + 1];
-				snprintf(buffer, targetLen + 1, "$%s*%02X\r\n", command, crc);
-
-				ESP_LOGI("GNSS", "Sending command: %s", buffer);
-
-				uart_write_bytes(uartPort, buffer, targetLen);
-
-				delete[] buffer;
-			}
-
-			void readAndParse() {
-				const auto bytesRead = uart_read_bytes(uartPort, rxBuffer, rxBufferSize - 1, pdMS_TO_TICKS(100));
-
-				if (bytesRead) {
-					rxBuffer[bytesRead] = '\0';
-
-					auto bufferPtr = rxBuffer;
-
-					while (*bufferPtr)
-						gps.encode(*bufferPtr++);
-
-					// Location
-					latitudeRad = toRadians(gps.location.lat());
-					longitudeRad = toRadians(gps.location.lng());
-
-					if (simulationMode) {
-						// Lat/lon
-						// distance - 10 sec
-						// x - deltaTime
-						simulationLatRad += (simulationLatRadTo - simulationLatRadFrom) * static_cast<float>(tickInterval) / simulationLatLonTime;
-						simulationLonRad += (simulationLonRadTo - simulationLonRadFrom) * static_cast<float>(tickInterval) / simulationLatLonTime;
-
-						if (simulationLatRad > simulationLatRadTo) {
-							simulationLatRad = simulationLatRadFrom;
-							simulationLonRad = simulationLonRadFrom;
-						}
-
-						// Speed
-						simulationSpeed += YOBA::random(
-							static_cast<int32_t>(Units::convertSpeed(1, SpeedUnit::knot, SpeedUnit::meterPerSecond)),
-							static_cast<int32_t>(Units::convertSpeed(2, SpeedUnit::knot, SpeedUnit::meterPerSecond))
-						);
-
-						if (simulationSpeed >= Units::convertSpeed(20, SpeedUnit::knot, SpeedUnit::meterPerSecond))
-							simulationSpeed = 0;
-
-						// Altitude
-						simulationAltitude += YOBA::random(
-							static_cast<int32_t>(Units::convertDistance(6, DistanceUnit::foot, DistanceUnit::meter)),
-							static_cast<int32_t>(Units::convertDistance(12, DistanceUnit::foot, DistanceUnit::meter))
-						);
-
-						if (simulationAltitude >= Units::convertDistance(150, DistanceUnit::foot, DistanceUnit::meter))
-							simulationAltitude = 0;
-					}
-
-					// Course
-					if (esp_timer_get_time() > courseTickTime) {
-						courseComputed = normalizeAngle360(toDegrees(GeographicCoordinates::getBearing(
-							coursePrevLatitudeRad,
-							coursePrevLongitudeRad,
-							getLatitudeRad(),
-							getLongitudeRad()
-						)));
-
-						coursePrevLatitudeRad = getLatitudeRad();
-						coursePrevLongitudeRad = getLongitudeRad();
-
-						courseTickTime = esp_timer_get_time() + courseTickInterval;
-					}
-
-					// Trends
-					if (haveSpeed()) {
-						speedTrend = (getSpeedMps() - oldSpeed) * trendInterval / tickInterval;
-						oldSpeed = getSpeedMps();
-					}
-					else {
-						speedTrend = oldSpeed;
-					}
-
-					if (haveAltitude()) {
-						altitudeTrendM = (getAltitudeM() - oldAltitudeM) * trendInterval / tickInterval;
-						oldAltitudeM = getAltitudeM();
-					}
-					else {
-						altitudeTrendM = oldAltitudeM;
-					}
-
-					// ESP_LOGI("GNSS", "---------------- Processed data ----------------");
-					// ESP_LOGI("GNSS", "Sat / HDOP: %lu, %lf", getSatellites(), getHDOP());
-					// ESP_LOGI("GNSS", "Date / time: %d.%d.%d %d:%d:%d", getDateDay(), getDateMonth(), getDateYear(), getTimeHours(), getTimeMinutes(), getTimeSeconds());
-					// ESP_LOGI("GNSS", "Lat / lon / alt: %f deg, %f deg, %f m", toDegrees(getLatitudeRad()), toDegrees(getLongitudeRad()), getAltitudeM());
-					// ESP_LOGI("GNSS", "Speed / Course: %f mps, %f deg", getSpeedMps(), getCourseDeg());
-				}
-			}
+			static uint8_t computeCommandCRC(const char* data);
+			static void sendCommand(const char* command);
+			void readAndParse();
+			static bool isSimulationMode();
 	};
 }

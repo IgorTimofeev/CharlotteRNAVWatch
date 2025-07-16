@@ -30,7 +30,7 @@ namespace pizda {
 	}
 
 	PerformanceProfileSettingsPage::PerformanceProfileSettingsPage() :
-		backItem({ L"Back", &Routes::PFD })
+		backItem({ L"Back", &Routes::settings })
 	{
 		title.setText(L"Performance profile");
 

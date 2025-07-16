@@ -8,7 +8,7 @@ namespace pizda {
 		navWaypointItem(FunctionMenuItem(L"As destination", [] {
 			auto& rc = RC::getInstance();
 
-			rc.settings.nav.navWaypointIndex = WaypointMenuItem::getLastWaypointIndex();
+			rc.settings.nav.waypoint1Index = WaypointMenuItem::getLastWaypointIndex();
 			rc.settings.nav.scheduleWrite();
 
 			rc.setRoute(&Routes::PFD);
@@ -16,7 +16,7 @@ namespace pizda {
 		bearingWaypointItem(FunctionMenuItem(L"As bearing", [] {
 			auto& rc = RC::getInstance();
 
-			rc.settings.nav.bearingWaypointIndex = WaypointMenuItem::getLastWaypointIndex();
+			rc.settings.nav.waypoint2Index = WaypointMenuItem::getLastWaypointIndex();
 			rc.settings.nav.scheduleWrite();
 
 			rc.setRoute(&Routes::PFD);
@@ -26,12 +26,12 @@ namespace pizda {
 
 			const auto waypointIndex = WaypointMenuItem::getLastWaypointIndex();
 
-			if (waypointIndex <= rc.settings.nav.navWaypointIndex) {
-				rc.settings.nav.navWaypointIndex = 0;
+			if (waypointIndex <= rc.settings.nav.waypoint1Index) {
+				rc.settings.nav.waypoint1Index = 0;
 			}
 
-			if (waypointIndex <= rc.settings.nav.bearingWaypointIndex) {
-				rc.settings.nav.bearingWaypointIndex = 0;
+			if (waypointIndex <= rc.settings.nav.waypoint2Index) {
+				rc.settings.nav.waypoint2Index = 0;
 			}
 
 			// rc.settings.nav.waypoints.erase(rc.settings.nav.waypoints.begin() + waypointIndex);

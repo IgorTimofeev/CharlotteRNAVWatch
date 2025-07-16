@@ -3,14 +3,16 @@
 
 namespace pizda {
 	SettingsPage::SettingsPage() :
-		PFDSettingsItem(RouteMenuItem(L"PFD", &Routes::PFDSettings)),
+		performanceProfileMenuItem(RouteMenuItem(L"Perf profile", &Routes::performanceProfile)),
+		themeItem(RouteMenuItem(L"Theme", &Routes::themeSettings)),
 		GNSSSettingsItem(RouteMenuItem(L"GNSS", &Routes::GNSSSettings)),
 		backItem(RouteMenuItem(L"Back", &Routes::mainMenu))
 	{
 		title.setText(L"Settings");
 
 		menu.setItems({
-			&PFDSettingsItem,
+			&performanceProfileMenuItem,
+			&themeItem,
 			&GNSSSettingsItem,
 			&backItem
 		});

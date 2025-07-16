@@ -135,21 +135,21 @@ namespace pizda {
 		const auto& rc = RC::getInstance();
 
 		// Bars
-		constexpr static uint8_t diffAngle = 50;
-		constexpr static float minAngle = toRadians(180 - diffAngle);
-		constexpr static float maxAngle = toRadians(180 + diffAngle);
+		constexpr static uint8_t diffAngleDeg = 50;
+		constexpr static float minAngleRad = toRadians(180 - diffAngleDeg);
+		constexpr static float maxAngleRad = toRadians(180 + diffAngleDeg);
 
 		for (const auto& [from, to, color] : rc.performanceProfile.speedBars) {
 			const auto radFrom = std::clamp(
 				std::numbers::pi_v<float> - (from - value) * rc.performanceProfile.speedRadPerUnit,
-				minAngle,
-				maxAngle
+				minAngleRad,
+				maxAngleRad
 			);
 
 			const auto radTo = std::clamp(
 				std::numbers::pi_v<float> - (to - value) * rc.performanceProfile.speedRadPerUnit,
-				minAngle,
-				maxAngle
+				minAngleRad,
+				maxAngleRad
 			);
 
 			// ESP_LOGI("SPD BARS", "from: %f, to: %f", toDegrees(radFrom), toDegrees(radTo));
@@ -172,16 +172,16 @@ namespace pizda {
 	}
 
 	void PFDPage::renderSpeedValue(Renderer* renderer, const Bounds& sidebarBounds, const Point& center, const float value) {
-		const auto& rc = RC::getInstance();
+		auto& rc = RC::getInstance();
 
-		const auto bg = rc.gnss.haveSpeed() ? &Theme::bg4 : &Theme::bgRed2;
-		const auto fg = rc.gnss.haveSpeed() ? &Theme::fg1 : &Theme::fgRed1;
-		const auto text = rc.gnss.haveSpeed() ? std::format(L"{:03}", static_cast<int16_t>(value)) : L"---";
+		const auto bg = rc.gnss.isSatellitesCountEnough() ? &Theme::bg4 : &Theme::bgRed2;
+		const auto fg = rc.gnss.isSatellitesCountEnough() ? &Theme::fg1 : &Theme::fgRed1;
+		const auto text = rc.gnss.isSatellitesCountEnough() ? std::format(L"{:03}", static_cast<int16_t>(value)) : L"---";
 
 		const auto valueBounds  = Bounds(
 		   sidebarBounds.getX(),
 		   center.getY() - sidebarValueHeight / 2,
-		   sidebarValueWidth,
+		   sidebarValueTextMargin + Theme::fontBig.getWidth(value < 1000 ? L"888" : L"8888"),
 		   sidebarValueHeight
 	   );
 
@@ -208,10 +208,10 @@ namespace pizda {
 
 		renderer->renderString(
 			Point(
-				valueBounds.getX() + sidebarValueMargin,
-				center.getY() - Theme::fontNormal.getHeight() / 2
+				valueBounds.getX() + sidebarValueTextMargin,
+				center.getY() - Theme::fontBig.getHeight() / 2
 			),
-			&Theme::fontNormal,
+			&Theme::fontBig,
 			fg,
 			text
 		);
@@ -243,7 +243,7 @@ namespace pizda {
 		for (const auto& [name, speed] : rc.performanceProfile.speedBugs) {
 			const auto angleRad = (value - static_cast<float>(speed)) * rc.performanceProfile.speedRadPerUnit;
 
-			if (std::abs(angleRad) > 50)
+			if (std::abs(angleRad) > toRadians(50))
 				continue;
 
 			const auto pos = center + static_cast<Point>(Vector2F(displayRadius - speedBarWidth, 0).rotate(std::numbers::pi_v<float> - angleRad));
@@ -370,18 +370,20 @@ namespace pizda {
 	}
 
 	void PFDPage::renderAltitudeValue(Renderer* renderer, const Bounds& sidebarBounds, const Point& center, const float value) {
-		const auto& rc = RC::getInstance();
+		auto& rc = RC::getInstance();
 
-		const auto bg = rc.gnss.haveAltitude() ? &Theme::bg4 : &Theme::bgRed2;
-		const auto fg = rc.gnss.haveAltitude() ? &Theme::fg1 : &Theme::fgRed1;
-		const auto text = rc.gnss.haveAltitude() ? std::format(L"{:04}", static_cast<int16_t>(value)) : L"----";
+		const auto bg = rc.gnss.isSatellitesCountEnough() ? &Theme::bg4 : &Theme::bgRed2;
+		const auto fg = rc.gnss.isSatellitesCountEnough() ? &Theme::fg1 : &Theme::fgRed1;
+		const auto text = rc.gnss.isSatellitesCountEnough() ? std::format(L"{:03}", static_cast<int16_t>(value)) : L"---";
 
-		const auto valueBounds  = Bounds(
-		   sidebarBounds.getX2() - sidebarValueWidth + 1,
+		auto valueBounds  = Bounds(
+		   0,
 		   center.getY() - sidebarValueHeight / 2,
-		   sidebarValueWidth,
+		   sidebarValueTextMargin + Theme::fontBig.getWidth(value < 1'000 ? L"888" : (value < 10'000 ? L"8888" : L"88888")),
 		   sidebarValueHeight
 	   );
+
+		valueBounds.setX(sidebarBounds.getX2() - valueBounds.getWidth() + 1);
 
 		renderer->renderFilledRectangle(
 			valueBounds,
@@ -406,10 +408,10 @@ namespace pizda {
 
 		renderer->renderString(
 			Point(
-				valueBounds.getX2() - sidebarValueMargin + 2 - Theme::fontNormal.getWidth(text),
-				center.getY() - Theme::fontNormal.getHeight() / 2
+				valueBounds.getX2() - sidebarValueTextMargin + 2 - Theme::fontBig.getWidth(text),
+				center.getY() - Theme::fontBig.getHeight() / 2
 			),
-			&Theme::fontNormal,
+			&Theme::fontBig,
 			fg,
 			text
 		);
@@ -440,7 +442,7 @@ namespace pizda {
 		const auto center = bounds.getCenter();
 
 		// Normal mode
-		if (rc.gnss.haveLocation()) {
+		if (rc.gnss.isSatellitesCountEnough()) {
 			renderer->renderFilledCircle(
 			   center,
 			   compassRadius,
@@ -517,7 +519,7 @@ namespace pizda {
 
 			// Bearing
 			{
-				const auto bearingRad = toRadians(rc.bearingWaypointBearingDeg);
+				const auto bearingRad = toRadians(rc.waypoint2BearingDeg);
 				const auto bearingVec = Vector2F(0, -bearingRadius).rotate(bearingRad - headingRad);
 				const auto bearingVecNorm = bearingVec.normalize();
 				const auto bearingVecNormPerp = bearingVecNorm.clockwisePerpendicular();
@@ -564,8 +566,8 @@ namespace pizda {
 
 			// HSI
 			{
-				const auto HSICDIDeg = normalizeAngle180(static_cast<float>(rc.settings.nav.navWaypointCourseDeg) - rc.navWaypointBearingDeg);
-				const auto HSIVec = Vector2F(0, -HSIRadius).rotate(toRadians(rc.settings.nav.navWaypointCourseDeg) - headingRad);
+				const auto HSICDIDeg = normalizeAngle180(static_cast<float>(rc.settings.nav.waypoint1CourseDeg) - rc.waypoint1BearingDeg);
+				const auto HSIVec = Vector2F(0, -HSIRadius).rotate(toRadians(rc.settings.nav.waypoint1CourseDeg) - headingRad);
 				const auto HSIVecNorm = HSIVec.normalize();
 				const auto HSIVecNormPerp = HSIVecNorm.clockwisePerpendicular();
 
@@ -661,7 +663,7 @@ namespace pizda {
 
 				// WPT
 				{
-					const auto& waypoint = rc.settings.nav.waypoints[rc.settings.nav.navWaypointIndex];
+					const auto& waypoint = rc.settings.nav.waypoints[rc.settings.nav.waypoint1Index];
 
 					renderField(
 					   renderer,
@@ -682,7 +684,7 @@ namespace pizda {
 						center.getY() + fieldsVec.getY()
 					),
 					L"CRS",
-					std::format(L"{:03}", rc.settings.nav.navWaypointCourseDeg)
+					std::format(L"{:03}", rc.settings.nav.waypoint1CourseDeg)
 				);
 
 				// DIS
@@ -693,7 +695,7 @@ namespace pizda {
 						center.getY() - fieldsVec.getY()
 					),
 					L"DIS",
-					std::format(L"{:.1f} nm", rc.navWaypointDistanceNm)
+					std::format(L"{:.1f} nm", Units::convertDistance(rc.gnss.getWaypoint1DistanceM(), DistanceUnit::meter, DistanceUnit::nauticalMile))
 				);
 
 				// ETE
@@ -704,7 +706,9 @@ namespace pizda {
 						center.getY() - fieldsVec.getY()
 					),
 					L"ETE",
-					std::format(L"{:02}:{:02}", rc.navWaypointETESec / 3600, rc.navWaypointETESec % 60)
+					rc.gnss.getWaypoint1ETESec() > 0
+					? std::format(L"{:02}:{:02}", rc.gnss.getWaypoint1ETESec() / 3600, rc.gnss.getWaypoint1ETESec() % 60)
+					: L"--:--"
 				);
 			}
 		}
@@ -855,9 +859,9 @@ namespace pizda {
 			constexpr static uint8_t courseWidth = 42;
 			constexpr static uint8_t courseHeight = sidebarWidth + 5;
 
-			const auto bg = rc.gnss.haveLocation() ? &Theme::bg1 : &Theme::bgRed2;
-			const auto fg = rc.gnss.haveLocation() ? &Theme::fg1 : &Theme::fgRed1;
-			const auto text = rc.gnss.haveLocation() ? std::format(L"{:03}", static_cast<int16_t>(rc.courseDeg)) : L"---";
+			const auto bg = rc.gnss.isSatellitesCountEnough() ? &Theme::bg1 : &Theme::bgRed2;
+			const auto fg = rc.gnss.isSatellitesCountEnough() ? &Theme::fg1 : &Theme::fgRed1;
+			const auto text = rc.gnss.isSatellitesCountEnough() ? std::format(L"{:03}", static_cast<int16_t>(rc.courseDeg)) : L"---";
 
 			renderer->renderFilledRectangle(
 				Bounds(
@@ -872,10 +876,10 @@ namespace pizda {
 
 			renderer->renderString(
 				Point(
-					center.getX() - Theme::fontNormal.getWidth(text) / 2,
-					courseHeight / 2 - Theme::fontNormal.getHeight() / 2 - 2
+					center.getX() - Theme::fontBig.getWidth(text) / 2,
+					courseHeight / 2 - Theme::fontBig.getHeight() / 2 - 2
 				),
-				&Theme::fontNormal,
+				&Theme::fontBig,
 				fg,
 				text
 			);
@@ -883,7 +887,7 @@ namespace pizda {
 
 		// Time
 		{
-			constexpr static uint8_t timeWidth = 42;
+			constexpr static uint8_t timeWidth = 46;
 			constexpr static uint8_t timeHeight = sidebarWidth + 5;
 
 			const auto bg = rc.gnss.haveTime() ? &Theme::bg1 : &Theme::bgRed2;
@@ -902,10 +906,10 @@ namespace pizda {
 
 			renderer->renderString(
 				Point(
-					center.getX() - Theme::fontNormal.getWidth(text) / 2,
-					bounds.getY2() - timeHeight / 2 - Theme::fontNormal.getHeight() / 2 + 3
+					center.getX() - Theme::fontBig.getWidth(text) / 2,
+					bounds.getY2() - timeHeight / 2 - Theme::fontBig.getHeight() / 2 + 3
 				),
-				&Theme::fontNormal,
+				&Theme::fontBig,
 				fg,
 				text
 			);
@@ -941,7 +945,7 @@ namespace pizda {
 				),
 				&Theme::fontNormal,
 				&Theme::fg3,
-				std::to_wstring(rc.gnss.getSatellites())
+				std::to_wstring(rc.gnss.getSatellitesCount())
 			);
 		}
 
@@ -998,7 +1002,7 @@ namespace pizda {
 					? static_cast<int16_t>(incrementMagnitude)
 					: static_cast<int16_t>(-incrementMagnitude);
 
-				rc.settings.nav.navWaypointCourseDeg = static_cast<uint16_t>(normalizeAngle360(static_cast<int32_t>(rc.settings.nav.navWaypointCourseDeg) + incrementValue));
+				rc.settings.nav.waypoint1CourseDeg = static_cast<uint16_t>(normalizeAngle360(static_cast<int32_t>(rc.settings.nav.waypoint1CourseDeg) + incrementValue));
 				rc.settings.nav.scheduleWrite();
 
 				event->setHandled(true);

@@ -40,8 +40,6 @@ namespace pizda {
 		// GNSS
 		gnss.setup();
 		gnss.setUpdateInterval(1000);
-		updateGNSSSystemsFromSettings();
-		updateGNSSSimulationFromSettings();
 		gnss.startReading();
 
 		// UI
@@ -53,7 +51,6 @@ namespace pizda {
 		application.addHID(&buttonUp);
 		application.addHID(&buttonMiddle);
 		application.addHID(&buttonDown);
-
 
 		setRoute(&Routes::PFD);
 
@@ -75,25 +72,6 @@ namespace pizda {
 			if (deltaTime < mainTickInterval)
 				vTaskDelay(pdMS_TO_TICKS((mainTickInterval - deltaTime) / 1000));
 		}
-	}
-
-	void RC::updateGNSSSystemsFromSettings() const {
-		uint8_t flags = 0;
-
-		if (settings.GNSS.GPS)
-			flags |= GNSSSystem::GPS;
-
-		if (settings.GNSS.BDS)
-			flags |= GNSSSystem::BDS;
-
-		if (settings.GNSS.GLONASS)
-			flags |= GNSSSystem::GLONASS;
-
-		gnss.setSystems(flags);
-	}
-
-	void RC::updateGNSSSimulationFromSettings() {
-		gnss.setSimulationMode(settings.GNSS.simulation);
 	}
 
 	void RC::updateThemeFromSettings() const {
@@ -139,22 +117,6 @@ namespace pizda {
 		if (deltaTime < computePrimaryTickInterval)
 			return;
 
-		const auto& navWaypoint = settings.nav.waypoints[settings.nav.navWaypointIndex];
-		const auto& bearingWaypoint = settings.nav.waypoints[settings.nav.bearingWaypointIndex];
-
-		const auto navWaypointBearingDegTarget = normalizeAngle360(toDegrees(GeographicCoordinates::getBearing(
-			gnss.getLatitudeRad(),
-			gnss.getLongitudeRad(),
-			navWaypoint.geographicCoordinates.getLatitude(),
-			navWaypoint.geographicCoordinates.getLongitude()
-		)));
-
-		const auto bearingWaypointBearingDegTarget = normalizeAngle360(toDegrees(GeographicCoordinates::getBearing(
-			gnss.getLatitudeRad(),
-			gnss.getLongitudeRad(),
-			bearingWaypoint.geographicCoordinates.getLatitude(),
-			bearingWaypoint.geographicCoordinates.getLongitude()
-		)));
 
 		// Low pass
 
@@ -164,15 +126,13 @@ namespace pizda {
 		// factorPerTick = factorPerSecond * deltaTime / 1'000'000
 
 		// Fast
-		float LPFFactor = 2.0f * deltaTime / 1'000'000.f;
-		LowPassFilter::apply(navWaypointBearingDeg, navWaypointBearingDegTarget, LPFFactor);
-		LowPassFilter::apply(bearingWaypointBearingDeg, bearingWaypointBearingDegTarget, LPFFactor);
+		float LPFFactor = deltaTime / 500'000.f;
 
 		// Normal
-		LPFFactor = 1.0f * deltaTime / 1'000'000.f;
+		LPFFactor = deltaTime / 1'000'000.f;
 
-		LowPassFilter::apply(speedKt, gnss.haveSpeed() ? Units::convertSpeed(gnss.getSpeedMps(), SpeedUnit::meterPerSecond, SpeedUnit::knot) : 0, LPFFactor);
-		LowPassFilter::apply(altitudeFt, gnss.haveAltitude() ? Units::convertDistance(gnss.getAltitudeM(), DistanceUnit::meter, DistanceUnit::foot) : 0, LPFFactor);
+		LowPassFilter::apply(speedKt, gnss.isSatellitesCountEnough() ? Units::convertSpeed(gnss.getSpeedMps(), SpeedUnit::meterPerSecond, SpeedUnit::knot) : 0, LPFFactor);
+		LowPassFilter::apply(altitudeFt, gnss.isSatellitesCountEnough() ? Units::convertDistance(gnss.getAltitudeM(), DistanceUnit::meter, DistanceUnit::foot) : 0, LPFFactor);
 
 		// Course
 		if (speedKt > 2) {
@@ -195,27 +155,12 @@ namespace pizda {
 		}
 
 		// Slow
-		LPFFactor = 0.5f * deltaTime / 1'000'000.f;
-		LowPassFilter::apply(speedTrendKt, gnss.haveSpeed() ? Units::convertSpeed(gnss.getSpeedTrendMps(), SpeedUnit::meterPerSecond, SpeedUnit::knot) : 0, LPFFactor);
-		LowPassFilter::apply(altitudeTrendFt, gnss.haveAltitude() ? Units::convertDistance(gnss.getAltitudeTrendM(), DistanceUnit::meter, DistanceUnit::foot) : 0, LPFFactor);
+		LPFFactor = deltaTime / 2'000'000.f;
+		LowPassFilter::apply(speedTrendKt, gnss.isSatellitesCountEnough() ? Units::convertSpeed(gnss.getSpeedTrendMps(), SpeedUnit::meterPerSecond, SpeedUnit::knot) : 0, LPFFactor);
+		LowPassFilter::apply(altitudeTrendFt, gnss.isSatellitesCountEnough() ? Units::convertDistance(gnss.getAltitudeTrendM(), DistanceUnit::meter, DistanceUnit::foot) : 0, LPFFactor);
 
-		// Delayed shit
-		if (esp_timer_get_time() >= _computingDelayedTickTime) {
-			navWaypointDistanceNm = Units::convertDistance(
-				GeographicCoordinates::getDistance(
-					gnss.getLatitudeRad(),
-					gnss.getLongitudeRad(),
-					navWaypoint.geographicCoordinates.getLatitude(),
-					navWaypoint.geographicCoordinates.getLongitude()
-				),
-				DistanceUnit::meter,
-				DistanceUnit::nauticalMile
-			);
-
-			navWaypointETESec = static_cast<uint32_t>(navWaypointDistanceNm / speedKt * 3600);
-
-			_computingDelayedTickTime = esp_timer_get_time() + computeDelayedTickInterval;
-		}
+		LowPassFilter::apply(waypoint1BearingDeg, gnss.getWaypoint1BearingDeg(), LPFFactor);
+		LowPassFilter::apply(waypoint2BearingDeg, gnss.getWaypoint2BearingDeg(), LPFFactor);
 
 		// ESP_LOGI("CDI", "gps lat: %f, lon: %f", toDegrees(gps.getLatitudeRad()), toDegrees(gps.getLongitudeRad()));
 		// ESP_LOGI("CDI", "Bearing deg: %f", WPTBearingDeg);

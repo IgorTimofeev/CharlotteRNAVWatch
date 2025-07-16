@@ -68,11 +68,11 @@ namespace pizda {
 			void setDiamondDA40() {
 				speedStep = 5;
 				speedStepBig = 10;
-				speedRadPerUnit = toRadians(0.8f);
+				speedRadPerUnit = toRadians(1.6f);
 
 				altitudeStep = 50;
 				altitudeStepBig = 100;
-				altitudeRadPerUnit = toRadians(0.1f);
+				altitudeRadPerUnit = toRadians(0.15f);
 
 				speedBars.clear();
 				speedBars.push_back(SpeedBar { 0, 49, &Theme::speedBarRed });

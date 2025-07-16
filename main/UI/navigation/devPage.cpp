@@ -31,8 +31,8 @@ namespace pizda {
 		renderLine(std::format(L"ALT: {:.2f}", rc.gnss.getAltitudeM()));
 		renderLine(std::format(L"CR1: {:.2f}", rc.gnss.getCourseDeg()));
 		renderLine(std::format(L"CR2: {:.2f}", rc.gnss.getComputedCourseDeg()));
-		renderLine(std::format(L"NAV: {:.2f}", rc.navWaypointBearingDeg));
-		renderLine(std::format(L"BRG: {:.2f}", rc.bearingWaypointBearingDeg));
+		renderLine(std::format(L"NAV: {:.2f}", rc.waypoint1BearingDeg));
+		renderLine(std::format(L"BRG: {:.2f}", rc.waypoint2BearingDeg));
 	}
 
 	void DevPage::onEvent(Event* event) {

@@ -23,7 +23,7 @@ namespace pizda {
 	}
 
 	ThemeSettingsPage::ThemeSettingsPage() :
-		backItem(RouteMenuItem(L"Back", &Routes::PFDSettings))
+		backItem(RouteMenuItem(L"Back", &Routes::settings))
 	{
 		title.setText(L"Theme");
 

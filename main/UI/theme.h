@@ -5,6 +5,8 @@
 #include <YOBA/resources/fonts/unscii16.h>
 #include <YOBA/resources/fonts/PIXY10Font.h>
 #include <YOBA/resources/fonts/Vaticanus8Font.h>
+#include <YOBA/resources/fonts/unscii8Font.h>
+#include <YOBA/resources/fonts/unscii8ThinFont.h>
 
 namespace pizda {
 	using namespace YOBA;
@@ -50,7 +52,7 @@ namespace pizda {
 			static RGB565Color speedBarYellow;
 			static RGB565Color speedBarRed;
 
-			static const unscii16Font fontBig;
+			static const unscii8Font fontBig;
 			static const PIXY10Font fontNormal;
 			static const Vaticanus8Font fontSmall;
 

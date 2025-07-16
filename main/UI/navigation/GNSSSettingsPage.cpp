@@ -20,30 +20,30 @@ namespace pizda {
 		GPSSystemItem.setValue(rc.settings.GNSS.GPS);
 
 		GPSSystemItem.valueChanged += [this, &rc] {
-			rc.settings.GNSS.GPS = simulationItem.getValue();
+			rc.settings.GNSS.GPS = GPSSystemItem.getValue();
 			rc.settings.GNSS.scheduleWrite();
 
-			rc.updateGNSSSystemsFromSettings();
+			rc.gnss.updateSystemsFromSettings();
 		};
 
 		// BDS
 		BDSSystemItem.setValue(rc.settings.GNSS.BDS);
 
 		BDSSystemItem.valueChanged += [this, &rc] {
-			rc.settings.GNSS.BDS = simulationItem.getValue();
+			rc.settings.GNSS.BDS = BDSSystemItem.getValue();
 			rc.settings.GNSS.scheduleWrite();
 
-			rc.updateGNSSSystemsFromSettings();
+			rc.gnss.updateSystemsFromSettings();
 		};
 
 		// GLONASS
 		GLONASSSystemItem.setValue(rc.settings.GNSS.GLONASS);
 
 		GLONASSSystemItem.valueChanged += [this, &rc] {
-			rc.settings.GNSS.GLONASS = simulationItem.getValue();
+			rc.settings.GNSS.GLONASS = GLONASSSystemItem.getValue();
 			rc.settings.GNSS.scheduleWrite();
 
-			rc.updateGNSSSystemsFromSettings();
+			rc.gnss.updateSystemsFromSettings();
 		};
 		
 		// Simulation
@@ -52,8 +52,6 @@ namespace pizda {
 		simulationItem.valueChanged += [this, &rc] {
 			rc.settings.GNSS.simulation = simulationItem.getValue();
 			rc.settings.GNSS.scheduleWrite();
-
-			rc.updateGNSSSimulationFromSettings();
 		};
 
 		menu.setItems({
