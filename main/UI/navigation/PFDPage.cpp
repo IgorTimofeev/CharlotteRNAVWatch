@@ -209,7 +209,7 @@ namespace pizda {
 		renderer->renderString(
 			Point(
 				valueBounds.getX() + sidebarValueTextMargin,
-				center.getY() - Theme::fontBig.getHeight() / 2
+				center.getY() - Theme::fontBig.getHeight() / 2 + 1
 			),
 			&Theme::fontBig,
 			fg,
@@ -409,7 +409,7 @@ namespace pizda {
 		renderer->renderString(
 			Point(
 				valueBounds.getX2() - sidebarValueTextMargin + 2 - Theme::fontBig.getWidth(text),
-				center.getY() - Theme::fontBig.getHeight() / 2
+				center.getY() - Theme::fontBig.getHeight() / 2 + 1
 			),
 			&Theme::fontBig,
 			fg,
@@ -887,12 +887,12 @@ namespace pizda {
 
 		// Time
 		{
-			constexpr static uint8_t timeWidth = 46;
+			constexpr static uint8_t timeWidth = 62;
 			constexpr static uint8_t timeHeight = sidebarWidth + 5;
 
 			const auto bg = rc.gnss.haveTime() ? &Theme::bg1 : &Theme::bgRed2;
 			const auto fg = rc.gnss.haveTime() ? &Theme::fg1 : &Theme::fgRed1;
-			const auto text = rc.gnss.haveTime() ? std::format(L"{:02}:{:02}", rc.gnss.getTimeHours(), rc.gnss.getTimeMinutes()) : L"--:--";
+			const auto text = rc.gnss.haveTime() ? std::format(L"{:02}:{:02}Z", rc.gnss.getTimeHours(), rc.gnss.getTimeMinutes()) : L"--:--";
 
 			renderer->renderFilledRectangle(
 				Bounds(
@@ -930,7 +930,7 @@ namespace pizda {
 		{
 			const auto position = Point(
 				center.getX() - 59,
-				bounds.getY2() - 30
+				bounds.getY() + 16
 			);
 
 			renderer->renderImage(
@@ -952,8 +952,8 @@ namespace pizda {
 		// Battery
 		{
 			const auto batteryBounds = Bounds(
-				center.getX() + 39,
-				bounds.getY2() - 25,
+				center.getX() + 40,
+				bounds.getY() + 19,
 				15,
 				8
 			);

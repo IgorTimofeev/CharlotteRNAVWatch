@@ -29,7 +29,7 @@ namespace pizda {
 			void setDataUpdatingDistanceM(uint16_t value);
 
 			void setSystems(uint8_t systems) const;
-			void setUpdateInterval(uint16_t intervalMs) const;
+			void setUpdateInterval(uint32_t intervalUs);
 
 			bool haveLocation() const;
 			float getLatitudeRad() const;
@@ -68,10 +68,11 @@ namespace pizda {
 			constexpr static uint16_t txBufferSize = 2048;
 			constexpr static uint16_t queueSize = 10;
 			constexpr static auto trendInterval = 5'000'000;
-			
+
 			TinyGPSPlus gps {};
 			QueueHandle_t uartQueue {};
 			char rxBuffer[rxBufferSize] {};
+			uint32_t updateInterval = 1'000'000;
 
 			// Location
 			float latitudeRad = 0;
@@ -89,7 +90,6 @@ namespace pizda {
 			float waypoint2BearingDeg = 0;
 
 			// Data updating
-			uint16_t dataUpdatingDistanceM = 0;
 			float dataUpdatingPrevLatRad = -1;
 			float dataUpdatingPrevLonRad = -1;
 
@@ -117,7 +117,7 @@ namespace pizda {
 
 			static uint8_t computeCommandCRC(const char* data);
 			static void sendCommand(const char* command);
-			void readAndParse();
+			void tick();
 			static bool isSimulationMode();
 	};
 }

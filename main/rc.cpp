@@ -39,7 +39,7 @@ namespace pizda {
 
 		// GNSS
 		gnss.setup();
-		gnss.setUpdateInterval(1000);
+		gnss.setUpdateInterval(1'000'000);
 		gnss.startReading();
 
 		// UI
@@ -125,11 +125,8 @@ namespace pizda {
 		//
 		// factorPerTick = factorPerSecond * deltaTime / 1'000'000
 
-		// Fast
-		float LPFFactor = deltaTime / 500'000.f;
-
 		// Normal
-		LPFFactor = deltaTime / 1'000'000.f;
+		float LPFFactor = deltaTime / 1'000'000.f;
 
 		LowPassFilter::apply(speedKt, gnss.isSatellitesCountEnough() ? Units::convertSpeed(gnss.getSpeedMps(), SpeedUnit::meterPerSecond, SpeedUnit::knot) : 0, LPFFactor);
 		LowPassFilter::apply(altitudeFt, gnss.isSatellitesCountEnough() ? Units::convertDistance(gnss.getAltitudeM(), DistanceUnit::meter, DistanceUnit::foot) : 0, LPFFactor);
@@ -137,7 +134,7 @@ namespace pizda {
 		// Course
 		if (speedKt > 2) {
 			const auto targetCourseDeg = gnss.getComputedCourseDeg();
-			const auto courseLPFFactor = 1.0f * deltaTime / 2'500'000.f;
+			const auto courseLPFFactor = deltaTime / 1'000'000.f;
 
 			// Clockwise
 			if (courseDeg > 270 && targetCourseDeg < 90) {

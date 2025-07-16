@@ -82,7 +82,7 @@ namespace pizda {
 			constexpr static float fieldsRadius = compassRadius / 2.f;
 
 			// Speed bars
-			constexpr static uint8_t speedBarWidth = 1;
+			constexpr static uint8_t speedBarWidth = 2;
 
 			// Speed bugs
 			constexpr static uint8_t speedBugLineWidth = 4;

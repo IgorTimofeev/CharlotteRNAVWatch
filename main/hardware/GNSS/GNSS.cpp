@@ -21,9 +21,13 @@ namespace pizda {
 	void GNSS::startReading() {
 		xTaskCreate(
 			[](void* arg) {
+				const auto instance = static_cast<GNSS*>(arg);
+
+				// ReSharper disable once CppDFAEndlessLoop
 				while (true) {
-					static_cast<GNSS*>(arg)->readAndParse();
-					vTaskDelay(pdMS_TO_TICKS(RC::getInstance().settings.GNSS.tickIntervalUs / 1000));
+					instance->tick();
+
+					vTaskDelay(pdMS_TO_TICKS(instance->updateInterval / 1000));
 				}
 			},
 			"GPS task",
@@ -51,14 +55,6 @@ namespace pizda {
 		setSystems(flags);
 	}
 
-	uint16_t GNSS::getDataUpdatingDistanceM() const {
-		return dataUpdatingDistanceM;
-	}
-
-	void GNSS::setDataUpdatingDistanceM(const uint16_t value) {
-		this->dataUpdatingDistanceM = value;
-	}
-
 	void GNSS::setSystems(const uint8_t systems) const {
 		const auto buffer = new char[11];
 		snprintf(buffer, 11, "PCAS04,%d", systems);
@@ -68,9 +64,11 @@ namespace pizda {
 		delete[] buffer;
 	}
 
-	void GNSS::setUpdateInterval(const uint16_t intervalMs) const {
-		const auto buffer = new char[13];
-		snprintf(buffer, 13, "MTK220,%d", intervalMs);
+	void GNSS::setUpdateInterval(const uint32_t intervalUs) {
+		updateInterval = intervalUs;
+
+		const auto buffer = new char[15];
+		snprintf(buffer, 15, "MTK220,%lu", updateInterval / 1000);
 
 		sendCommand(buffer);
 
@@ -194,7 +192,7 @@ namespace pizda {
 		delete[] buffer;
 	}
 
-	void GNSS::readAndParse() {
+	void GNSS::tick() {
 		const auto bytesRead = uart_read_bytes(constants::gnss::port, rxBuffer, rxBufferSize - 1, pdMS_TO_TICKS(100));
 
 		if (!bytesRead)
@@ -215,17 +213,11 @@ namespace pizda {
 		latitudeRad = toRadians(gps.location.lat());
 		longitudeRad = toRadians(gps.location.lng());
 
-		// First ever location update
-		if (dataUpdatingPrevLatRad < 0) {
-			dataUpdatingPrevLatRad = latitudeRad;
-			dataUpdatingPrevLonRad = longitudeRad;
-		}
-
 		if (isSimulationMode()) {
 			// Lat/lon
 			// distance - 10 sec
 			// x - deltaTime
-			const auto factor = static_cast<float>(rc.settings.GNSS.tickIntervalUs) / simulationLatLonInterval * random(80, 100) / 100.f;
+			const auto factor = static_cast<float>(updateInterval) / simulationLatLonInterval * random(80, 100) / 100.f;
 			simulationLatRad += (simulationLatLonRev ? simulationLatRadFrom - simulationLatRadTo : simulationLatRadTo - simulationLatRadFrom) * factor;
 			simulationLonRad += (simulationLatLonRev ? simulationLonRadFrom - simulationLonRadTo : simulationLonRadTo - simulationLonRadFrom) * factor;
 
@@ -243,6 +235,12 @@ namespace pizda {
 				simulationAltitude = 0;
 		}
 
+		// First ever location update
+		if (dataUpdatingPrevLatRad < 0) {
+			dataUpdatingPrevLatRad = getLatitudeRad();
+			dataUpdatingPrevLonRad = getLongitudeRad();
+		}
+
 		// Distance
 		const auto samplesDistanceM = GeographicCoordinates::getDistance(
 			dataUpdatingPrevLatRad,
@@ -252,11 +250,11 @@ namespace pizda {
 		);
 
 		// Distance between 2 samples is enough, data should be updated
-		if (samplesDistanceM > dataUpdatingDistanceM) {
+		if (samplesDistanceM >= 20) {
 			// Speed
 			// samplesDistanceM - tickInterval us
 			// x - 1'000'000 us
-			speedMps = samplesDistanceM * 1'000'000 / rc.settings.GNSS.tickIntervalUs;
+			speedMps = samplesDistanceM * 1'000'000 / updateInterval;
 
 			// Course
 			course = normalizeAngle360(toDegrees(GeographicCoordinates::getBearing(
@@ -268,7 +266,7 @@ namespace pizda {
 
 			// Speed trend
 			if (haveSpeed()) {
-				speedTrendMps = (getSpeedMps() - oldSpeedMps) * trendInterval / rc.settings.GNSS.tickIntervalUs;
+				speedTrendMps = (getSpeedMps() - oldSpeedMps) * trendInterval / updateInterval;
 				oldSpeedMps = getSpeedMps();
 			}
 			else {
@@ -281,7 +279,7 @@ namespace pizda {
 
 		// Altitude trend
 		if (haveAltitude()) {
-			altitudeTrendM = (getAltitudeM() - oldAltitudeM) * trendInterval / rc.settings.GNSS.tickIntervalUs;
+			altitudeTrendM = (getAltitudeM() - oldAltitudeM) * trendInterval / updateInterval;
 			oldAltitudeM = getAltitudeM();
 		}
 		else {
