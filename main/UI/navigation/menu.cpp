@@ -47,17 +47,9 @@ namespace pizda {
 	void TitleMenuItem::onRender(Renderer* renderer, const Bounds& bounds) {
 		MenuItem::onRender(renderer, bounds);
 
-		renderer->renderImage(
-			Point(
-				bounds.getX() + 10,
-				bounds.getYCenter() - resources::Images::satellite.getSize().getHeight() / 2
-			),
-			&resources::Images::satellite
-		);
-
 		renderer->renderString(
 			Point(
-				bounds.getX() + 10 + resources::Images::satellite.getSize().getWidth() + textMargin,
+				bounds.getXCenter() - Theme::fontNormal.getWidth(getTitle()) / 2,
 				bounds.getYCenter() - Theme::fontNormal.getHeight() / 2
 			),
 			&Theme::fontNormal,
@@ -155,93 +147,70 @@ namespace pizda {
 		}
 	}
 
-	void AlphabetMenuItem::onRender(Renderer* renderer, const Bounds& bounds) {
-		TitleMenuItem::onRender(renderer, bounds);
-
-		const uint16_t charWidth = Theme::fontNormal.getWidth(L"8");
-		const uint16_t textWidth = text.size() * charWidth;
-
-		int32_t x = bounds.getX2() - textMargin - textWidth - textMargin;
-
-		if (getState() != MenuItemState::normal) {
-			renderer->renderFilledRectangle(
-				Bounds(
-					x,
-					bounds.getY(),
-					textWidth + textMargin * 2,
-					bounds.getHeight()
-				),
-				&Theme::fg2
-			);
-		}
-
-		x += textMargin;
-		const int32_t textY = bounds.getYCenter() - Theme::fontNormal.getHeight() / 2;
-
-		for (uint16_t i = 0; i < static_cast<uint16_t>(text.size()); i++) {
-			const auto isSelected = getState() == MenuItemState::active && i == selectedCharIndex;
-
-			if (isSelected) {
-				renderer->renderFilledRectangle(
-					Bounds(x, bounds.getY(), charWidth, bounds.getHeight()),
-					editingChar ? &Theme::bg3 : &Theme::fg3
-				);
-			}
-
-			renderer->renderChar(
-				Point(x, textY),
-				&Theme::fontNormal,
-				getState() == MenuItemState::normal ? &Theme::fg4 : (isSelected ? (editingChar ? &Theme::fg1 : &Theme::bg1) : &Theme::fg5),
-				alphabet[text[i]]
-			);
-
-			x += charWidth;
-		}
+	TextMenuItem::TextMenuItem(const std::wstring_view title, const std::wstring_view text) {
+		setTitle(title);
+		setText(text);
 	}
 
-	void AlphabetMenuItem::onKorryEvent(KorryEvent* event) {
-		if (event->getButtonType() == KorryButtonType::middle) {
-			if (event->getEventType() == KorryEventType::down) {
-				if (getState() == MenuItemState::hovered) {
-					setState(MenuItemState::active);
-				}
-				else if (getState() == MenuItemState::active) {
-					editingChar = !editingChar;
-					invalidate();
-				}
-			}
-		}
-		else {
-			if (event->getEventType() == KorryEventType::down || event->getEventType() == KorryEventType::tick) {
-				if (getState() == MenuItemState::active) {
-					if (editingChar) {
-						auto alphabetIndex = static_cast<int32_t>(text[selectedCharIndex]) + (event->getButtonType() == KorryButtonType::down ? 1 : -1);
+	void TextMenuItem::onRender(Renderer* renderer, const Bounds& bounds) {
+		MenuItem::onRender(renderer, bounds);
 
-						if (alphabetIndex >= static_cast<int32_t>(alphabet.size())) {
-							alphabetIndex = 0;
-						}
-						else if (alphabetIndex < 0) {
-							alphabetIndex = static_cast<int32_t>(alphabet.size()) - 1;
-						}
+		const auto titleWidth = Theme::fontNormal.getWidth(getTitle());
+		const auto textWidth = Theme::fontNormal.getWidth(getText());
 
-						text[selectedCharIndex] = static_cast<uint16_t>(alphabetIndex);
+		auto pos = Point(
+			bounds.getXCenter() - (titleWidth + textWidth) / 2,
+			bounds.getYCenter() - Theme::fontNormal.getHeight() / 2
+		);
 
-						invalidate();
-					}
-					else {
-						const auto index = static_cast<int32_t>(selectedCharIndex) + (event->getButtonType() == KorryButtonType::down ? 1 : -1);
+		renderer->renderString(
+			pos,
+			&Theme::fontNormal,
+			getState() == MenuItemState::normal ? &Theme::fg4 : &Theme::bg1,
+			getTitle()
+		);
 
-						if (index >= 0 && index < text.size()) {
-							setSelectedCharIndex(index);
-						}
-						else {
-							editingChar = false;
-							setState(MenuItemState::hovered);
-						}
-					}
-				}
-			}
-		}
+		pos.setX(pos.getX() + titleWidth);
+
+		renderer->renderString(
+			pos,
+			&Theme::fontNormal,
+			getState() == MenuItemState::normal ? &Theme::fg5 : &Theme::bg2,
+			getText()
+		);
+	}
+
+	void TextMenuItem::onKorryEvent(KorryEvent* event) {
+		if (event->getButtonType() != KorryButtonType::middle || event->getEventType() != KorryEventType::down)
+			return;
+
+		const auto keyboard = WatchKeyboard::show();
+
+		keyboard->setText(getText());
+
+		keyboard->setOnInputFinished([this](const std::wstring_view text) {
+			setText(text);
+		});
+
+		onKeyboardShown(keyboard);
+
+		event->setHandled(true);
+	}
+
+	AZTextMenuItem::AZTextMenuItem(const std::wstring_view title, const std::wstring_view text): TextMenuItem(title, text) {
+
+	}
+
+	void AZTextMenuItem::onKeyboardShown(WatchKeyboard* keyboard) {
+		keyboard->setAZLayout();
+	}
+
+	IntTextMenuItem::IntTextMenuItem(const std::wstring_view title, const std::wstring_view text): TextMenuItem(title, text) {
+
+	}
+
+	void IntTextMenuItem::onKeyboardShown(WatchKeyboard* keyboard) {
+		keyboard->setIntLayout();
 	}
 
 	Menu::Menu() {

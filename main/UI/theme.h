@@ -53,6 +53,7 @@ namespace pizda {
 			static RGB565Color speedBarRed;
 
 			static const unscii8Font fontBig;
+			static const unscii8ThinFont fontBigThin;
 			static const PIXY10Font fontNormal;
 			static const Vaticanus8Font fontSmall;
 

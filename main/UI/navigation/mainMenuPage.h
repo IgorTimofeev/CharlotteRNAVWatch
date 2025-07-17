@@ -12,10 +12,10 @@ namespace pizda {
 		public:
 			MainMenuPage();
 
-			EnglishTextMenuItem nameItem;
-			NumberMenuItem latItem;
-			NumberMenuItem lonItem;
-			NumberMenuItem altItem;
+			AZTextMenuItem nameItem;
+			IntTextMenuItem latItem;
+			IntTextMenuItem lonItem;
+			IntTextMenuItem altItem;
 
 			RouteMenuItem waypointsItem;
 			RouteMenuItem devItem;

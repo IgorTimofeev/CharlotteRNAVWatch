@@ -8,6 +8,8 @@
 #include "UI/theme.h"
 #include "types/settingsNav.h"
 
+#include "UI/elements/watchKeyboard.h"
+
 namespace pizda {
 	using namespace YOBA;
 
@@ -100,62 +102,32 @@ namespace pizda {
 		private:
 	};
 
-	class AlphabetMenuItem : public TitleMenuItem {
+	class TextMenuItem : public TitleMenuItem, public TextElement {
 		public:
-			AlphabetMenuItem() {
-
-			}
-
-			uint16_t getSelectedCharIndex() const {
-				return selectedCharIndex;
-			}
-
-			void setSelectedCharIndex(const uint16_t value) {
-				selectedCharIndex = value;
-
-				invalidate();
-			}
-
-			void setAlphabet(const std::vector<wchar_t>& value) {
-				alphabet = value;
-			}
-
-			void setText(const std::initializer_list<uint16_t>& value) {
-				text = value;
-			}
+			TextMenuItem(std::wstring_view title, std::wstring_view text);
 
 		protected:
 			void onRender(Renderer* renderer, const Bounds& bounds) override;
 			void onKorryEvent(KorryEvent* event) override;
+			virtual void onKeyboardShown(WatchKeyboard* keyboard) = 0;
 
 		private:
-			uint16_t selectedCharIndex = 0;
-			bool editingChar = false;
-			std::vector<wchar_t> alphabet {};
-			std::vector<uint16_t> text {};
 	};
 
-	class EnglishTextMenuItem : public AlphabetMenuItem {
+	class AZTextMenuItem : public TextMenuItem {
 		public:
-			EnglishTextMenuItem(const std::wstring_view title, const std::initializer_list<uint16_t>& text) {
-				setTitle(title),
-				setAlphabet(std::vector(alphabet, alphabet + 36));
-				setText(text);
-			}
+			AZTextMenuItem(std::wstring_view title, std::wstring_view text);
 
-		private:
-			constexpr static wchar_t alphabet[] {
-				L'A', L'B', L'C', L'D', L'E', L'F', L'G', L'H', L'I', L'J', L'K', L'L', L'M', L'N', L'O', L'P', L'Q', L'R', L'S', L'T', L'U', L'V', L'W', L'X', L'Y', L'Z', L'0', L'1', L'2', L'3', L'4', L'5', L'6', L'7', L'8', L'9'
-			};
+		protected:
+			void onKeyboardShown(WatchKeyboard* keyboard) override;
 	};
 
-	class NumberMenuItem : public AlphabetMenuItem {
+	class IntTextMenuItem : public TextMenuItem {
 		public:
-			NumberMenuItem(const std::wstring_view title, const std::initializer_list<uint16_t>& text) {
-				setTitle(title),
-				setAlphabet({ L'0', L'1', L'2', L'3', L'4', L'5', L'6', L'7', L'8', L'9' });
-				setText(text);
-			}
+			IntTextMenuItem(std::wstring_view title, std::wstring_view text);
+
+		protected:
+			void onKeyboardShown(WatchKeyboard* keyboard) override;
 	};
 
 	class Menu : public ScrollView {
