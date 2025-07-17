@@ -2,6 +2,7 @@
 
 #include "hardware/korryButton.h"
 #include "rc.h"
+#include "resources/images.h"
 
 namespace pizda {
 	MenuItem::MenuItem() {
@@ -27,17 +28,7 @@ namespace pizda {
 
 	void MenuItem::onRender(Renderer* renderer, const Bounds& bounds) {
 		if (getState() != MenuItemState::normal) {
-			renderer->renderFilledRectangle(bounds, &Theme::bg3);
-
-			renderer->renderFilledRectangle(
-				Bounds(
-					bounds.getX(),
-					bounds.getY(),
-					2,
-					bounds.getHeight()
-				),
-				&Theme::fg1
-			);
+			renderer->renderFilledRectangle(bounds, &Theme::fg1);
 		}
 	}
 
@@ -56,13 +47,21 @@ namespace pizda {
 	void TitleMenuItem::onRender(Renderer* renderer, const Bounds& bounds) {
 		MenuItem::onRender(renderer, bounds);
 
+		renderer->renderImage(
+			Point(
+				bounds.getX() + 10,
+				bounds.getYCenter() - resources::Images::satellite.getSize().getHeight() / 2
+			),
+			&resources::Images::satellite
+		);
+
 		renderer->renderString(
 			Point(
-				bounds.getXCenter() - Theme::fontNormal.getWidth(getTitle()) / 2,
+				bounds.getX() + 10 + resources::Images::satellite.getSize().getWidth() + textMargin,
 				bounds.getYCenter() - Theme::fontNormal.getHeight() / 2
 			),
 			&Theme::fontNormal,
-			&Theme::fg4,
+			getState() == MenuItemState::normal ? &Theme::fg4 : &Theme::bg1,
 			getTitle()
 		);
 	}
@@ -153,6 +152,95 @@ namespace pizda {
 	void ListMenuItem::onKorryEvent(KorryEvent* event) {
 		if (event->getEventType() == KorryEventType::down && event->getButtonType() == KorryButtonType::middle) {
 			onSelectionRequested();
+		}
+	}
+
+	void AlphabetMenuItem::onRender(Renderer* renderer, const Bounds& bounds) {
+		TitleMenuItem::onRender(renderer, bounds);
+
+		const uint16_t charWidth = Theme::fontNormal.getWidth(L"8");
+		const uint16_t textWidth = text.size() * charWidth;
+
+		int32_t x = bounds.getX2() - textMargin - textWidth - textMargin;
+
+		if (getState() != MenuItemState::normal) {
+			renderer->renderFilledRectangle(
+				Bounds(
+					x,
+					bounds.getY(),
+					textWidth + textMargin * 2,
+					bounds.getHeight()
+				),
+				&Theme::fg2
+			);
+		}
+
+		x += textMargin;
+		const int32_t textY = bounds.getYCenter() - Theme::fontNormal.getHeight() / 2;
+
+		for (uint16_t i = 0; i < static_cast<uint16_t>(text.size()); i++) {
+			const auto isSelected = getState() == MenuItemState::active && i == selectedCharIndex;
+
+			if (isSelected) {
+				renderer->renderFilledRectangle(
+					Bounds(x, bounds.getY(), charWidth, bounds.getHeight()),
+					editingChar ? &Theme::bg3 : &Theme::fg3
+				);
+			}
+
+			renderer->renderChar(
+				Point(x, textY),
+				&Theme::fontNormal,
+				getState() == MenuItemState::normal ? &Theme::fg4 : (isSelected ? (editingChar ? &Theme::fg1 : &Theme::bg1) : &Theme::fg5),
+				alphabet[text[i]]
+			);
+
+			x += charWidth;
+		}
+	}
+
+	void AlphabetMenuItem::onKorryEvent(KorryEvent* event) {
+		if (event->getButtonType() == KorryButtonType::middle) {
+			if (event->getEventType() == KorryEventType::down) {
+				if (getState() == MenuItemState::hovered) {
+					setState(MenuItemState::active);
+				}
+				else if (getState() == MenuItemState::active) {
+					editingChar = !editingChar;
+					invalidate();
+				}
+			}
+		}
+		else {
+			if (event->getEventType() == KorryEventType::down || event->getEventType() == KorryEventType::tick) {
+				if (getState() == MenuItemState::active) {
+					if (editingChar) {
+						auto alphabetIndex = static_cast<int32_t>(text[selectedCharIndex]) + (event->getButtonType() == KorryButtonType::down ? 1 : -1);
+
+						if (alphabetIndex >= static_cast<int32_t>(alphabet.size())) {
+							alphabetIndex = 0;
+						}
+						else if (alphabetIndex < 0) {
+							alphabetIndex = static_cast<int32_t>(alphabet.size()) - 1;
+						}
+
+						text[selectedCharIndex] = static_cast<uint16_t>(alphabetIndex);
+
+						invalidate();
+					}
+					else {
+						const auto index = static_cast<int32_t>(selectedCharIndex) + (event->getButtonType() == KorryButtonType::down ? 1 : -1);
+
+						if (index >= 0 && index < text.size()) {
+							setSelectedCharIndex(index);
+						}
+						else {
+							editingChar = false;
+							setState(MenuItemState::hovered);
+						}
+					}
+				}
+			}
 		}
 	}
 
