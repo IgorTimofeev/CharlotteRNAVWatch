@@ -213,7 +213,7 @@ namespace pizda {
 	}
 
 	void IntInputMenuItem::onKeyboardShown(WatchKeyboard* keyboard) {
-		keyboard->setIntLayout();
+		keyboard->setIntLayout(getAllowNegative());
 	}
 
 	// Float
@@ -222,7 +222,7 @@ namespace pizda {
 	}
 
 	void FloatInputMenuItem::onKeyboardShown(WatchKeyboard* keyboard) {
-		keyboard->setFloatLayout();
+		keyboard->setFloatLayout(getAllowNegative());
 	}
 
 	Menu::Menu() {

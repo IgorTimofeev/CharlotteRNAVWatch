@@ -162,13 +162,33 @@ namespace pizda {
 		this->setText(std::to_wstring(value));
 	}
 
-	class IntInputMenuItem : public ValueInputMenuItem<int32_t> {
+	template <typename T>
+	class NumericValueInputMenuItem : public ValueInputMenuItem<T> {
+		public:
+			bool getAllowNegative() const;
+			void setAllowNegative(bool value);
+
+		private:
+			bool allowNegative = false;
+	};
+
+	template <typename T>
+	bool NumericValueInputMenuItem<T>::getAllowNegative() const {
+		return allowNegative;
+	}
+
+	template <typename T>
+	void NumericValueInputMenuItem<T>::setAllowNegative(bool value) {
+		this->allowNegative = value;
+	}
+
+	class IntInputMenuItem : public NumericValueInputMenuItem<int32_t> {
 		protected:
 			int32_t textToValue() const override;
 			void onKeyboardShown(WatchKeyboard* keyboard) override;
 	};
 
-	class FloatInputMenuItem : public ValueInputMenuItem<float> {
+	class FloatInputMenuItem : public NumericValueInputMenuItem<float> {
 		protected:
 			float textToValue() const override;
 			void onKeyboardShown(WatchKeyboard* keyboard) override;
