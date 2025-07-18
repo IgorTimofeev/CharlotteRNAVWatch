@@ -115,7 +115,8 @@ namespace pizda {
 
 	void FunctionMenuItem::onKorryEvent(KorryEvent* event) {
 		if (event->getButtonType() == KorryButtonType::middle && event->getEventType() == KorryEventType::down) {
-			press();
+			if (press)
+				press();
 
 			event->setHandled(true);
 		}
@@ -194,7 +195,8 @@ namespace pizda {
 		keyboard->setOnInputFinished([this](const std::wstring_view text) {
 			setText(text);
 
-			input();
+			if (input)
+				input();
 		});
 
 		onKeyboardShown(keyboard);

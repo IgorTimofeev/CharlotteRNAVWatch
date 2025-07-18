@@ -82,7 +82,7 @@ namespace pizda {
 		private:
 			static WatchKeyboard* instance;
 
-			std::function<void(const std::wstring_view&)> onInputFinished {};
+			std::function<void(const std::wstring_view&)> onInputFinished = nullptr;
 
 			DitheredRectangle ditheredRectangle {};
 

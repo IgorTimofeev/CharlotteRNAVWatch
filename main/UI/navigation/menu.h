@@ -61,7 +61,7 @@ namespace pizda {
 
 		private:
 			T value;
-			std::function<void()> valueChanged {};
+			std::function<void()> valueChanged = nullptr;
 	};
 
 	template<typename T>
@@ -76,7 +76,8 @@ namespace pizda {
 
 		this->value = value;
 
-		valueChanged();
+		if (valueChanged)
+			valueChanged();
 
 		invalidate();
 	}
@@ -106,7 +107,7 @@ namespace pizda {
 			void onKorryEvent(KorryEvent* event) override;
 
 		private:
-			std::function<void()> press;
+			std::function<void()> press = nullptr;
 	};
 
 	class BoolMenuItem : public ValueMenuItem<bool> {
@@ -134,7 +135,7 @@ namespace pizda {
 			virtual void onKeyboardShown(WatchKeyboard* keyboard) = 0;
 
 		private:
-			std::function<void()> input {};
+			std::function<void()> input = nullptr;
 	};
 
 	class AZTextMenuItem : public InputMenuItem {

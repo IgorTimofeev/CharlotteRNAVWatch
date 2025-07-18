@@ -299,7 +299,8 @@ namespace pizda {
 	}
 
 	void WatchKeyboard::onEnter() const {
-		onInputFinished(getText());
+		if (onInputFinished)
+			onInputFinished(getText());
 
 		hide();
 	}
