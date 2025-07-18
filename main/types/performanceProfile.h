@@ -46,6 +46,24 @@ namespace pizda {
 			std::vector<SpeedBar> speedBars = std::vector<SpeedBar>(5);
 			std::vector<SpeedBug> speedBugs = std::vector<SpeedBug>(5);
 
+			void setOnFoot() {
+				speedStep = 1;
+				speedStepBig = 2;
+				speedRadPerUnit = toRadians(10.0f);
+
+				altitudeStep = 10;
+				altitudeStepBig = 50;
+				altitudeRadPerUnit = toRadians(0.5f);
+
+				speedBars.clear();
+				speedBars.push_back(SpeedBar { 0, 9, &Theme::speedBarGreen });
+				speedBars.push_back(SpeedBar { 9, 13, &Theme::speedBarYellow });
+				speedBars.push_back(SpeedBar { 13, 40, &Theme::speedBarRed });
+
+				speedBugs.clear();
+				speedBugs.push_back(SpeedBug { L"Opt", 3 });
+			}
+
 			void setCycling() {
 				speedStep = 1;
 				speedStepBig = 5;
@@ -62,7 +80,7 @@ namespace pizda {
 				speedBars.push_back(SpeedBar { 18, 40, &Theme::speedBarRed });
 
 				speedBugs.clear();
-				speedBugs.push_back(SpeedBug { L"X", 13 });
+				speedBugs.push_back(SpeedBug { L"Opt", 13 });
 			}
 
 			void setDiamondDA40() {

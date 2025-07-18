@@ -5,106 +5,128 @@
 
 #include "hardware/korryButton.h"
 #include "UI/navigation/route.h"
-#include "UI/theme.h"
 #include "types/settingsNav.h"
 
 #include "UI/elements/watchKeyboard.h"
 
+#include "UI/theme.h"
+
 namespace pizda {
 	using namespace YOBA;
 
-	enum class MenuItemState : uint8_t {
-		normal,
-		hovered,
-		active
-	};
-
-	class MenuItem : public Control {
+	class MenuItem : public Control, public ActiveElement {
 		public:
 			MenuItem();
-			MenuItemState getState() const;
-			void setState(MenuItemState state);
 
 			constexpr static uint8_t height = 20;
 			constexpr static uint8_t textMargin = 10;
 
-		protected:
-			void onEvent(Event* event) override;
-			void onRender(Renderer* renderer, const Bounds& bounds) override;
-			virtual void onKorryEvent(KorryEvent* event);
-
-		private:
-			MenuItemState state = MenuItemState::normal;
-	};
-
-	class TitleMenuItem : public MenuItem {
-		public:
 			void setTitle(std::wstring_view value);
 			std::wstring_view getTitle() const;
 
+			const Color* getActiveBackgroundColor() const;
+			void setActiveBackgroundColor(const Color* value);
+
+			const Color* getDefaultTitleColor() const;
+			void setDefaultTitleColor(const Color* value);
+
+			const Color* getActiveTitleColor() const;
+			void setActiveTitleColor(const Color* value);
+
+			void setSecondaryColors();
+
 		protected:
 			void onRender(Renderer* renderer, const Bounds& bounds) override;
+			void onEvent(Event* event) override;
+			void renderSelectionBackground(Renderer* renderer, const Bounds& bounds) const;
+			void renderTitleOnCenter(Renderer* renderer, const Bounds& bounds) const;
+			static void renderSideIndicator(Renderer* renderer, const Bounds& bounds, const Color* color);
+			virtual void onKorryEvent(KorryEvent* event);
 
 		private:
 			std::wstring title {};
+
+			const Color* activeBackgroundColor = &Theme::fg1;
+
+			const Color* defaultTitleColor = &Theme::fg3;
+			const Color* activeTitleColor = &Theme::bg1;
 	};
 
-	class RouteMenuItem : public TitleMenuItem {
+	template<typename T>
+	class ValueMenuItem : public virtual MenuItem {
 		public:
-			RouteMenuItem(std::wstring_view title, const Route* route);
+			T getValue() const;
+			void setValue(T value);
+			void setOnValueChanged(const std::function<void()>& callback);
+
+		private:
+			T value;
+			std::function<void()> valueChanged {};
+	};
+
+	template<typename T>
+	T ValueMenuItem<T>::getValue() const {
+		return value;
+	}
+
+	template<typename T>
+	void ValueMenuItem<T>::setValue(T value) {
+		if (value == this->value)
+			return;
+
+		this->value = value;
+
+		valueChanged();
+
+		invalidate();
+	}
+
+	template<typename T>
+	void ValueMenuItem<T>::setOnValueChanged(const std::function<void()>& callback) {
+		valueChanged = callback;
+	}
+
+	class RouteMenuItem : public MenuItem {
+		public:
+			void setRoute(const Route* route);
+			void setBackStyle();
 
 		protected:
 			void onKorryEvent(KorryEvent* event) override;
 
 		private:
-			const Route* route;
+			const Route* route = nullptr;
 	};
 
-	class FunctionMenuItem : public TitleMenuItem {
+	class FunctionMenuItem : public MenuItem {
 		public:
-			FunctionMenuItem(std::wstring_view title, const std::function<void()>& function);
+			void setOnPress(const std::function<void()>& press);
 
 		protected:
 			void onKorryEvent(KorryEvent* event) override;
 
 		private:
-			std::function<void()> function;
+			std::function<void()> press;
 	};
 
-	class BoolMenuItem : public TitleMenuItem {
-		public:
-			explicit BoolMenuItem(std::wstring_view title);
-
-			Callback<> valueChanged {};
-
-			bool getValue() const;
-			void setValue(bool value);
-
+	class BoolMenuItem : public ValueMenuItem<bool> {
 		protected:
 			void onRender(Renderer* renderer, const Bounds& bounds) override;
 			void onKorryEvent(KorryEvent* event) override;
-			virtual void onValueChanged();
-
-		private:
-			bool value = false;
 	};
 
-	class ListMenuItem : public TitleMenuItem {
-		public:
-
+	class ListMenuItem : public MenuItem {
 		protected:
 			void onRender(Renderer* renderer, const Bounds& bounds) override;
 			void onKorryEvent(KorryEvent* event) override;
 
 			virtual bool isSelected() const = 0;
 			virtual void onSelectionRequested() = 0;
-
-		private:
 	};
 
-	class TextMenuItem : public TitleMenuItem, public TextElement {
+	class InputMenuItem : public virtual MenuItem, public TextElement {
 		public:
-			TextMenuItem(std::wstring_view title, std::wstring_view text);
+			void setOnInput(const std::function<void()>& callback);
 
 		protected:
 			void onRender(Renderer* renderer, const Bounds& bounds) override;
@@ -112,21 +134,43 @@ namespace pizda {
 			virtual void onKeyboardShown(WatchKeyboard* keyboard) = 0;
 
 		private:
+			std::function<void()> input {};
 	};
 
-	class AZTextMenuItem : public TextMenuItem {
-		public:
-			AZTextMenuItem(std::wstring_view title, std::wstring_view text);
-
+	class AZTextMenuItem : public InputMenuItem {
 		protected:
 			void onKeyboardShown(WatchKeyboard* keyboard) override;
 	};
 
-	class IntTextMenuItem : public TextMenuItem {
+	template<typename T>
+	class ValueInputMenuItem : public InputMenuItem {
 		public:
-			IntTextMenuItem(std::wstring_view title, std::wstring_view text);
+			T getValue();
+			void setValue(T value);
 
 		protected:
+			virtual T textToValue() const = 0;
+	};
+
+	template <typename T>
+	T ValueInputMenuItem<T>::getValue() {
+		return textToValue();
+	}
+
+	template <typename T>
+	void ValueInputMenuItem<T>::setValue(T value) {
+		this->setText(std::to_wstring(value));
+	}
+
+	class IntInputMenuItem : public ValueInputMenuItem<int32_t> {
+		protected:
+			int32_t textToValue() const override;
+			void onKeyboardShown(WatchKeyboard* keyboard) override;
+	};
+
+	class FloatInputMenuItem : public ValueInputMenuItem<float> {
+		protected:
+			float textToValue() const override;
 			void onKeyboardShown(WatchKeyboard* keyboard) override;
 	};
 
@@ -136,7 +180,6 @@ namespace pizda {
 
 			constexpr static uint8_t itemSpacing = 5;
 
-			void setItems(const std::initializer_list<MenuItem*>& items);
 			uint16_t getItemsCount() const;
 			void addItem(MenuItem* item);
 			MenuItem* getItemAt(uint16_t index) const;

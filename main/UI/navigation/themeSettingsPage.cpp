@@ -22,15 +22,16 @@ namespace pizda {
 		invalidate();
 	}
 
-	ThemeSettingsPage::ThemeSettingsPage() :
-		backItem(RouteMenuItem(L"Back", &Routes::settings))
-	{
+	ThemeSettingsPage::ThemeSettingsPage() {
 		title.setText(L"Theme");
 
-		menu.setItems({
-			&darkItem,
-			&brightItem,
-			&backItem
-		});
+		menu.addItem(&darkItem);
+		menu.addItem(&brightItem);
+
+		backItem.setBackStyle();
+		backItem.setRoute(&Routes::mainMenu);
+		menu.addItem(&backItem);
+
+		menu.setSelectedIndex(0);
 	}
 }

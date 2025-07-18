@@ -8,22 +8,25 @@ namespace pizda {
 
 	class SettingsNavWaypoint {
 		public:
-			SettingsNavWaypoint() = default;
-
 			explicit SettingsNavWaypoint(
-				std::wstring_view name,
+				const std::wstring_view name,
 				const GeographicCoordinates& geographicCoordinates
 			) :
 				geographicCoordinates(geographicCoordinates)
 			{
-				std::ranges::copy(name, this->name);
+				std::wcscpy(this->name, name.data());
 			}
 
-			wchar_t name[16] {};
+			SettingsNavWaypoint() : SettingsNavWaypoint(L"", {}) {
+
+			}
+
+			wchar_t name[16];
 			GeographicCoordinates geographicCoordinates;
 	};
 
 	enum class SettingsNavPerformanceProfile : uint8_t {
+		onFoot,
 		cycling,
 		diamondDA40
 	};

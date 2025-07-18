@@ -3,65 +3,66 @@
 #include "rc.h"
 
 namespace pizda {
-	GNSSSettingsPage::GNSSSettingsPage() :
-		GPSSystemItem(BoolMenuItem(L"GPS")),
-		BDSSystemItem(BoolMenuItem(L"BDS")),
-		GLONASSSystemItem(BoolMenuItem(L"GLONASS")),
-		
-		simulationItem(BoolMenuItem(L"Simulation")),
-		
-		backItem(RouteMenuItem(L"Back", &Routes::settings))
-	{
+	GNSSSettingsPage::GNSSSettingsPage() {
 		title.setText(L"GNSS settings");
 
 		auto& rc = RC::getInstance();
 
 		// GPS
+		GPSSystemItem.setTitle(L"GPS");
 		GPSSystemItem.setValue(rc.settings.GNSS.GPS);
 
-		GPSSystemItem.valueChanged += [this, &rc] {
+		GPSSystemItem.setOnValueChanged([this, &rc] {
 			rc.settings.GNSS.GPS = GPSSystemItem.getValue();
 			rc.settings.GNSS.scheduleWrite();
 
 			rc.gnss.updateSystemsFromSettings();
-		};
+		});
 
-		// BDS
-		BDSSystemItem.setValue(rc.settings.GNSS.BDS);
+		menu.addItem(&GPSSystemItem);
 
-		BDSSystemItem.valueChanged += [this, &rc] {
-			rc.settings.GNSS.BDS = BDSSystemItem.getValue();
+		// BeiDou
+		BeiDouSystemItem.setTitle(L"BeiDou");
+		BeiDouSystemItem.setValue(rc.settings.GNSS.BeiDou);
+
+		BeiDouSystemItem.setOnValueChanged([this, &rc] {
+			rc.settings.GNSS.BeiDou = BeiDouSystemItem.getValue();
 			rc.settings.GNSS.scheduleWrite();
 
 			rc.gnss.updateSystemsFromSettings();
-		};
+		});
+
+		menu.addItem(&BeiDouSystemItem);
 
 		// GLONASS
+		GLONASSSystemItem.setTitle(L"GLONASS");
 		GLONASSSystemItem.setValue(rc.settings.GNSS.GLONASS);
 
-		GLONASSSystemItem.valueChanged += [this, &rc] {
+		GLONASSSystemItem.setOnValueChanged([this, &rc] {
 			rc.settings.GNSS.GLONASS = GLONASSSystemItem.getValue();
 			rc.settings.GNSS.scheduleWrite();
 
 			rc.gnss.updateSystemsFromSettings();
-		};
-		
+		});
+
+		menu.addItem(&GLONASSSystemItem);
+
 		// Simulation
+		simulationItem.setTitle(L"Simulation");
 		simulationItem.setValue(rc.settings.GNSS.simulation);
 
-		simulationItem.valueChanged += [this, &rc] {
+		simulationItem.setOnValueChanged([this, &rc] {
 			rc.settings.GNSS.simulation = simulationItem.getValue();
 			rc.settings.GNSS.scheduleWrite();
-		};
-
-		menu.setItems({
-			&simulationItem,
-			&GPSSystemItem,
-			&BDSSystemItem,
-
-			&GLONASSSystemItem,
-			
-			&backItem,
 		});
+
+		menu.addItem(&simulationItem);
+
+		// Back
+		backItem.setBackStyle();
+		backItem.setRoute(&Routes::mainMenu);
+		menu.addItem(&backItem);
+
+		menu.setSelectedIndex(0);
 	}
 }

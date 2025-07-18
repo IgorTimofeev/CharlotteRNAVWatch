@@ -16,7 +16,7 @@ namespace pizda {
 
 		protected:
 			const char* getNVSNamespace() override {
-				return "in";
+				return "int";
 			}
 
 			void onRead(const NVSStream& stream) override {

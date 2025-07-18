@@ -22,7 +22,7 @@ namespace pizda {
 
 		protected:
 			const char* getNVSNamespace() override {
-				return "PFD";
+				return "pfd";
 			}
 
 			void onRead(const NVSStream& stream) override {

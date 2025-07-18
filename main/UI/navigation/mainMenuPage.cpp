@@ -2,28 +2,33 @@
 #include "UI/navigation/routes.h"
 
 namespace pizda {
-	MainMenuPage::MainMenuPage() :
-		nameItem({ L"Name: ", L"ULLI" }),
-		latItem({ L"Latitude: ", L"60.000" }),
-		lonItem({ L"Longitude: ", L"60.000" }),
-		altItem({ L"Altitude: ", L"32000" }),
+	MainMenuPage::MainMenuPage() {
+		title.setText(L"Settings");
 
-		waypointsItem({L"Waypoints", &Routes::waypoints}),
-		devItem({L"Debug", &Routes::dev}),
-		settingsItem({L"Settings", &Routes::settings}),
-		backItem({L"Back", &Routes::PFD})
-	{
-		title.setText(L"Menu");
+		waypointsItem.setTitle(L"Waypoints");
+		waypointsItem.setRoute(&Routes::waypoints);
+		menu.addItem(&waypointsItem);
 
-		menu.setItems({
-			&nameItem,
-			&latItem,
-			&lonItem,
-			&altItem,
-			&waypointsItem,
-			&devItem,
-			&settingsItem,
-			&backItem,
-		});
+		PFDSettingsItem.setTitle(L"PFD");
+		PFDSettingsItem.setRoute(&Routes::PFDSettings);
+		menu.addItem(&PFDSettingsItem);
+
+		GNSSSettingsItem.setTitle(L"GNSS");
+		GNSSSettingsItem.setRoute(&Routes::GNSSSettings);
+		menu.addItem(&GNSSSettingsItem);
+
+		themeItem.setTitle(L"Theme");
+		themeItem.setRoute(&Routes::themeSettings);
+		menu.addItem(&themeItem);
+
+		devItem.setTitle(L"Dev");
+		devItem.setRoute(&Routes::dev);
+		menu.addItem(&devItem);
+
+		backItem.setBackStyle();
+		backItem.setRoute(&Routes::PFD);
+		menu.addItem(&backItem);
+
+		menu.setSelectedIndex(0);
 	}
 }

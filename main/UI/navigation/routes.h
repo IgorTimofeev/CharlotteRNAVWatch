@@ -6,9 +6,9 @@
 #include "UI/navigation/mainMenuPage.h"
 #include "UI/navigation/waypointsPage.h"
 #include "UI/navigation/waypointPage.h"
+#include "UI/navigation/waypointEditPage.h"
 #include "UI/navigation/devPage.h"
-
-#include "UI/navigation/settingsPage.h"
+#include "UI/navigation/PFDSettingsPage.h"
 #include "UI/navigation/GNSSSettingsPage.h"
 #include "UI/navigation/themeSettingsPage.h"
 #include "UI/navigation/performanceProfileSettingsPage.h"
@@ -21,9 +21,10 @@ namespace pizda {
 			constexpr static ElementRoute<MainMenuPage> mainMenu {};
 			constexpr static ElementRoute<WaypointsPage> waypoints {};
 			constexpr static ElementRoute<WaypointPage> waypoint {};
+			constexpr static ElementRoute<WaypointEditPage> waypointEdit {};
 			constexpr static ElementRoute<DevPage> dev {};
+			constexpr static ElementRoute<PFDSettingsPage> PFDSettings {};
 
-			constexpr static ElementRoute<SettingsPage> settings {};
 			constexpr static ElementRoute<ThemeSettingsPage> themeSettings {};
 			constexpr static ElementRoute<PerformanceProfileSettingsPage> performanceProfile {};
 			constexpr static ElementRoute<GNSSSettingsPage> GNSSSettings {};

@@ -46,7 +46,7 @@ namespace pizda {
 		if (settings.GNSS.GPS)
 			flags |= GNSSSystem::GPS;
 
-		if (settings.GNSS.BDS)
+		if (settings.GNSS.BeiDou)
 			flags |= GNSSSystem::BDS;
 
 		if (settings.GNSS.GLONASS)
@@ -128,19 +128,19 @@ namespace pizda {
 	}
 
 	uint8_t GNSS::getTimeHours() {
-		return isSimulationMode() ? 12 : gps.time.hour();
+		return isSimulationMode() ? esp_timer_get_time() / 1'000'000 / 3600 : gps.time.hour();
 	}
 
 	uint8_t GNSS::getTimeMinutes() {
-		return isSimulationMode() ? 0 : gps.time.minute();
+		return isSimulationMode() ? esp_timer_get_time() / 1'000'000 / 60 : gps.time.minute();
 	}
 
 	uint8_t GNSS::getTimeSeconds() {
-		return isSimulationMode() ? 0 : gps.time.second();
+		return isSimulationMode() ? esp_timer_get_time() / 1'000'000 : gps.time.second();
 	}
 
 	uint32_t GNSS::getSatellitesCount() {
-		return isSimulationMode() ? 19 : gps.satellites.value();
+		return isSimulationMode() ? 9 : gps.satellites.value();
 	}
 
 	bool GNSS::isSatellitesCountEnough() {

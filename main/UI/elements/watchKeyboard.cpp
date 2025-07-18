@@ -4,7 +4,7 @@
 #include "UI/theme.h"
 
 namespace pizda {
-	WatchKeyboardButton::WatchKeyboardButton(const wchar_t text): text(text) {
+	WatchKeyboardButton::WatchKeyboardButton(const wchar_t text) : text(text) {
 		setSize({20, 20});
 	}
 
@@ -43,14 +43,14 @@ namespace pizda {
 	}
 
 	WatchKeyboard* WatchKeyboardButton::getKeyboard() const {
-		return dynamic_cast<WatchKeyboard*>(dynamic_cast<StackLayout*>(dynamic_cast<StackLayout*>(getParent())->getParent())->getParent()->getParent());
+		return dynamic_cast<WatchKeyboard*>(dynamic_cast<StackLayout*>(dynamic_cast<WatchKeyboardButtonsRow*>(getParent())->getParent())->getParent()->getParent());
 	}
 
 	wchar_t WatchKeyboardButton::getText() const {
 		return text;
 	}
 
-	TextWatchKeyboardButton::TextWatchKeyboardButton(const wchar_t text): WatchKeyboardButton(text) {
+	TextWatchKeyboardButton::TextWatchKeyboardButton(const wchar_t text) : WatchKeyboardButton(text) {
 
 	}
 
@@ -58,7 +58,7 @@ namespace pizda {
 		getKeyboard()->onInput(getText());
 	}
 
-	BackspaceWatchKeyboardButton::BackspaceWatchKeyboardButton(): WatchKeyboardButton(L'<') {
+	BackspaceWatchKeyboardButton::BackspaceWatchKeyboardButton() : WatchKeyboardButton(L'<') {
 
 	}
 
@@ -66,12 +66,21 @@ namespace pizda {
 		getKeyboard()->onBackspace();
 	}
 
-	EnterWatchKeyboardButton::EnterWatchKeyboardButton(): WatchKeyboardButton(L'>') {
+	EnterWatchKeyboardButton::EnterWatchKeyboardButton() : WatchKeyboardButton(L'>') {
 
 	}
 
 	void EnterWatchKeyboardButton::onPressed() {
 		getKeyboard()->onEnter();
+	}
+
+	WatchKeyboardButtonsRow::WatchKeyboardButtonsRow() {
+		setOrientation(Orientation::horizontal);
+		setHorizontalAlignment(Alignment::center);
+	}
+
+	void WatchKeyboardButtonsRow::addButton(WatchKeyboardButton* button) {
+		*this += button;
 	}
 
 	WatchKeyboard::WatchKeyboard() {
@@ -104,7 +113,7 @@ namespace pizda {
 
 	WatchKeyboard::~WatchKeyboard() {
 		for (auto rowIndex = 0; rowIndex < buttonsRows.getChildrenCount(); rowIndex++) {
-			const auto row = dynamic_cast<StackLayout*>(buttonsRows[rowIndex]);
+			const auto row = dynamic_cast<WatchKeyboardButtonsRow*>(buttonsRows[rowIndex]);
 
 			for (auto buttonIndex = 0; buttonIndex < row->getChildrenCount(); buttonIndex++) {
 				const auto button = (*row)[buttonIndex];
@@ -131,16 +140,36 @@ namespace pizda {
 		focusLast();
 	}
 
-	void WatchKeyboard::setIntLayout() {
+	void WatchKeyboard::setIntLayout(const bool allowNegative) {
 		addButtonsRow({ L'1', L'2', L'3', L'4', L'5', L'6', L'7', L'8', L'9', L'0' });
 
-		addButtonsRow({
-			new TextWatchKeyboardButton(L'-'),
-			new BackspaceWatchKeyboardButton(),
-			new EnterWatchKeyboardButton()
-		});
+		const auto row = addButtonsRow();
 
-		buttonsRows.setMargin(Margin(0, 8, 0, 15));
+		if (allowNegative)
+			row->addButton(new TextWatchKeyboardButton(L'-'));
+
+		row->addButton(new BackspaceWatchKeyboardButton());
+		row->addButton(new EnterWatchKeyboardButton());
+
+		buttonsRows.setMargin(Margin(0, 8, 0, 20));
+
+		focusLast();
+	}
+
+	void WatchKeyboard::setFloatLayout(const bool allowNegative) {
+		addButtonsRow({ L'1', L'2', L'3', L'4', L'5', L'6', L'7', L'8', L'9', L'0' });
+
+		const auto row = addButtonsRow();
+
+		row->addButton(new TextWatchKeyboardButton(L'-'));
+
+		if (allowNegative)
+			row->addButton(new TextWatchKeyboardButton(L'-'));
+
+		row->addButton(new BackspaceWatchKeyboardButton());
+		row->addButton(new EnterWatchKeyboardButton());
+
+		buttonsRows.setMargin(Margin(0, 8, 0, 20));
 
 		focusLast();
 	}
@@ -193,7 +222,7 @@ namespace pizda {
 			&& (korryEvent->getEventType() == KorryEventType::down || korryEvent->getEventType() == KorryEventType::tick)
 		) {
 			for (auto rowIndex = 0; rowIndex < buttonsRows.getChildrenCount(); rowIndex++) {
-				const auto row = dynamic_cast<StackLayout*>(buttonsRows[rowIndex]);
+				const auto row = dynamic_cast<WatchKeyboardButtonsRow*>(buttonsRows[rowIndex]);
 
 				for (auto buttonIndex = 0; buttonIndex < row->getChildrenCount(); buttonIndex++) {
 					const auto button = dynamic_cast<WatchKeyboardButton*>((*row)[buttonIndex]);
@@ -202,7 +231,7 @@ namespace pizda {
 						const auto newIndex = buttonIndex + (korryEvent->getButtonType() == KorryButtonType::down ? 1 : -1);
 
 						if (newIndex < 0) {
-							const auto prevRow = dynamic_cast<StackLayout*>(buttonsRows[rowIndex > 0 ? rowIndex - 1 : buttonsRows.getChildrenCount() - 1]);
+							const auto prevRow = dynamic_cast<WatchKeyboardButtonsRow*>(buttonsRows[rowIndex > 0 ? rowIndex - 1 : buttonsRows.getChildrenCount() - 1]);
 							const auto prevButton = dynamic_cast<WatchKeyboardButton*>((*prevRow)[prevRow->getChildrenCount() - 1]);
 							prevButton->setFocused(true);
 						}
@@ -211,7 +240,7 @@ namespace pizda {
 							nextButton->setFocused(true);
 						}
 						else {
-							const auto nextRow = dynamic_cast<StackLayout*>(buttonsRows[rowIndex < buttonsRows.getChildrenCount() - 1 ? rowIndex + 1 : 0]);
+							const auto nextRow = dynamic_cast<WatchKeyboardButtonsRow*>(buttonsRows[rowIndex < buttonsRows.getChildrenCount() - 1 ? rowIndex + 1 : 0]);
 							const auto nextButton = dynamic_cast<WatchKeyboardButton*>((*nextRow)[0]);
 							nextButton->setFocused(true);
 						}
@@ -226,38 +255,33 @@ namespace pizda {
 		}
 	}
 
-	StackLayout* WatchKeyboard::addButtonsRow() {
-		const auto row = new StackLayout();
-		row->setOrientation(Orientation::horizontal);
-		row->setHorizontalAlignment(Alignment::center);
-
+	WatchKeyboardButtonsRow* WatchKeyboard::addButtonsRow() {
+		const auto row = new WatchKeyboardButtonsRow();
 		buttonsRows += row;
 
 		return row;
 	}
 
-	StackLayout* WatchKeyboard::addButtonsRow(const std::initializer_list<WatchKeyboardButton*>& buttons) {
+	WatchKeyboardButtonsRow* WatchKeyboard::addButtonsRow(const std::initializer_list<WatchKeyboardButton*>& buttons) {
 		const auto row = addButtonsRow();
 
-		for (const auto button : buttons) {
-			*row += button;
-		}
+		for (const auto button : buttons)
+			row->addButton(button);
 
 		return row;
 	}
 
-	StackLayout* WatchKeyboard::addButtonsRow(const std::initializer_list<wchar_t>& buttons) {
+	WatchKeyboardButtonsRow* WatchKeyboard::addButtonsRow(const std::initializer_list<wchar_t>& buttons) {
 		const auto row = addButtonsRow();
 
-		for (const auto button : buttons) {
-			*row += new TextWatchKeyboardButton(button);
-		}
+		for (const auto button : buttons)
+			row->addButton(new TextWatchKeyboardButton(button));
 
 		return row;
 	}
 
 	void WatchKeyboard::focusLast() const {
-		const auto row = dynamic_cast<StackLayout*>(buttonsRows[buttonsRows.getChildrenCount() - 1]);
+		const auto row = dynamic_cast<WatchKeyboardButtonsRow*>(buttonsRows[buttonsRows.getChildrenCount() - 1]);
 		const auto button = dynamic_cast<WatchKeyboardButton*>((*row)[row->getChildrenCount() - 1]);
 
 		button->setFocused(true);

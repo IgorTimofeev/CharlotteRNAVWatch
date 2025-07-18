@@ -12,14 +12,11 @@ namespace pizda {
 		public:
 			MainMenuPage();
 
-			AZTextMenuItem nameItem;
-			IntTextMenuItem latItem;
-			IntTextMenuItem lonItem;
-			IntTextMenuItem altItem;
-
-			RouteMenuItem waypointsItem;
-			RouteMenuItem devItem;
-			RouteMenuItem settingsItem;
-			RouteMenuItem backItem;
+			RouteMenuItem waypointsItem {};
+			RouteMenuItem PFDSettingsItem {};
+			RouteMenuItem GNSSSettingsItem {};
+			RouteMenuItem themeItem {};
+			RouteMenuItem devItem {};
+			RouteMenuItem backItem {};
 	};
 }

@@ -8,27 +8,28 @@
 namespace pizda {
 	using namespace YOBA;
 
-	class WaypointMenuItem : public TitleMenuItem {
+	class WaypointMenuItem : public MenuItem {
 		public:
 			explicit WaypointMenuItem(uint16_t waypointIndex);
 
 			static uint16_t getLastWaypointIndex();
 
 		protected:
+			void onRender(Renderer* renderer, const Bounds& bounds) override;
 			void onKorryEvent(KorryEvent* event) override;
 
 		private:
-			static uint16_t _lastWaypointIndex;
-			uint16_t _waypointIndex;
+			static uint16_t lastWaypointIndex;
+			uint16_t waypointIndex;
 	};
 
 	class WaypointsPage : public MenuPage {
 		public:
 			WaypointsPage();
 
-			RouteMenuItem addMenuItem;
-			RouteMenuItem backMenuItem;
-
 			std::vector<WaypointMenuItem> waypointItems {};
+
+			FunctionMenuItem createItem {};
+			RouteMenuItem backItem {};
 	};
 }

@@ -49,6 +49,13 @@ namespace pizda {
 			void onPressed() override;
 	};
 
+	class WatchKeyboardButtonsRow : public StackLayout {
+		public:
+			WatchKeyboardButtonsRow();
+
+			void addButton(WatchKeyboardButton* button);
+	};
+
 	class WatchKeyboard : public RelativeStackLayout {
 		friend class TextWatchKeyboardButton;
 		friend class BackspaceWatchKeyboardButton;
@@ -58,7 +65,6 @@ namespace pizda {
 			explicit WatchKeyboard();
 			~WatchKeyboard() override;
 
-
 			std::wstring_view getText() const;
 			void setText(const std::wstring_view& value);
 
@@ -66,7 +72,8 @@ namespace pizda {
 			static void hide();
 
 			void setAZLayout();
-			void setIntLayout();
+			void setIntLayout(bool allowNegative = true);
+			void setFloatLayout(bool allowNegative = true);
 			void setOnInputFinished(const std::function<void(const std::wstring_view&)>& value);
 
 		protected:
@@ -87,11 +94,11 @@ namespace pizda {
 			Rectangle buttonsBackgroundRect {};
 			StackLayout buttonsRows {};
 
-			StackLayout* addButtonsRow();
-			StackLayout* addButtonsRow(const std::initializer_list<WatchKeyboardButton*>& buttons);
-			StackLayout* addButtonsRow(const std::initializer_list<wchar_t>& buttons);
-			void focusLast() const;
+			WatchKeyboardButtonsRow* addButtonsRow();
+			WatchKeyboardButtonsRow* addButtonsRow(const std::initializer_list<WatchKeyboardButton*>& buttons);
+			WatchKeyboardButtonsRow* addButtonsRow(const std::initializer_list<wchar_t>& buttons);
 
+			void focusLast() const;
 			void onInput(wchar_t ch);
 			void onBackspace();
 			void onEnter() const;

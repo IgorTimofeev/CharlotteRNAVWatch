@@ -9,57 +9,96 @@ namespace pizda {
 		setHeight(height);
 	}
 
-	MenuItemState MenuItem::getState() const {
-		return state;
+	void MenuItem::setTitle(const std::wstring_view value) {
+		title = value;
 	}
 
-	void MenuItem::setState(const MenuItemState state) {
-		this->state = state;
+	std::wstring_view MenuItem::getTitle() const {
+		return title;
+	}
 
-		invalidate();
+	const Color* MenuItem::getDefaultTitleColor() const {
+		return defaultTitleColor;
+	}
+
+	void MenuItem::setDefaultTitleColor(const Color* value) {
+		this->defaultTitleColor = value;
+	}
+
+	const Color* MenuItem::getActiveTitleColor() const {
+		return activeTitleColor;
+	}
+
+	void MenuItem::setActiveTitleColor(const Color* value) {
+		this->activeTitleColor = value;
+	}
+
+	void MenuItem::setSecondaryColors() {
+		setDefaultTitleColor(&Theme::fg7);
+	}
+
+	const Color* MenuItem::getActiveBackgroundColor() const {
+		return activeBackgroundColor;
+	}
+
+	void MenuItem::setActiveBackgroundColor(const Color* value) {
+		this->activeBackgroundColor = value;
+	}
+
+	void MenuItem::onRender(Renderer* renderer, const Bounds& bounds) {
+		renderSelectionBackground(renderer, bounds);
+		renderTitleOnCenter(renderer, bounds);
 	}
 
 	void MenuItem::onEvent(Event* event) {
-		if (event->getTypeID() != KorryEvent::typeID || getState() == MenuItemState::normal)
+		if (event->getTypeID() != KorryEvent::typeID || !isActive())
 			return;
 
 		onKorryEvent(reinterpret_cast<KorryEvent*>(event));
 	}
 
-	void MenuItem::onRender(Renderer* renderer, const Bounds& bounds) {
-		if (getState() != MenuItemState::normal) {
-			renderer->renderFilledRectangle(bounds, &Theme::fg1);
+	void MenuItem::renderSelectionBackground(Renderer* renderer, const Bounds& bounds) const {
+		if (isActive()) {
+			renderer->renderFilledRectangle(bounds, 2, getActiveBackgroundColor());
 		}
 	}
 
-	void MenuItem::onKorryEvent(KorryEvent* event) {
-
-	}
-
-	void TitleMenuItem::setTitle(const std::wstring_view value) {
-		title = value;
-	}
-
-	std::wstring_view TitleMenuItem::getTitle() const {
-		return title;
-	}
-
-	void TitleMenuItem::onRender(Renderer* renderer, const Bounds& bounds) {
-		MenuItem::onRender(renderer, bounds);
-
+	void MenuItem::renderTitleOnCenter(Renderer* renderer, const Bounds& bounds) const {
 		renderer->renderString(
 			Point(
 				bounds.getXCenter() - Theme::fontNormal.getWidth(getTitle()) / 2,
 				bounds.getYCenter() - Theme::fontNormal.getHeight() / 2
 			),
 			&Theme::fontNormal,
-			getState() == MenuItemState::normal ? &Theme::fg4 : &Theme::bg1,
+			isActive() ? getActiveTitleColor() : getDefaultTitleColor(),
 			getTitle()
 		);
 	}
 
-	RouteMenuItem::RouteMenuItem(const std::wstring_view title, const Route* route) : route(route) {
-		setTitle(title);
+	void MenuItem::renderSideIndicator(Renderer* renderer, const Bounds& bounds, const Color* color) {
+		constexpr static uint8_t radius = 2;
+
+		renderer->renderFilledCircle(
+			Point(
+				bounds.getX2() - radius / 2 - 10,
+				bounds.getYCenter() - radius / 2
+			),
+			radius,
+			color
+		);
+	}
+
+	void MenuItem::onKorryEvent(KorryEvent* event) {
+
+	}
+
+	void RouteMenuItem::setRoute(const Route* route) {
+		this->route = route;
+	}
+
+	void RouteMenuItem::setBackStyle() {
+		setSecondaryColors();
+		setTitle(L"Back");
 	}
 
 	void RouteMenuItem::onKorryEvent(KorryEvent* event) {
@@ -70,48 +109,22 @@ namespace pizda {
 		}
 	}
 
-	FunctionMenuItem::FunctionMenuItem(const std::wstring_view title, const std::function<void()>& function) : function(function) {
-		setTitle(title);
+	void FunctionMenuItem::setOnPress(const std::function<void()>& press) {
+		this->press = press;
 	}
 
 	void FunctionMenuItem::onKorryEvent(KorryEvent* event) {
 		if (event->getButtonType() == KorryButtonType::middle && event->getEventType() == KorryEventType::down) {
-			function();
+			press();
 
 			event->setHandled(true);
 		}
 	}
 
-	BoolMenuItem::BoolMenuItem(const std::wstring_view title) {
-		setTitle(title);
-	}
-
-	bool BoolMenuItem::getValue() const {
-		return value;
-	}
-
-	void BoolMenuItem::setValue(const bool value) {
-		this->value = value;
-
-		onValueChanged();
-		valueChanged();
-
-		invalidate();
-	}
-
 	void BoolMenuItem::onRender(Renderer* renderer, const Bounds& bounds) {
-		TitleMenuItem::onRender(renderer, bounds);
-
-		renderer->renderFilledRectangle(
-			Bounds(
-				bounds.getX2() - 2 - 7,
-				bounds.getYCenter() - 1,
-				7,
-				4
-			),
-			2,
-			getValue() ? &Theme::green : &Theme::red
-		);
+		renderSelectionBackground(renderer, bounds);
+		renderTitleOnCenter(renderer, bounds);
+		renderSideIndicator(renderer, bounds, getValue() ? &Theme::good : &Theme::bg4);
 	}
 
 	void BoolMenuItem::onKorryEvent(KorryEvent* event) {
@@ -120,25 +133,13 @@ namespace pizda {
 		}
 	}
 
-	void BoolMenuItem::onValueChanged() {
-
-	}
-
+	// List
 	void ListMenuItem::onRender(Renderer* renderer, const Bounds& bounds) {
-		TitleMenuItem::onRender(renderer, bounds);
+		renderSelectionBackground(renderer, bounds);
+		renderTitleOnCenter(renderer, bounds);
 
-		if (isSelected()) {
-			renderer->renderFilledRectangle(
-				Bounds(
-					bounds.getX2() - 2 - 7,
-					bounds.getYCenter() - 1,
-					7,
-					4
-				),
-				2,
-				&Theme::green
-			);
-		}
+		if (isSelected())
+			renderSideIndicator(renderer, bounds, &Theme::green);
 	}
 
 	void ListMenuItem::onKorryEvent(KorryEvent* event) {
@@ -147,17 +148,17 @@ namespace pizda {
 		}
 	}
 
-	TextMenuItem::TextMenuItem(const std::wstring_view title, const std::wstring_view text) {
-		setTitle(title);
-		setText(text);
+	void InputMenuItem::setOnInput(const std::function<void()>& callback) {
+		input = callback;
 	}
 
-	void TextMenuItem::onRender(Renderer* renderer, const Bounds& bounds) {
-		MenuItem::onRender(renderer, bounds);
+	void InputMenuItem::onRender(Renderer* renderer, const Bounds& bounds) {
+		renderSelectionBackground(renderer, bounds);
 
 		const auto titleWidth = Theme::fontNormal.getWidth(getTitle());
 		const auto textWidth = Theme::fontNormal.getWidth(getText());
 
+		// Title
 		auto pos = Point(
 			bounds.getXCenter() - (titleWidth + textWidth) / 2,
 			bounds.getYCenter() - Theme::fontNormal.getHeight() / 2
@@ -166,21 +167,23 @@ namespace pizda {
 		renderer->renderString(
 			pos,
 			&Theme::fontNormal,
-			getState() == MenuItemState::normal ? &Theme::fg4 : &Theme::bg1,
+			isActive() ? getActiveTitleColor() : getDefaultTitleColor(),
 			getTitle()
 		);
 
+		// Text
 		pos.setX(pos.getX() + titleWidth);
 
 		renderer->renderString(
 			pos,
 			&Theme::fontNormal,
-			getState() == MenuItemState::normal ? &Theme::fg5 : &Theme::bg2,
+			isActive() ? &Theme::bg6 : &Theme::fg6,
 			getText()
 		);
 	}
 
-	void TextMenuItem::onKorryEvent(KorryEvent* event) {
+	// Text
+	void InputMenuItem::onKorryEvent(KorryEvent* event) {
 		if (event->getButtonType() != KorryButtonType::middle || event->getEventType() != KorryEventType::down)
 			return;
 
@@ -190,6 +193,8 @@ namespace pizda {
 
 		keyboard->setOnInputFinished([this](const std::wstring_view text) {
 			setText(text);
+
+			input();
 		});
 
 		onKeyboardShown(keyboard);
@@ -197,20 +202,27 @@ namespace pizda {
 		event->setHandled(true);
 	}
 
-	AZTextMenuItem::AZTextMenuItem(const std::wstring_view title, const std::wstring_view text): TextMenuItem(title, text) {
-
-	}
-
+	// AZ
 	void AZTextMenuItem::onKeyboardShown(WatchKeyboard* keyboard) {
 		keyboard->setAZLayout();
 	}
 
-	IntTextMenuItem::IntTextMenuItem(const std::wstring_view title, const std::wstring_view text): TextMenuItem(title, text) {
-
+	// Int
+	int32_t IntInputMenuItem::textToValue() const {
+		return std::wcstol(getText().data(), nullptr, 0);
 	}
 
-	void IntTextMenuItem::onKeyboardShown(WatchKeyboard* keyboard) {
+	void IntInputMenuItem::onKeyboardShown(WatchKeyboard* keyboard) {
 		keyboard->setIntLayout();
+	}
+
+	// Float
+	float FloatInputMenuItem::textToValue() const {
+		return std::wcstof(getText().data(), nullptr);
+	}
+
+	void FloatInputMenuItem::onKeyboardShown(WatchKeyboard* keyboard) {
+		keyboard->setFloatLayout();
 	}
 
 	Menu::Menu() {
@@ -228,13 +240,6 @@ namespace pizda {
 
 	void Menu::addItem(MenuItem* item) {
 		itemsLayout += item;
-	}
-
-	void Menu::setItems(const std::initializer_list<MenuItem*>& items) {
-		for (const auto item : items)
-			addItem(item);
-
-		setSelectedIndex(0);
 	}
 
 	uint16_t Menu::getItemsCount() const {
@@ -270,9 +275,6 @@ namespace pizda {
 			(korryEvent->getButtonType() == KorryButtonType::up || korryEvent->getButtonType() == KorryButtonType::down)
 			&& (korryEvent->getEventType() == KorryEventType::down || korryEvent->getEventType() == KorryEventType::tick)
 		) {
-			if (getSelectedItem()->getState() == MenuItemState::active)
-				return;
-
 			auto newIndex = static_cast<int16_t>(selectedIndex + (korryEvent->getButtonType() == KorryButtonType::down ? 1 : -1));
 
 			// Cycling
@@ -292,7 +294,7 @@ namespace pizda {
 
 	void Menu::updateItemsFromSelection() const {
 		for (uint16_t i = 0; i < getItemsCount(); i++) {
-			getItemAt(i)->setState(i == selectedIndex ? MenuItemState::hovered : MenuItemState::normal);
+			getItemAt(i)->setActive(i == selectedIndex);
 		}
 	}
 }

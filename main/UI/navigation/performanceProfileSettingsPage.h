@@ -25,8 +25,9 @@ namespace pizda {
 		public:
 			PerformanceProfileSettingsPage();
 
+			PerformanceProfileMenuItem footItem { SettingsNavPerformanceProfile::onFoot };
 			PerformanceProfileMenuItem cyclingItem { SettingsNavPerformanceProfile::cycling };
 			PerformanceProfileMenuItem diamondDA40Item { SettingsNavPerformanceProfile::diamondDA40 };
-			RouteMenuItem backItem;
+			RouteMenuItem backItem {};
 	};
 }

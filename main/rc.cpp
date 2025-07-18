@@ -87,6 +87,9 @@ namespace pizda {
 
 	void RC::updatePerformanceProfileFromSettings() {
 		switch (settings.nav.performanceProfile) {
+			case SettingsNavPerformanceProfile::onFoot:
+				performanceProfile.setOnFoot();
+				break;
 			case SettingsNavPerformanceProfile::cycling:
 				performanceProfile.setCycling();
 				break;

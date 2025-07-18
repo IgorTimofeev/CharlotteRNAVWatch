@@ -3,6 +3,7 @@
 #include <YOBA/main.h>
 #include <YOBA/UI.h>
 
+#include "UI/theme.h"
 #include "UI/navigation/menu.h"
 
 namespace pizda {
@@ -33,7 +34,7 @@ namespace pizda {
 				rows += &menu;
 			}
 
-			constexpr static uint8_t menuWidth = 170;
+			constexpr static uint8_t menuWidth = 140;
 
 			constexpr static uint8_t menuItemCount = 5;
 			constexpr static uint8_t menuHeight = (MenuItem::height + Menu::itemSpacing) * menuItemCount - Menu::itemSpacing;

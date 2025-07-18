@@ -27,6 +27,6 @@ namespace pizda {
 
 			ThemeMenuItem darkItem { SettingsInterfaceTheme::dark };
 			ThemeMenuItem brightItem { SettingsInterfaceTheme::bright };
-			RouteMenuItem backItem;
+			RouteMenuItem backItem {};
 	};
 }

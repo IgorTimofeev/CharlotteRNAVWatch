@@ -6,6 +6,9 @@
 namespace pizda {
 	PerformanceProfileMenuItem::PerformanceProfileMenuItem(const SettingsNavPerformanceProfile performanceProfile) : performanceProfile(performanceProfile) {
 		switch (performanceProfile) {
+			case SettingsNavPerformanceProfile::onFoot:
+				setTitle(L"On foot");
+				break;
 			case SettingsNavPerformanceProfile::cycling:
 				setTitle(L"Cycling");
 				break;
@@ -29,15 +32,17 @@ namespace pizda {
 		invalidate();
 	}
 
-	PerformanceProfileSettingsPage::PerformanceProfileSettingsPage() :
-		backItem({ L"Back", &Routes::settings })
-	{
+	PerformanceProfileSettingsPage::PerformanceProfileSettingsPage() {
 		title.setText(L"Performance profile");
 
-		menu.setItems({
-			&cyclingItem,
-			&diamondDA40Item,
-			&backItem
-		});
+		menu.addItem(&footItem);
+		menu.addItem(&cyclingItem);
+		menu.addItem(&diamondDA40Item);
+
+		backItem.setBackStyle();
+		backItem.setRoute(&Routes::mainMenu);
+		menu.addItem(&backItem);
+
+		menu.setSelectedIndex(0);
 	}
 }
