@@ -5,6 +5,7 @@
 #include "esp_log.h"
 #include "hardware/GNSS/TinyGPS++.h"
 #include <inttypes.h>
+#include <span>
 #include <YOBA/main.h>
 #include <YOBAUnits.h>
 
@@ -23,13 +24,11 @@ namespace pizda {
 		public:
 			void setup();
 			void startReading();
+			void setUpdateInterval(uint16_t intervalMs);
 			void updateSystemsFromSettings() const;
 
-			uint16_t getDataUpdatingDistanceM() const;
-			void setDataUpdatingDistanceM(uint16_t value);
-
 			void setSystems(uint8_t systems) const;
-			void setUpdateInterval(uint32_t intervalUs);
+			void updateUpdatingIntervalFromSettings();
 
 			bool haveLocation() const;
 			float getLatitudeRad() const;
@@ -39,14 +38,9 @@ namespace pizda {
 			float getAltitudeM();
 			float getAltitudeTrendM() const;
 
-			bool haveSpeed() const;
 			float getSpeedMps() const;
-
 			float getSpeedTrendMps() const;
-			bool haveCourse() const;
-
-			float getCourseDeg();
-			float getComputedCourseDeg() const;
+			float getCourseDeg() const;
 
 			bool haveTime() const;
 			uint8_t getTimeHours();
@@ -62,6 +56,7 @@ namespace pizda {
 			float getWaypoint2BearingDeg() const;
 
 			float getHDOP();
+			std::span<char> getRXData();
 
 		private:
 			constexpr static uint16_t rxBufferSize = 2048;
@@ -69,10 +64,13 @@ namespace pizda {
 			constexpr static uint16_t queueSize = 10;
 			constexpr static auto trendInterval = 5'000'000;
 
+			char rxBuffer[rxBufferSize] {};
+			int32_t rxDataLength = 0;
+
 			TinyGPSPlus gps {};
 			QueueHandle_t uartQueue {};
-			char rxBuffer[rxBufferSize] {};
-			uint32_t updateInterval = 1'000'000;
+
+			int64_t tickTime = 0;
 
 			// Location
 			float latitudeRad = 0;
@@ -92,21 +90,29 @@ namespace pizda {
 			// Data updating
 			float dataUpdatingPrevLatRad = -1;
 			float dataUpdatingPrevLonRad = -1;
+			int64_t dataUpdatingTime = 0;
+			int64_t dataUpdatingZeroingTime = 0;
 
 			// Speed
 			float speedMps = 0;
-			float oldSpeedMps = 0;
+			float speedTrendOldSpeedMps = 0;
 			float speedTrendMps = 0;
 
 			// Course
 			float course = 0;
 
 			// Simulation
-			constexpr static float simulationLatRadFrom = toRadians(59.804165104373745);
-			constexpr static float simulationLonRadFrom = toRadians(30.58331776426169);
+			// constexpr static float simulationLatRadFrom = toRadians(59.804165104373745);
+			// constexpr static float simulationLonRadFrom = toRadians(30.58331776426169);
+			//
+			// constexpr static float simulationLatRadTo = toRadians(59.80960977788406);
+			// constexpr static float simulationLonRadTo = toRadians(30.59353048681725);
 
-			constexpr static float simulationLatRadTo = toRadians(59.80960977788406);
-			constexpr static float simulationLonRadTo = toRadians(30.59353048681725);
+			constexpr static float simulationLatRadFrom = toRadians(59.81065170166242);
+			constexpr static float simulationLonRadFrom = toRadians(30.562827043564145);
+
+			constexpr static float simulationLatRadTo = toRadians(59.81183576340701);
+			constexpr static float simulationLonRadTo = toRadians(30.564879512058923);
 
 			constexpr static float simulationLatLonInterval = 20'000'000.f;
 

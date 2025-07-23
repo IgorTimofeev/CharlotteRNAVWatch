@@ -153,22 +153,33 @@ namespace pizda {
 		input = callback;
 	}
 
+	std::wstring InputMenuItem::getSuffix() const {
+		return suffix;
+	}
+
+	void InputMenuItem::setSuffix(const std::wstring& value) {
+		this->suffix = value;
+	}
+
 	void InputMenuItem::onRender(Renderer* renderer, const Bounds& bounds) {
 		renderSelectionBackground(renderer, bounds);
 
 		const auto titleWidth = Theme::fontNormal.getWidth(getTitle());
 		const auto textWidth = Theme::fontNormal.getWidth(getText());
+		const auto suffixWidth = suffix.empty() ? 0 : Theme::fontNormal.getWidth(suffix);
 
 		// Title
 		auto pos = Point(
-			bounds.getXCenter() - (titleWidth + textWidth) / 2,
+			bounds.getXCenter() - (titleWidth + textWidth + suffixWidth) / 2,
 			bounds.getYCenter() - Theme::fontNormal.getHeight() / 2
 		);
+
+		const auto titleColor = isActive() ? getActiveTitleColor() : getDefaultTitleColor();
 
 		renderer->renderString(
 			pos,
 			&Theme::fontNormal,
-			isActive() ? getActiveTitleColor() : getDefaultTitleColor(),
+			titleColor,
 			getTitle()
 		);
 
@@ -181,6 +192,18 @@ namespace pizda {
 			isActive() ? &Theme::bg6 : &Theme::fg6,
 			getText()
 		);
+
+		// Suffix
+		if (!suffix.empty()) {
+			pos.setX(pos.getX() + textWidth);
+
+			renderer->renderString(
+				pos,
+				&Theme::fontNormal,
+				titleColor,
+				suffix
+			);
+		}
 	}
 
 	// Text

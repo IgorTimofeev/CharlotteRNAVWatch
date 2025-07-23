@@ -15,7 +15,14 @@ namespace pizda {
 		config.source_clk = UART_SCLK_DEFAULT;
 
 		ESP_ERROR_CHECK(uart_param_config(constants::gnss::port, &config));
-		ESP_ERROR_CHECK(uart_set_pin(constants::gnss::port, constants::gnss::tx, constants::gnss::rx, GPIO_NUM_NC, GPIO_NUM_NC));
+
+		ESP_ERROR_CHECK(uart_set_pin(
+			constants::gnss::port,
+			constants::gnss::tx,
+			constants::gnss::rx,
+			GPIO_NUM_NC,
+			GPIO_NUM_NC
+		));
 	}
 
 	void GNSS::startReading() {
@@ -27,15 +34,24 @@ namespace pizda {
 				while (true) {
 					instance->tick();
 
-					vTaskDelay(pdMS_TO_TICKS(instance->updateInterval / 1000));
+					vTaskDelay(pdMS_TO_TICKS(RC::getInstance().settings.GNSS.updatingIntervalMs));
 				}
 			},
-			"GPS task",
+			"GNSS",
 			4096,
 			this,
 			1,
 			nullptr
 		);
+	}
+
+	void GNSS::setUpdateInterval(const uint16_t intervalMs) {
+		const auto buffer = new char[15];
+		snprintf(buffer, 15, "MTK220,%d", intervalMs);
+
+		sendCommand(buffer);
+
+		delete[] buffer;
 	}
 
 	void GNSS::updateSystemsFromSettings() const {
@@ -55,7 +71,7 @@ namespace pizda {
 		setSystems(flags);
 	}
 
-	void GNSS::setSystems(const uint8_t systems) const {
+	void GNSS::setSystems(const uint8_t systems) const { // NOLINT(*-convert-member-functions-to-static)
 		const auto buffer = new char[11];
 		snprintf(buffer, 11, "PCAS04,%d", systems);
 
@@ -64,15 +80,8 @@ namespace pizda {
 		delete[] buffer;
 	}
 
-	void GNSS::setUpdateInterval(const uint32_t intervalUs) {
-		updateInterval = intervalUs;
-
-		const auto buffer = new char[15];
-		snprintf(buffer, 15, "MTK220,%lu", updateInterval / 1000);
-
-		sendCommand(buffer);
-
-		delete[] buffer;
+	void GNSS::updateUpdatingIntervalFromSettings() {
+		setUpdateInterval(RC::getInstance().settings.GNSS.updatingIntervalMs);
 	}
 
 	bool GNSS::haveLocation() const {
@@ -92,15 +101,11 @@ namespace pizda {
 	}
 
 	float GNSS::getAltitudeM() {
-		return isSimulationMode() ? simulationAltitude : gps.altitude.meters();
+		return isSimulationMode() ? simulationAltitude : static_cast<float>(gps.altitude.meters());
 	}
 
 	float GNSS::getAltitudeTrendM() const {
 		return altitudeTrendM;
-	}
-
-	bool GNSS::haveSpeed() const {
-		return isSimulationMode() || gps.speed.isValid();
 	}
 
 	float GNSS::getSpeedMps() const {
@@ -111,15 +116,7 @@ namespace pizda {
 		return speedTrendMps;
 	}
 
-	bool GNSS::haveCourse() const {
-		return isSimulationMode() || gps.course.isValid();
-	}
-
-	float GNSS::getCourseDeg() {
-		return normalizeAngle360(gps.course.value());
-	}
-
-	float GNSS::getComputedCourseDeg() const {
+	float GNSS::getCourseDeg() const {
 		return course;
 	}
 
@@ -148,7 +145,11 @@ namespace pizda {
 	}
 
 	float GNSS::getHDOP() {
-		return isSimulationMode() ? 10 : gps.hdop.hdop();
+		return isSimulationMode() ? 10 : static_cast<float>(gps.hdop.hdop());
+	}
+
+	std::span<char> GNSS::getRXData() {
+		return std::span(rxBuffer, rxDataLength);
 	}
 
 	float GNSS::getWaypoint1BearingDeg() const {
@@ -193,12 +194,12 @@ namespace pizda {
 	}
 
 	void GNSS::tick() {
-		const auto bytesRead = uart_read_bytes(constants::gnss::port, rxBuffer, rxBufferSize - 1, pdMS_TO_TICKS(100));
+		rxDataLength = uart_read_bytes(constants::gnss::port, rxBuffer, rxBufferSize - 1, pdMS_TO_TICKS(100));
 
-		if (!bytesRead)
+		if (!rxDataLength)
 			return;
 
-		rxBuffer[bytesRead] = '\0';
+		rxBuffer[rxDataLength] = '\0';
 
 		auto bufferPtr = rxBuffer;
 
@@ -208,6 +209,7 @@ namespace pizda {
 		const auto& rc = RC::getInstance();
 		const auto& navWaypoint = rc.settings.nav.waypoints[rc.settings.nav.waypoint1Index];
 		const auto& bearingWaypoint = rc.settings.nav.waypoints[rc.settings.nav.waypoint2Index];
+		const auto deltaTimeUsF = static_cast<float>(esp_timer_get_time() - tickTime);
 
 		// Location
 		latitudeRad = toRadians(gps.location.lat());
@@ -217,7 +219,7 @@ namespace pizda {
 			// Lat/lon
 			// distance - 10 sec
 			// x - deltaTime
-			const auto factor = static_cast<float>(updateInterval) / simulationLatLonInterval * random(80, 100) / 100.f;
+			const auto factor = deltaTimeUsF / simulationLatLonInterval * static_cast<float>(random(80, 100)) / 100.f;
 			simulationLatRad += (simulationLatLonRev ? simulationLatRadFrom - simulationLatRadTo : simulationLatRadTo - simulationLatRadFrom) * factor;
 			simulationLonRad += (simulationLatLonRev ? simulationLonRadFrom - simulationLonRadTo : simulationLonRadTo - simulationLonRadFrom) * factor;
 
@@ -226,10 +228,10 @@ namespace pizda {
 			}
 
 			// Altitude
-			simulationAltitude += YOBA::random(
+			simulationAltitude += static_cast<float>(random(
 				static_cast<int32_t>(Units::convertDistance(6, DistanceUnit::foot, DistanceUnit::meter)),
 				static_cast<int32_t>(Units::convertDistance(12, DistanceUnit::foot, DistanceUnit::meter))
-			);
+			));
 
 			if (simulationAltitude >= Units::convertDistance(150, DistanceUnit::foot, DistanceUnit::meter))
 				simulationAltitude = 0;
@@ -250,11 +252,19 @@ namespace pizda {
 		);
 
 		// Distance between 2 samples is enough, data should be updated
-		if (samplesDistanceM >= 20) {
+		if (samplesDistanceM >= static_cast<float>(rc.settings.GNSS.dataSamplingDistanceM)) {
+			const auto dataUpdatingDeltaTimeUsF = static_cast<float>(esp_timer_get_time() - dataUpdatingTime);
+
 			// Speed
-			// samplesDistanceM - tickInterval us
+			// samplesDistanceM - interval us
 			// x - 1'000'000 us
-			speedMps = samplesDistanceM * 1'000'000 / updateInterval;
+			speedMps = samplesDistanceM * 1'000'000.f / dataUpdatingDeltaTimeUsF;
+
+			// Speed trend
+			// deltasPeed - interval us
+			// x - trendInterval us
+			speedTrendMps = (getSpeedMps() - speedTrendOldSpeedMps) * static_cast<float>(trendInterval) / dataUpdatingDeltaTimeUsF;
+			speedTrendOldSpeedMps = getSpeedMps();
 
 			// Course
 			course = normalizeAngle360(toDegrees(GeographicCoordinates::getBearing(
@@ -264,27 +274,30 @@ namespace pizda {
 				getLongitudeRad()
 			)));
 
-			// Speed trend
-			if (haveSpeed()) {
-				speedTrendMps = (getSpeedMps() - oldSpeedMps) * trendInterval / updateInterval;
-				oldSpeedMps = getSpeedMps();
-			}
-			else {
-				speedTrendMps = oldSpeedMps;
-			}
-
 			dataUpdatingPrevLatRad = getLatitudeRad();
 			dataUpdatingPrevLonRad = getLongitudeRad();
+
+			dataUpdatingTime = esp_timer_get_time();
+			dataUpdatingZeroingTime = dataUpdatingTime + rc.settings.GNSS.dataSamplingZeroingIntervalMs * 1'000;
+		}
+		else {
+			// If too much time has passed since last update, data should be zeroed out
+			if (esp_timer_get_time() >= dataUpdatingZeroingTime) {
+				// Speed
+				speedMps = 0;
+
+				// Speed trend
+				speedTrendMps = 0;
+				speedTrendOldSpeedMps = 0;
+
+				dataUpdatingTime = esp_timer_get_time();
+				dataUpdatingZeroingTime = dataUpdatingTime + rc.settings.GNSS.dataSamplingZeroingIntervalMs * 1'000;
+			}
 		}
 
 		// Altitude trend
-		if (haveAltitude()) {
-			altitudeTrendM = (getAltitudeM() - oldAltitudeM) * trendInterval / updateInterval;
-			oldAltitudeM = getAltitudeM();
-		}
-		else {
-			altitudeTrendM = oldAltitudeM;
-		}
+		altitudeTrendM = (getAltitudeM() - oldAltitudeM) * static_cast<float>(trendInterval) / deltaTimeUsF;
+		oldAltitudeM = getAltitudeM();
 
 		// Waypoint 1
 		waypoint1BearingDeg = normalizeAngle360(toDegrees(GeographicCoordinates::getBearing(
@@ -316,6 +329,8 @@ namespace pizda {
 		// ESP_LOGI("GNSS", "Date / time: %d.%d.%d %d:%d:%d", getDateDay(), getDateMonth(), getDateYear(), getTimeHours(), getTimeMinutes(), getTimeSeconds());
 		// ESP_LOGI("GNSS", "Lat / lon / alt: %f deg, %f deg, %f m", toDegrees(getLatitudeRad()), toDegrees(getLongitudeRad()), getAltitudeM());
 		// ESP_LOGI("GNSS", "Speed / Course: %f mps, %f deg", getSpeedMps(), getCourseDeg());
+
+		tickTime = esp_timer_get_time();
 	}
 
 	bool GNSS::isSimulationMode() {

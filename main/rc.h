@@ -72,13 +72,15 @@ namespace pizda {
 
 			static RC& getInstance();
 
-			[[noreturn]] void run();
+			void setup();
+			void tick();
 
 			const Route* getRoute() const;
 			void setRoute(const Route* route);
 
 			void updateThemeFromSettings() const;
 			void updatePerformanceProfileFromSettings();
+			void sleep();
 
 		private:
 			RC() = default;
@@ -92,7 +94,7 @@ namespace pizda {
 			int64_t _computingPrimaryTickTime = 0;
 
 			void SPIBusSetup() const;
-
+			static void sleepSetup();
 			void computeStuff();
 	};
 }

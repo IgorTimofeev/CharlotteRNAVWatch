@@ -128,6 +128,8 @@ namespace pizda {
 	class InputMenuItem : public virtual MenuItem, public TextElement {
 		public:
 			void setOnInput(const std::function<void()>& callback);
+			std::wstring getSuffix() const;
+			void setSuffix(const std::wstring& value);
 
 		protected:
 			void onRender(Renderer* renderer, const Bounds& bounds) override;
@@ -135,6 +137,7 @@ namespace pizda {
 			virtual void onKeyboardShown(WatchKeyboard* keyboard) = 0;
 
 		private:
+			std::wstring suffix = L"";
 			std::function<void()> input = nullptr;
 	};
 

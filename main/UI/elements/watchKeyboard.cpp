@@ -19,10 +19,10 @@ namespace pizda {
 
 		renderer->renderChar(
 			Point(
-				bounds.getXCenter() - Theme::fontBigThin.getWidth(text) / 2,
-				bounds.getYCenter() - Theme::fontBigThin.getHeight() / 2
+				bounds.getXCenter() - Theme::fontBig.getWidth(text) / 2,
+				bounds.getYCenter() - Theme::fontBig.getHeight() / 2
 			),
-			&Theme::fontBigThin,
+			&Theme::fontBig,
 			isFocused() ? &Theme::bg1 : &Theme::fg1,
 			text
 		);
@@ -93,7 +93,7 @@ namespace pizda {
 
 		valueText.setHorizontalAlignment(Alignment::center);
 		valueText.setMargin(Margin(0, 3));
-		valueText.setFont(&Theme::fontBigThin);
+		valueText.setFont(&Theme::fontBig);
 		valueText.setTextColor(&Theme::fg1);
 		valueLayout += &valueText;
 

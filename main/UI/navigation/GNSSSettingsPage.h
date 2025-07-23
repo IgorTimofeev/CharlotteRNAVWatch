@@ -12,10 +12,16 @@ namespace pizda {
 		public:
 			GNSSSettingsPage();
 
+			IntInputMenuItem updatingIntervalItem {};
+			IntInputMenuItem dataSamplingZeroingIntervalItem {};
+			IntInputMenuItem dataSamplingDistanceItem {};
+
 			BoolMenuItem GPSSystemItem {};
 			BoolMenuItem BeiDouSystemItem {};
 			BoolMenuItem GLONASSSystemItem {};
+
 			BoolMenuItem simulationItem {};
+
 			RouteMenuItem backItem {};
 	};
 }

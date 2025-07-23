@@ -17,6 +17,7 @@ namespace pizda {
 			RouteMenuItem GNSSSettingsItem {};
 			RouteMenuItem themeItem {};
 			RouteMenuItem devItem {};
+			FunctionMenuItem sleepItem {};
 			RouteMenuItem backItem {};
 	};
 }

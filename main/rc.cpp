@@ -3,6 +3,7 @@
 #include "resources/images.h"
 #include "utils/lowPassFilter.h"
 #include <YOBAUnits.h>
+#include <esp_sleep.h>
 
 namespace pizda {
 	using namespace YOBA;
@@ -13,7 +14,8 @@ namespace pizda {
 		return instance;
 	}
 
-	[[noreturn]] void RC::run() {
+	void RC::setup() {
+		// SPI comes first to render splash screen on boot
 		SPIBusSetup();
 
 		// Display
@@ -37,9 +39,12 @@ namespace pizda {
 		buttonMiddle.setup();
 		buttonDown.setup();
 
+		// Sleep
+		sleepSetup();
+
 		// GNSS
 		gnss.setup();
-		gnss.setUpdateInterval(1'000'000);
+		gnss.updateUpdatingIntervalFromSettings();
 		gnss.startReading();
 
 		// UI
@@ -56,22 +61,21 @@ namespace pizda {
 
 		// This shit is blazingly 🔥 fast 🚀, so letting user enjoy logo for a few moments
 		vTaskDelay(pdMS_TO_TICKS(1000));
+	}
 
-		// Main loop
-		while (true) {
-			const auto tickTime = esp_timer_get_time();
+	void RC::tick() {
+		const auto tickTime = esp_timer_get_time();
 
-			computeStuff();
+		computeStuff();
 
-			application.tick();
-			application.render();
+		application.tick();
+		application.render();
 
-			// Skipping remaining tick time if any
-			const auto deltaTime = esp_timer_get_time() - tickTime;
+		// Skipping remaining tick time if any
+		const auto deltaTime = esp_timer_get_time() - tickTime;
 
-			if (deltaTime < mainTickInterval)
-				vTaskDelay(pdMS_TO_TICKS((mainTickInterval - deltaTime) / 1000));
-		}
+		if (deltaTime < mainTickInterval)
+			vTaskDelay(pdMS_TO_TICKS((mainTickInterval - deltaTime) / 1000));
 	}
 
 	void RC::updateThemeFromSettings() const {
@@ -136,7 +140,7 @@ namespace pizda {
 
 		// Course
 		if (speedKt > 2) {
-			const auto targetCourseDeg = gnss.getComputedCourseDeg();
+			const auto targetCourseDeg = gnss.getCourseDeg();
 			const auto courseLPFFactor = deltaTime / 1'000'000.f;
 
 			// Clockwise
@@ -180,5 +184,33 @@ namespace pizda {
 		busConfig.max_transfer_sz = static_cast<int32_t>(display.getSize().getSquare()) * 2;
 
 		ESP_ERROR_CHECK(spi_bus_initialize(SPI2_HOST, &busConfig, SPI_DMA_CH_AUTO));
+	}
+
+	void RC::sleepSetup() {
+		ESP_ERROR_CHECK(gpio_wakeup_enable(constants::buttons::middle, GPIO_INTR_LOW_LEVEL));
+		ESP_ERROR_CHECK(esp_sleep_enable_gpio_wakeup());
+	}
+
+	void RC::sleep() {
+		ESP_LOGI("RC", "Light sleep started");
+
+		// Waiting for button release
+		while (buttonMiddle.isPressed())
+			vTaskDelay(pdMS_TO_TICKS(10));
+
+		// Turning off peripherals for power saving
+		display.turnOff();
+
+		// Zzzzz....
+		ESP_ERROR_CHECK(esp_light_sleep_start());
+
+		// Moving to PFD
+		setRoute(&Routes::PFD);
+		application.render();
+
+		// Turning peripherals on again
+		display.turnOn();
+
+		ESP_LOGI("RC", "Light sleep finished");
 	}
 }

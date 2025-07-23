@@ -41,8 +41,7 @@ namespace pizda {
 	RGB565Color Theme::speedBarYellow { 0 };
 	RGB565Color Theme::speedBarRed { 0 };
 
-	const unscii8Font Theme::fontBig {};
-	const unscii8ThinFont Theme::fontBigThin {};
+	const unscii8ThinFont Theme::fontBig {};
 	const PIXY10Font Theme::fontNormal {};
 	const Vaticanus8Font Theme::fontSmall {};
 

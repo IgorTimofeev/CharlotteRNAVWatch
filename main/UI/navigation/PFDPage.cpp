@@ -181,7 +181,7 @@ namespace pizda {
 		const auto valueBounds  = Bounds(
 		   sidebarBounds.getX(),
 		   center.getY() - sidebarValueHeight / 2,
-		   sidebarValueTextMargin + Theme::fontBigThin.getWidth(value < 1000 ? L"888" : L"8888"),
+		   sidebarValueTextMargin + Theme::fontBig.getWidth(value < 1000 ? L"888" : L"8888"),
 		   sidebarValueHeight
 	   );
 
@@ -209,9 +209,9 @@ namespace pizda {
 		renderer->renderString(
 			Point(
 				valueBounds.getX() + sidebarValueTextMargin,
-				center.getY() - Theme::fontBigThin.getHeight() / 2 + 1
+				center.getY() - Theme::fontBig.getHeight() / 2 + 1
 			),
-			&Theme::fontBigThin,
+			&Theme::fontBig,
 			fg,
 			text
 		);
@@ -379,7 +379,7 @@ namespace pizda {
 		auto valueBounds  = Bounds(
 		   0,
 		   center.getY() - sidebarValueHeight / 2,
-		   sidebarValueTextMargin + Theme::fontBigThin.getWidth(value < 1'000 ? L"888" : (value < 10'000 ? L"8888" : L"88888")),
+		   sidebarValueTextMargin + Theme::fontBig.getWidth(value < 1'000 ? L"888" : (value < 10'000 ? L"8888" : L"88888")),
 		   sidebarValueHeight
 	   );
 
@@ -408,10 +408,10 @@ namespace pizda {
 
 		renderer->renderString(
 			Point(
-				valueBounds.getX2() - sidebarValueTextMargin + 2 - Theme::fontBigThin.getWidth(text),
-				center.getY() - Theme::fontBigThin.getHeight() / 2 + 1
+				valueBounds.getX2() - sidebarValueTextMargin + 2 - Theme::fontBig.getWidth(text),
+				center.getY() - Theme::fontBig.getHeight() / 2 + 1
 			),
-			&Theme::fontBigThin,
+			&Theme::fontBig,
 			fg,
 			text
 		);
@@ -876,10 +876,10 @@ namespace pizda {
 
 			renderer->renderString(
 				Point(
-					center.getX() - Theme::fontBigThin.getWidth(text) / 2,
-					courseHeight / 2 - Theme::fontBigThin.getHeight() / 2 - 2
+					center.getX() - Theme::fontBig.getWidth(text) / 2,
+					courseHeight / 2 - Theme::fontBig.getHeight() / 2 - 2
 				),
-				&Theme::fontBigThin,
+				&Theme::fontBig,
 				fg,
 				text
 			);
@@ -906,10 +906,10 @@ namespace pizda {
 
 			renderer->renderString(
 				Point(
-					center.getX() - Theme::fontBigThin.getWidth(text) / 2,
-					bounds.getY2() - timeHeight / 2 - Theme::fontBigThin.getHeight() / 2 + 3
+					center.getX() - Theme::fontBig.getWidth(text) / 2,
+					bounds.getY2() - timeHeight / 2 - Theme::fontBig.getHeight() / 2 + 3
 				),
-				&Theme::fontBigThin,
+				&Theme::fontBig,
 				fg,
 				text
 			);
