@@ -37,6 +37,11 @@ namespace pizda {
 		setDefaultTitleColor(&Theme::fg7);
 	}
 
+	void MenuItem::setBackStyle() {
+		setSecondaryColors();
+		setTitle(L"Back");
+	}
+
 	const Color* MenuItem::getActiveBackgroundColor() const {
 		return activeBackgroundColor;
 	}
@@ -94,11 +99,6 @@ namespace pizda {
 
 	void RouteMenuItem::setRoute(const Route* route) {
 		this->route = route;
-	}
-
-	void RouteMenuItem::setBackStyle() {
-		setSecondaryColors();
-		setTitle(L"Back");
 	}
 
 	void RouteMenuItem::onKorryEvent(KorryEvent* event) {

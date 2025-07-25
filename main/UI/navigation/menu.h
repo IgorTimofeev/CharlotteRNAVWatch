@@ -34,6 +34,7 @@ namespace pizda {
 			void setActiveTitleColor(const Color* value);
 
 			void setSecondaryColors();
+			void setBackStyle();
 
 		protected:
 			void onRender(Renderer* renderer, const Bounds& bounds) override;
@@ -90,7 +91,6 @@ namespace pizda {
 	class RouteMenuItem : public MenuItem {
 		public:
 			void setRoute(const Route* route);
-			void setBackStyle();
 
 		protected:
 			void onKorryEvent(KorryEvent* event) override;

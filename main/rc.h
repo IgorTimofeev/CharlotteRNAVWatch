@@ -81,7 +81,7 @@ namespace pizda {
 			void updateThemeFromSettings() const;
 			void updatePerformanceProfileFromSettings();
 			void sleep();
-			void updateFaceFromSettings();
+			void setFaceRouteFromSettings();
 
 		private:
 			RC() = default;

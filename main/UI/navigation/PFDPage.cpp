@@ -222,7 +222,7 @@ namespace pizda {
 
 		const auto underlayX = sidebarBounds.getX() + sidebarUnderlayTextCenterMargin;
 		renderUnderlayText(renderer, underlayX, sidebarBounds.getY() - sidebarUnderlayHeight, &Theme::ocean, std::to_wstring(rc.settings.PFD.speedKt));
-		renderUnderlayText(renderer, underlayX, sidebarBounds.getY2() + 1, &Theme::purple, L"GS");
+		renderUnderlayText(renderer, underlayX, sidebarBounds.getY2() + 1, &Theme::purple1, L"GS");
 	}
 
 	void PFDPage::renderSpeedTrendArrow(Renderer* renderer, const Point& center) {
@@ -594,7 +594,7 @@ namespace pizda {
 				renderer->renderLine(
 					static_cast<Point>(HSILineHeadFromVec),
 					HSILineHeadTo,
-					&Theme::purple,
+					&Theme::purple1,
 					2
 				);
 
@@ -604,7 +604,7 @@ namespace pizda {
 				renderer->renderLine(
 					static_cast<Point>(HSILineTailFromVec),
 					static_cast<Point>(centerVec - HSIVec),
-					&Theme::purple,
+					&Theme::purple1,
 					2
 				);
 
@@ -616,7 +616,7 @@ namespace pizda {
 						static_cast<Point>(arrowFrom + HSIVecNormPerp * HSIArrowBigWidth),
 						static_cast<Point>(arrowFrom - HSIVecNormPerp * HSIArrowBigWidth),
 						HSILineHeadTo,
-						&Theme::purple
+						&Theme::purple1
 					);
 				}
 
@@ -627,7 +627,7 @@ namespace pizda {
 							static_cast<Point>(HSILineHeadFromVec + HSIVecNormPerp * HSIArrowSmallWidth),
 							static_cast<Point>(HSILineHeadFromVec - HSIVecNormPerp * HSIArrowSmallWidth),
 							static_cast<Point>(HSILineHeadFromVec + HSIVecNorm * HSIArrowSmallHeight),
-							&Theme::purple
+							&Theme::purple1
 						);
 					}
 					else {
@@ -635,7 +635,7 @@ namespace pizda {
 							static_cast<Point>(HSILineTailFromVec + HSIVecNormPerp * HSIArrowSmallWidth),
 							static_cast<Point>(HSILineTailFromVec - HSIVecNormPerp * HSIArrowSmallWidth),
 							static_cast<Point>(HSILineTailFromVec - HSIVecNorm * HSIArrowSmallHeight),
-							&Theme::purple
+							&Theme::purple1
 						);
 					}
 				}
@@ -652,7 +652,7 @@ namespace pizda {
 				renderer->renderLine(
 					static_cast<Point>(HSICDIVec + HSIVecNorm * HSICDILengthHalf),
 					static_cast<Point>(HSICDIVec - HSIVecNorm * HSICDILengthHalf),
-					&Theme::purple,
+					&Theme::purple1,
 					2
 				);
 			}
@@ -753,7 +753,7 @@ namespace pizda {
 				point.getY() + spacing / 2
 			),
 			&Theme::fontNormal,
-			&Theme::purple,
+			&Theme::purple1,
 			text2
 		);
 	}

@@ -23,7 +23,7 @@ namespace pizda {
 		renderTitleOnCenter(renderer, bounds);
 
 		if (waypointIndex == rc.settings.nav.waypoint1Index || waypointIndex == rc.settings.nav.waypoint2Index)
-			renderSideIndicator(renderer, bounds, waypointIndex == rc.settings.nav.waypoint1Index ? &Theme::purple : &Theme::ocean);
+			renderSideIndicator(renderer, bounds, waypointIndex == rc.settings.nav.waypoint1Index ? &Theme::purple1 : &Theme::ocean);
 	}
 
 	void WaypointMenuItem::onKorryEvent(KorryEvent* event) {

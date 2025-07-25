@@ -18,6 +18,6 @@ namespace pizda {
 			RouteMenuItem AHRSSettingsItem {};
 			RouteMenuItem themeItem {};
 			FunctionMenuItem sleepItem {};
-			RouteMenuItem backItem {};
+			FunctionMenuItem backItem {};
 	};
 }

@@ -27,7 +27,7 @@ namespace pizda {
 		rc.settings.interface.scheduleWrite();
 
 		rc.application.scheduleOnTick([&rc] {
-			rc.updateFaceFromSettings();
+			rc.setFaceRouteFromSettings();
 		});
 	}
 

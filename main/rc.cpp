@@ -56,7 +56,7 @@ namespace pizda {
 		application.addHID(&buttonMiddle);
 		application.addHID(&buttonDown);
 
-		updateFaceFromSettings();
+		setFaceRouteFromSettings();
 
 		// This shit is blazingly 🔥 fast 🚀, so letting user enjoy logo for a few moments
 		vTaskDelay(pdMS_TO_TICKS(1000));
@@ -206,7 +206,7 @@ namespace pizda {
 		ESP_ERROR_CHECK(esp_light_sleep_start());
 
 		// Moving to active face
-		updateFaceFromSettings();
+		setFaceRouteFromSettings();
 		application.render();
 
 		// Turning peripherals on again
@@ -215,7 +215,7 @@ namespace pizda {
 		ESP_LOGI("RC", "Light sleep finished");
 	}
 
-	void RC::updateFaceFromSettings() {
+	void RC::setFaceRouteFromSettings() {
 		switch (settings.interface.face) {
 			case SettingsInterfaceFace::PFD:
 				setRoute(&Routes::PFD);

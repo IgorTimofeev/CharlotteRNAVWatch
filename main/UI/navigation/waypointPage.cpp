@@ -18,7 +18,7 @@ namespace pizda {
 			rc.settings.nav.waypoint1Index = waypointIndex;
 			rc.settings.nav.scheduleWrite();
 
-			rc.updateFaceFromSettings();
+			rc.setFaceRouteFromSettings();
 		});
 
 		menu.addItem(&navItem);
@@ -30,7 +30,7 @@ namespace pizda {
 			rc.settings.nav.waypoint2Index = waypointIndex;
 			rc.settings.nav.scheduleWrite();
 
-			rc.updateFaceFromSettings();
+			rc.setFaceRouteFromSettings();
 		});
 
 		menu.addItem(&bearingItem);

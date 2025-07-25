@@ -19,7 +19,7 @@ namespace pizda {
 		menu.addItem(&faceItem);
 
 		// PFD
-		PFDSettingsItem.setTitle(L"PFD");
+		PFDSettingsItem.setTitle(L"MCP");
 		PFDSettingsItem.setRoute(&Routes::PFDSettings);
 		menu.addItem(&PFDSettingsItem);
 
@@ -47,7 +47,11 @@ namespace pizda {
 
 		// Back
 		backItem.setBackStyle();
-		backItem.setRoute(&Routes::PFD);
+
+		backItem.setOnPress([] {
+			RC::getInstance().setFaceRouteFromSettings();
+		});
+
 		menu.addItem(&backItem);
 
 		menu.setSelectedIndex(0);

@@ -15,5 +15,7 @@ namespace pizda {
 			void onEvent(Event* event) override;
 
 		private:
+			static bool timerMode = true;
+			static int64_t timerTime;
 	};
 }
