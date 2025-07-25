@@ -3,7 +3,7 @@
 #include "driver/uart.h"
 #include "constants.h"
 #include "esp_log.h"
-#include "hardware/GNSS/TinyGPS++.h"
+#include "hardware/AHRS/TinyGPS++.h"
 #include <inttypes.h>
 #include <span>
 #include <YOBA/main.h>
@@ -11,6 +11,12 @@
 
 namespace pizda {
 	using namespace YOBA;
+
+	enum class AHRSState : uint8_t {
+		coldAndDark,
+		aligned,
+		lost
+	};
 
 	namespace GNSSSystem {
 		enum : uint8_t {
@@ -20,10 +26,9 @@ namespace pizda {
 		};
 	}
 
-	class GNSS {
+	class AHRS {
 		public:
 			void setup();
-			void startReading();
 			void setUpdateInterval(uint16_t intervalMs);
 			void updateSystemsFromSettings() const;
 
@@ -48,7 +53,6 @@ namespace pizda {
 			uint8_t getTimeSeconds();
 
 			uint32_t getSatellitesCount();
-			bool isSatellitesCountEnough();
 
 			float getWaypoint1BearingDeg() const;
 			float getWaypoint1DistanceM() const;
@@ -58,11 +62,15 @@ namespace pizda {
 			float getHDOP();
 			std::span<char> getRXData();
 
+			AHRSState getState() const;
+
 		private:
 			constexpr static uint16_t rxBufferSize = 2048;
 			constexpr static uint16_t txBufferSize = 2048;
 			constexpr static uint16_t queueSize = 10;
 			constexpr static auto trendInterval = 5'000'000;
+
+			AHRSState state = AHRSState::coldAndDark;
 
 			char rxBuffer[rxBufferSize] {};
 			int32_t rxDataLength = 0;
@@ -87,11 +95,11 @@ namespace pizda {
 
 			float waypoint2BearingDeg = 0;
 
-			// Data updating
-			float dataUpdatingPrevLatRad = -1;
-			float dataUpdatingPrevLonRad = -1;
-			int64_t dataUpdatingTime = 0;
-			int64_t dataUpdatingZeroingTime = 0;
+			// Data sampling
+			float dataSamplingPrevLatRad = 0;
+			float dataSamplingPrevLonRad = 0;
+			int64_t dataSamplingTime = 0;
+			int64_t dataSamplingZeroingTime = 0;
 
 			// Speed
 			float speedMps = 0;

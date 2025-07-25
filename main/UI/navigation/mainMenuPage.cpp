@@ -6,35 +6,35 @@
 
 namespace pizda {
 	MainMenuPage::MainMenuPage() {
-		title.setText(L"Settings");
+		title.setText(L"Main menu");
 
 		// Waypoints
 		waypointsItem.setTitle(L"Waypoints");
 		waypointsItem.setRoute(&Routes::waypoints);
 		menu.addItem(&waypointsItem);
 
+		// Face
+		faceItem.setTitle(L"Face");
+		faceItem.setRoute(&Routes::face);
+		menu.addItem(&faceItem);
+
 		// PFD
 		PFDSettingsItem.setTitle(L"PFD");
 		PFDSettingsItem.setRoute(&Routes::PFDSettings);
 		menu.addItem(&PFDSettingsItem);
 
-		// GNSS
-		GNSSSettingsItem.setTitle(L"GNSS");
-		GNSSSettingsItem.setRoute(&Routes::GNSSSettings);
-		menu.addItem(&GNSSSettingsItem);
+		// AHRS
+		AHRSSettingsItem.setTitle(L"AHRS");
+		AHRSSettingsItem.setRoute(&Routes::AHRSSettings);
+		menu.addItem(&AHRSSettingsItem);
 
 		// Theme
 		themeItem.setTitle(L"Theme");
 		themeItem.setRoute(&Routes::themeSettings);
 		menu.addItem(&themeItem);
 
-		// Dev
-		devItem.setTitle(L"Dev");
-		devItem.setRoute(&Routes::dev);
-		menu.addItem(&devItem);
-
 		// Sleep
-		sleepItem.setTitle(L"Sleep");
+		sleepItem.setTitle(L"Shutdown");
 		sleepItem.setDefaultTitleColor(&Theme::speedBarRed);
 		sleepItem.setActiveBackgroundColor(&Theme::speedBarRed);
 		sleepItem.setActiveTitleColor(&Theme::bg1);

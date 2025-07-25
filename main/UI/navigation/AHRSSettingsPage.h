@@ -8,13 +8,11 @@
 namespace pizda {
 	using namespace YOBA;
 
-	class GNSSSettingsPage : public MenuPage {
+	class AHRSSettingsPage : public MenuPage {
 		public:
-			GNSSSettingsPage();
+			AHRSSettingsPage();
 
 			IntInputMenuItem updatingIntervalItem {};
-			IntInputMenuItem dataSamplingZeroingIntervalItem {};
-			IntInputMenuItem dataSamplingDistanceItem {};
 
 			BoolMenuItem GPSSystemItem {};
 			BoolMenuItem BeiDouSystemItem {};

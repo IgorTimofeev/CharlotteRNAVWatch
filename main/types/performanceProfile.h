@@ -19,90 +19,110 @@ namespace pizda {
 			float speed;
 	};
 
+	class PerformanceProfileSpeed {
+		public:
+			uint8_t step = 0;
+			uint8_t stepBig = 0;
+			float radPerUnit = 0;
+
+			std::vector<SpeedBar> bars = std::vector<SpeedBar>(5);
+			std::vector<SpeedBug> bugs = std::vector<SpeedBug>(5);
+	};
+
+	class PerformanceProfileAltitude {
+		public:
+			uint16_t step = 0;
+			uint16_t stepBig = 0;
+			float radPerUnit = 0;
+	};
+
+	class PerformanceProfileAHRS {
+		public:
+			uint16_t dataSamplingDistanceM = 0;
+			uint32_t dataSamplingIntervalUs = 0;
+	};
+
 	class PerformanceProfile {
 		public:
-			// Speed
-			uint8_t speedStep = 0;
-			uint8_t speedStepBig = 0;
-			float speedRadPerUnit = 0;
-
-			// Altitude
-			uint16_t altitudeStep = 0;
-			uint16_t altitudeStepBig = 0;
-			float altitudeRadPerUnit = 0;
-
-			constexpr static uint16_t speedFlapsMin = 40;
-			constexpr static uint16_t speedFlapsMax = 85;
-
-			constexpr static uint16_t speedSmoothMin = 47;
-			constexpr static uint16_t speedSmoothMax = 128;
-
-			constexpr static uint16_t speedTurbulentMin = speedSmoothMax;
-			constexpr static uint16_t speedTurbulentMax = 163;
-
-			constexpr static uint16_t speedStructuralMin = speedTurbulentMax;
-			constexpr static uint16_t speedStructuralMax = speedStructuralMin * 4;
-
-			std::vector<SpeedBar> speedBars = std::vector<SpeedBar>(5);
-			std::vector<SpeedBug> speedBugs = std::vector<SpeedBug>(5);
+			PerformanceProfileSpeed speed {};
+			PerformanceProfileAltitude altitude{};
+			PerformanceProfileAHRS AHRS {};
 
 			void setOnFoot() {
-				speedStep = 1;
-				speedStepBig = 2;
-				speedRadPerUnit = toRadians(10.0f);
+				// Speeed
+				speed.step = 1;
+				speed.stepBig = 2;
+				speed.radPerUnit = toRadians(10.0f);
 
-				altitudeStep = 10;
-				altitudeStepBig = 50;
-				altitudeRadPerUnit = toRadians(0.5f);
+				speed.bars.clear();
+				speed.bars.push_back(SpeedBar { 0, 9, &Theme::speedBarGreen });
+				speed.bars.push_back(SpeedBar { 9, 13, &Theme::speedBarYellow });
+				speed.bars.push_back(SpeedBar { 13, 40, &Theme::speedBarRed });
 
-				speedBars.clear();
-				speedBars.push_back(SpeedBar { 0, 9, &Theme::speedBarGreen });
-				speedBars.push_back(SpeedBar { 9, 13, &Theme::speedBarYellow });
-				speedBars.push_back(SpeedBar { 13, 40, &Theme::speedBarRed });
+				speed.bugs.clear();
+				speed.bugs.push_back(SpeedBug { L"Opt", 3 });
 
-				speedBugs.clear();
-				speedBugs.push_back(SpeedBug { L"Opt", 3 });
+				// Altitude
+				altitude.step = 10;
+				altitude.stepBig = 50;
+				altitude.radPerUnit = toRadians(0.5f);
+
+				// AHRS
+				AHRS.dataSamplingDistanceM = 8;
+				AHRS.dataSamplingIntervalUs = 20'000'000;
 			}
 
 			void setCycling() {
-				speedStep = 1;
-				speedStepBig = 5;
-				speedRadPerUnit = toRadians(4.0f);
+				// Speed
+				speed.step = 1;
+				speed.stepBig = 5;
+				speed.radPerUnit = toRadians(4.0f);
 
-				altitudeStep = 10;
-				altitudeStepBig = 50;
-				altitudeRadPerUnit = toRadians(0.5f);
+				speed.bars.clear();
+				speed.bars.push_back(SpeedBar { 0, 5, &Theme::speedBarWhite });
+				speed.bars.push_back(SpeedBar { 5, 10, &Theme::speedBarGreen });
+				speed.bars.push_back(SpeedBar { 10, 18, &Theme::speedBarYellow });
+				speed.bars.push_back(SpeedBar { 18, 40, &Theme::speedBarRed });
 
-				speedBars.clear();
-				speedBars.push_back(SpeedBar { 0, 5, &Theme::speedBarWhite });
-				speedBars.push_back(SpeedBar { 5, 10, &Theme::speedBarGreen });
-				speedBars.push_back(SpeedBar { 10, 18, &Theme::speedBarYellow });
-				speedBars.push_back(SpeedBar { 18, 40, &Theme::speedBarRed });
+				speed.bugs.clear();
+				speed.bugs.push_back(SpeedBug { L"Opt", 13 });
 
-				speedBugs.clear();
-				speedBugs.push_back(SpeedBug { L"Opt", 13 });
+				// Altitude
+				altitude.step = 10;
+				altitude.stepBig = 50;
+				altitude.radPerUnit = toRadians(0.5f);
+
+				// AHRS
+				AHRS.dataSamplingDistanceM = 10;
+				AHRS.dataSamplingIntervalUs = 10'000'000;
 			}
 
 			void setDiamondDA40() {
-				speedStep = 5;
-				speedStepBig = 10;
-				speedRadPerUnit = toRadians(1.6f);
+				// Speed
+				speed.step = 5;
+				speed.stepBig = 10;
+				speed.radPerUnit = toRadians(1.6f);
 
-				altitudeStep = 50;
-				altitudeStepBig = 100;
-				altitudeRadPerUnit = toRadians(0.15f);
+				speed.bars.clear();
+				speed.bars.push_back(SpeedBar { 0, 49, &Theme::speedBarRed });
+				speed.bars.push_back(SpeedBar { 49, 60, &Theme::speedBarWhite });
+				speed.bars.push_back(SpeedBar { 60, 170, &Theme::speedBarGreen });
+				speed.bars.push_back(SpeedBar { 170, 190, &Theme::speedBarYellow });
+				speed.bars.push_back(SpeedBar { 190, 300, &Theme::speedBarRed });
 
-				speedBars.clear();
-				speedBars.push_back(SpeedBar { 0, 49, &Theme::speedBarRed });
-				speedBars.push_back(SpeedBar { 49, 60, &Theme::speedBarWhite });
-				speedBars.push_back(SpeedBar { 60, 170, &Theme::speedBarGreen });
-				speedBars.push_back(SpeedBar { 170, 190, &Theme::speedBarYellow });
-				speedBars.push_back(SpeedBar { 190, 300, &Theme::speedBarRed });
+				speed.bugs.clear();
+				speed.bugs.push_back(SpeedBug { L"G", 76 });
+				speed.bugs.push_back(SpeedBug { L"Y", 68 });
+				speed.bugs.push_back(SpeedBug { L"R", 59 });
 
-				speedBugs.clear();
-				speedBugs.push_back(SpeedBug { L"G", 76 });
-				speedBugs.push_back(SpeedBug { L"Y", 68 });
-				speedBugs.push_back(SpeedBug { L"R", 59 });
+				// Altitude
+				altitude.step = 50;
+				altitude.stepBig = 100;
+				altitude.radPerUnit = toRadians(0.15f);
+
+				// AHRS
+				AHRS.dataSamplingDistanceM = 20;
+				AHRS.dataSamplingIntervalUs = 8'000'000;
 			}
 	};
 }

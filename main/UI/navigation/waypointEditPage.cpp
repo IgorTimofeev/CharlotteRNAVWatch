@@ -16,15 +16,15 @@ namespace pizda {
 		menu.addItem(&nameItem);
 
 		latItem.setTitle(L"Lat: ");
-		latItem.setValue(toDegrees(waypointPtr ? waypointPtr->geographicCoordinates.getLatitude() : rc.gnss.getLatitudeRad()));
+		latItem.setValue(toDegrees(waypointPtr ? waypointPtr->geographicCoordinates.getLatitude() : rc.ahrs.getLatitudeRad()));
 		menu.addItem(&latItem);
 
 		lonItem.setTitle(L"Lon: ");
-		lonItem.setValue(toDegrees(waypointPtr ? waypointPtr->geographicCoordinates.getLongitude() : rc.gnss.getLongitudeRad()));
+		lonItem.setValue(toDegrees(waypointPtr ? waypointPtr->geographicCoordinates.getLongitude() : rc.ahrs.getLongitudeRad()));
 		menu.addItem(&lonItem);
 
 		altItem.setTitle(L"Alt: ");
-		altItem.setValue(static_cast<int32_t>(waypointPtr ? waypointPtr->geographicCoordinates.getAltitude() : rc.gnss.getAltitudeM()));
+		altItem.setValue(static_cast<int32_t>(waypointPtr ? waypointPtr->geographicCoordinates.getAltitude() : rc.ahrs.getAltitudeM()));
 		menu.addItem(&altItem);
 
 		// Confirm

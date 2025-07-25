@@ -6,15 +6,7 @@
 namespace pizda {
 	using namespace YOBA;
 
-	enum class DevPageMode : uint8_t {
-		raw,
-		processed,
-
-		first = raw,
-		last = processed
-	};
-
-	class DevPage : public Control {
+	class AnalogPage : public Control {
 		public:
 
 		protected:
@@ -23,6 +15,5 @@ namespace pizda {
 			void onEvent(Event* event) override;
 
 		private:
-			DevPageMode mode = DevPageMode::raw;
 	};
 }

@@ -59,7 +59,7 @@ namespace pizda {
 	void PFDPage::renderSpeedLines(Renderer* renderer, const Bounds& sidebarBounds, const Point& center, const float value) const {
 		const auto& rc = RC::getInstance();
 
-		const auto snappedLineValue = static_cast<int32_t>(value / static_cast<float>(rc.performanceProfile.speedStep)) * rc.performanceProfile.speedStep;
+		const auto snappedLineValue = static_cast<int32_t>(value / static_cast<float>(rc.performanceProfile.speed.step)) * rc.performanceProfile.speed.step;
 
 		auto lineValue = snappedLineValue;
 		Point lineTo;
@@ -68,12 +68,12 @@ namespace pizda {
 			lineTo =
 				center + static_cast<Point>(
 					Vector2F(displayRadius - speedBarWidth, 0)
-					.rotate(std::numbers::pi_v<float> - (value - static_cast<float>(lineValue)) * rc.performanceProfile.speedRadPerUnit)
+					.rotate(std::numbers::pi_v<float> - (value - static_cast<float>(lineValue)) * rc.performanceProfile.speed.radPerUnit)
 				);
 		};
 
 		const auto renderLine = [&lineValue, &lineTo, renderer, this, &rc] {
-			const auto isBig = lineValue % rc.performanceProfile.speedStepBig == 0;
+			const auto isBig = lineValue % rc.performanceProfile.speed.stepBig == 0;
 			const auto lineLength = isBig ? sidebarLineLength1 : sidebarLineLength2;
 
 			renderer->renderHorizontalLine(
@@ -108,14 +108,14 @@ namespace pizda {
 
 			renderLine();
 
-			lineValue -= rc.performanceProfile.speedStep;
+			lineValue -= rc.performanceProfile.speed.step;
 
 			if (lineValue < 0)
 				break;
 		}
 
 		// Up
-		lineValue = snappedLineValue + rc.performanceProfile.speedStep;
+		lineValue = snappedLineValue + rc.performanceProfile.speed.step;
 
 		while (true) {
 			computeLineTo();
@@ -127,7 +127,7 @@ namespace pizda {
 
 			renderLine();
 
-			lineValue += rc.performanceProfile.speedStep;
+			lineValue += rc.performanceProfile.speed.step;
 		}
 	}
 
@@ -139,15 +139,15 @@ namespace pizda {
 		constexpr static float minAngleRad = toRadians(180 - diffAngleDeg);
 		constexpr static float maxAngleRad = toRadians(180 + diffAngleDeg);
 
-		for (const auto& [from, to, color] : rc.performanceProfile.speedBars) {
+		for (const auto& [from, to, color] : rc.performanceProfile.speed.bars) {
 			const auto radFrom = std::clamp(
-				std::numbers::pi_v<float> - (from - value) * rc.performanceProfile.speedRadPerUnit,
+				std::numbers::pi_v<float> - (from - value) * rc.performanceProfile.speed.radPerUnit,
 				minAngleRad,
 				maxAngleRad
 			);
 
 			const auto radTo = std::clamp(
-				std::numbers::pi_v<float> - (to - value) * rc.performanceProfile.speedRadPerUnit,
+				std::numbers::pi_v<float> - (to - value) * rc.performanceProfile.speed.radPerUnit,
 				minAngleRad,
 				maxAngleRad
 			);
@@ -174,9 +174,9 @@ namespace pizda {
 	void PFDPage::renderSpeedValue(Renderer* renderer, const Bounds& sidebarBounds, const Point& center, const float value) {
 		auto& rc = RC::getInstance();
 
-		const auto bg = rc.gnss.isSatellitesCountEnough() ? &Theme::bg4 : &Theme::bgRed2;
-		const auto fg = rc.gnss.isSatellitesCountEnough() ? &Theme::fg1 : &Theme::fgRed1;
-		const auto text = rc.gnss.isSatellitesCountEnough() ? std::format(L"{:03}", static_cast<int16_t>(value)) : L"---";
+		const auto bg = rc.ahrs.getState() == AHRSState::aligned ? &Theme::bg4 : &Theme::bgRed2;
+		const auto fg = rc.ahrs.getState() == AHRSState::aligned ? &Theme::fg1 : &Theme::fgRed1;
+		const auto text = rc.ahrs.getState() == AHRSState::aligned ? std::format(L"{:03}", static_cast<int16_t>(value)) : L"---";
 
 		const auto valueBounds  = Bounds(
 		   sidebarBounds.getX(),
@@ -232,7 +232,7 @@ namespace pizda {
 			renderer,
 			center,
 			-rc.speedTrendKt,
-			rc.performanceProfile.speedRadPerUnit,
+			rc.performanceProfile.speed.radPerUnit,
 			std::numbers::pi_v<float>
 		);
 	}
@@ -240,8 +240,8 @@ namespace pizda {
 	void PFDPage::renderSpeedBugs(Renderer* renderer, const Point& center, const float value) {
 		const auto& rc = RC::getInstance();
 
-		for (const auto& [name, speed] : rc.performanceProfile.speedBugs) {
-			const auto angleRad = (value - static_cast<float>(speed)) * rc.performanceProfile.speedRadPerUnit;
+		for (const auto& [name, speed] : rc.performanceProfile.speed.bugs) {
+			const auto angleRad = (value - static_cast<float>(speed)) * rc.performanceProfile.speed.radPerUnit;
 
 			if (std::abs(angleRad) > toRadians(50))
 				continue;
@@ -269,7 +269,7 @@ namespace pizda {
 	void PFDPage::renderAltitudeLines(Renderer* renderer, const Bounds& sidebarBounds, const Point& center, const float value) const {
 		const auto& rc = RC::getInstance();
 
-		const auto snappedLineValue = static_cast<int32_t>(value / static_cast<float>(rc.performanceProfile.altitudeStep)) * rc.performanceProfile.altitudeStep;
+		const auto snappedLineValue = static_cast<int32_t>(value / static_cast<float>(rc.performanceProfile.altitude.step)) * rc.performanceProfile.altitude.step;
 
 		auto lineValue = snappedLineValue;
 		Point lineTo;
@@ -278,11 +278,11 @@ namespace pizda {
 			lineTo =
 				center +
 				static_cast<Point>(Vector2F(displayRadius, 0)
-				.rotate((value - static_cast<float>(lineValue)) * rc.performanceProfile.altitudeRadPerUnit));
+				.rotate((value - static_cast<float>(lineValue)) * rc.performanceProfile.altitude.radPerUnit));
 		};
 
 		const auto renderLine = [&lineValue, &lineTo, renderer, this, &rc] {
-			const auto isBig = lineValue % rc.performanceProfile.altitudeStepBig == 0;
+			const auto isBig = lineValue % rc.performanceProfile.altitude.stepBig == 0;
 			const auto lineLength = isBig ? sidebarLineLength1 : sidebarLineLength2;
 
 			renderer->renderHorizontalLine(
@@ -318,11 +318,11 @@ namespace pizda {
 
 			renderLine();
 
-			lineValue -= rc.performanceProfile.altitudeStep;
+			lineValue -= rc.performanceProfile.altitude.step;
 		}
 
 		// Up
-		lineValue = snappedLineValue + rc.performanceProfile.altitudeStep;
+		lineValue = snappedLineValue + rc.performanceProfile.altitude.step;
 
 		while (true) {
 			computeLineTo();
@@ -332,14 +332,14 @@ namespace pizda {
 
 			renderLine();
 
-			lineValue += rc.performanceProfile.altitudeStep;
+			lineValue += rc.performanceProfile.altitude.step;
 		}
 	}
 
 	void PFDPage::renderAltitudeMinimums(Renderer* renderer, const Bounds& sidebarBounds, const Point& center, const float value) {
 		const auto& rc = RC::getInstance();
 
-		const auto minimumsPt = center + static_cast<Point>(Vector2F(displayRadius, 0).rotate((value - static_cast<float>(rc.settings.PFD.altitudeFt)) * rc.performanceProfile.altitudeRadPerUnit));
+		const auto minimumsPt = center + static_cast<Point>(Vector2F(displayRadius, 0).rotate((value - static_cast<float>(rc.settings.PFD.altitudeFt)) * rc.performanceProfile.altitude.radPerUnit));
 
 		if (minimumsPt.getY() >= sidebarBounds.getY() && minimumsPt.getY() <= sidebarBounds.getY2()) {
 			renderer->renderHorizontalLine(
@@ -372,9 +372,9 @@ namespace pizda {
 	void PFDPage::renderAltitudeValue(Renderer* renderer, const Bounds& sidebarBounds, const Point& center, const float value) {
 		auto& rc = RC::getInstance();
 
-		const auto bg = rc.gnss.isSatellitesCountEnough() ? &Theme::bg4 : &Theme::bgRed2;
-		const auto fg = rc.gnss.isSatellitesCountEnough() ? &Theme::fg1 : &Theme::fgRed1;
-		const auto text = rc.gnss.isSatellitesCountEnough() ? std::format(L"{:03}", static_cast<int16_t>(value)) : L"---";
+		const auto bg = rc.ahrs.getState() == AHRSState::aligned ? &Theme::bg4 : &Theme::bgRed2;
+		const auto fg = rc.ahrs.getState() == AHRSState::aligned ? &Theme::fg1 : &Theme::fgRed1;
+		const auto text = rc.ahrs.getState() == AHRSState::aligned ? std::format(L"{:03}", static_cast<int16_t>(value)) : L"---";
 
 		auto valueBounds  = Bounds(
 		   0,
@@ -432,7 +432,7 @@ namespace pizda {
 			renderer,
 			center,
 			rc.altitudeTrendFt,
-			rc.performanceProfile.altitudeRadPerUnit,
+			rc.performanceProfile.altitude.radPerUnit,
 			0
 		);
 	}
@@ -441,8 +441,8 @@ namespace pizda {
 		auto& rc = RC::getInstance();
 		const auto center = bounds.getCenter();
 
-		// Normal mode
-		if (rc.gnss.isSatellitesCountEnough()) {
+		// Aligned
+		if (rc.ahrs.getState() == AHRSState::aligned) {
 			renderer->renderFilledCircle(
 			   center,
 			   compassRadius,
@@ -695,7 +695,7 @@ namespace pizda {
 						center.getY() - fieldsVec.getY()
 					),
 					L"DIS",
-					std::format(L"{:.1f} nm", Units::convertDistance(rc.gnss.getWaypoint1DistanceM(), DistanceUnit::meter, DistanceUnit::nauticalMile))
+					std::format(L"{:.1f} nm", Units::convertDistance(rc.ahrs.getWaypoint1DistanceM(), DistanceUnit::meter, DistanceUnit::nauticalMile))
 				);
 
 				// ETE
@@ -706,13 +706,13 @@ namespace pizda {
 						center.getY() - fieldsVec.getY()
 					),
 					L"ETE",
-					rc.gnss.getWaypoint1ETESec() > 0
-					? std::format(L"{:02}:{:02}", rc.gnss.getWaypoint1ETESec() / 3600, rc.gnss.getWaypoint1ETESec() % 60)
+					rc.ahrs.getWaypoint1ETESec() > 0
+					? std::format(L"{:02}:{:02}", rc.ahrs.getWaypoint1ETESec() / 3600, rc.ahrs.getWaypoint1ETESec() / 60 % 60)
 					: L"--:--"
 				);
 			}
 		}
-		// AHRS align
+		// Pizda
 		else {
 			renderer->renderFilledCircle(
 			   center,
@@ -720,35 +720,17 @@ namespace pizda {
 			   &Theme::bgRed1
 			);
 
-			// 1
-			{
-				const auto text = L"AHRS ALIGN";
+			const auto text = rc.ahrs.getState() == AHRSState::coldAndDark ? L"AHRS ALIGN" : L"GNSS PRIMARY LOST";
 
-				renderer->renderString(
-					Point(
-						center.getX() - Theme::fontNormal.getWidth(text) / 2,
-						center.getY() - Theme::fontNormal.getHeight()
-					),
-					&Theme::fontNormal,
-					&Theme::yellow,
-					text
-				);
-			}
-
-			// 2
-			{
-				const auto text = L"KEEP WINGS LEVEL";
-
-				renderer->renderString(
-					Point(
-						center.getX() - Theme::fontNormal.getWidth(text) / 2,
-						center.getY() + 1
-					),
-					&Theme::fontNormal,
-					&Theme::yellow,
-					text
-				);
-			}
+			renderer->renderString(
+				Point(
+					center.getX() - Theme::fontBig.getWidth(text) / 2,
+					center.getY() - Theme::fontBig.getHeight() / 2
+				),
+				&Theme::fontBig,
+				&Theme::yellow,
+				text
+			);
 		}
 	}
 
@@ -859,9 +841,9 @@ namespace pizda {
 			constexpr static uint8_t courseWidth = 42;
 			constexpr static uint8_t courseHeight = sidebarWidth + 5;
 
-			const auto bg = rc.gnss.isSatellitesCountEnough() ? &Theme::bg1 : &Theme::bgRed2;
-			const auto fg = rc.gnss.isSatellitesCountEnough() ? &Theme::fg1 : &Theme::fgRed1;
-			const auto text = rc.gnss.isSatellitesCountEnough() ? std::format(L"{:03}", static_cast<int16_t>(rc.courseDeg)) : L"---";
+			const auto bg = rc.ahrs.getState() == AHRSState::aligned ? &Theme::bg1 : &Theme::bgRed2;
+			const auto fg = rc.ahrs.getState() == AHRSState::aligned ? &Theme::fg1 : &Theme::fgRed1;
+			const auto text = rc.ahrs.getState() == AHRSState::aligned ? std::format(L"{:03}", static_cast<int16_t>(rc.courseDeg)) : L"---";
 
 			renderer->renderFilledRectangle(
 				Bounds(
@@ -890,9 +872,9 @@ namespace pizda {
 			constexpr static uint8_t timeWidth = 62;
 			constexpr static uint8_t timeHeight = sidebarWidth + 5;
 
-			const auto bg = rc.gnss.haveTime() ? &Theme::bg1 : &Theme::bgRed2;
-			const auto fg = rc.gnss.haveTime() ? &Theme::fg1 : &Theme::fgRed1;
-			const auto text = rc.gnss.haveTime() ? std::format(L"{:02}{:02}Z", rc.gnss.getTimeHours(), rc.gnss.getTimeMinutes()) : L"----Z";
+			const auto bg = rc.ahrs.haveTime() ? &Theme::bg1 : &Theme::bgRed2;
+			const auto fg = rc.ahrs.haveTime() ? &Theme::fg1 : &Theme::fgRed1;
+			const auto text = rc.ahrs.haveTime() ? std::format(L"{:02}{:02}Z", rc.ahrs.getTimeHours(), rc.ahrs.getTimeMinutes()) : L"----Z";
 
 			renderer->renderFilledRectangle(
 				Bounds(
@@ -945,7 +927,7 @@ namespace pizda {
 				),
 				&Theme::fontNormal,
 				&Theme::fg3,
-				std::to_wstring(rc.gnss.getSatellitesCount())
+				std::to_wstring(rc.ahrs.getSatellitesCount())
 			);
 		}
 

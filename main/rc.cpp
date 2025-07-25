@@ -43,9 +43,8 @@ namespace pizda {
 		sleepSetup();
 
 		// GNSS
-		gnss.setup();
-		gnss.updateUpdatingIntervalFromSettings();
-		gnss.startReading();
+		ahrs.setup();
+		ahrs.updateUpdatingIntervalFromSettings();
 
 		// UI
 		updateThemeFromSettings();
@@ -57,7 +56,7 @@ namespace pizda {
 		application.addHID(&buttonMiddle);
 		application.addHID(&buttonDown);
 
-		setRoute(&Routes::PFD);
+		updateFaceFromSettings();
 
 		// This shit is blazingly 🔥 fast 🚀, so letting user enjoy logo for a few moments
 		vTaskDelay(pdMS_TO_TICKS(1000));
@@ -135,12 +134,14 @@ namespace pizda {
 		// Normal
 		float LPFFactor = deltaTime / 1'000'000.f;
 
-		LowPassFilter::apply(speedKt, gnss.isSatellitesCountEnough() ? Units::convertSpeed(gnss.getSpeedMps(), SpeedUnit::meterPerSecond, SpeedUnit::knot) : 0, LPFFactor);
-		LowPassFilter::apply(altitudeFt, gnss.isSatellitesCountEnough() ? Units::convertDistance(gnss.getAltitudeM(), DistanceUnit::meter, DistanceUnit::foot) : 0, LPFFactor);
+		const auto isAHRSAligned = ahrs.getState() == AHRSState::aligned;
+		
+		LowPassFilter::apply(speedKt, isAHRSAligned ? Units::convertSpeed(ahrs.getSpeedMps(), SpeedUnit::meterPerSecond, SpeedUnit::knot) : 0, LPFFactor);
+		LowPassFilter::apply(altitudeFt, isAHRSAligned ? Units::convertDistance(ahrs.getAltitudeM(), DistanceUnit::meter, DistanceUnit::foot) : 0, LPFFactor);
 
 		// Course
 		if (speedKt > 2) {
-			const auto targetCourseDeg = gnss.getCourseDeg();
+			const auto targetCourseDeg = ahrs.getCourseDeg();
 			const auto courseLPFFactor = deltaTime / 1'000'000.f;
 
 			// Clockwise
@@ -160,11 +161,11 @@ namespace pizda {
 
 		// Slow
 		LPFFactor = deltaTime / 2'000'000.f;
-		LowPassFilter::apply(speedTrendKt, gnss.isSatellitesCountEnough() ? Units::convertSpeed(gnss.getSpeedTrendMps(), SpeedUnit::meterPerSecond, SpeedUnit::knot) : 0, LPFFactor);
-		LowPassFilter::apply(altitudeTrendFt, gnss.isSatellitesCountEnough() ? Units::convertDistance(gnss.getAltitudeTrendM(), DistanceUnit::meter, DistanceUnit::foot) : 0, LPFFactor);
+		LowPassFilter::apply(speedTrendKt, isAHRSAligned ? Units::convertSpeed(ahrs.getSpeedTrendMps(), SpeedUnit::meterPerSecond, SpeedUnit::knot) : 0, LPFFactor);
+		LowPassFilter::apply(altitudeTrendFt, isAHRSAligned ? Units::convertDistance(ahrs.getAltitudeTrendM(), DistanceUnit::meter, DistanceUnit::foot) : 0, LPFFactor);
 
-		LowPassFilter::apply(waypoint1BearingDeg, gnss.getWaypoint1BearingDeg(), LPFFactor);
-		LowPassFilter::apply(waypoint2BearingDeg, gnss.getWaypoint2BearingDeg(), LPFFactor);
+		LowPassFilter::apply(waypoint1BearingDeg, ahrs.getWaypoint1BearingDeg(), LPFFactor);
+		LowPassFilter::apply(waypoint2BearingDeg, ahrs.getWaypoint2BearingDeg(), LPFFactor);
 
 		// ESP_LOGI("CDI", "gps lat: %f, lon: %f", toDegrees(gps.getLatitudeRad()), toDegrees(gps.getLongitudeRad()));
 		// ESP_LOGI("CDI", "Bearing deg: %f", WPTBearingDeg);
@@ -204,13 +205,27 @@ namespace pizda {
 		// Zzzzz....
 		ESP_ERROR_CHECK(esp_light_sleep_start());
 
-		// Moving to PFD
-		setRoute(&Routes::PFD);
+		// Moving to active face
+		updateFaceFromSettings();
 		application.render();
 
 		// Turning peripherals on again
 		display.turnOn();
 
 		ESP_LOGI("RC", "Light sleep finished");
+	}
+
+	void RC::updateFaceFromSettings() {
+		switch (settings.interface.face) {
+			case SettingsInterfaceFace::PFD:
+				setRoute(&Routes::PFD);
+				break;
+			case SettingsInterfaceFace::analog:
+				setRoute(&Routes::analog);
+				break;
+			case SettingsInterfaceFace::GNSSRaw:
+				setRoute(&Routes::GNSSRaw);
+				break;
+		}
 	}
 }

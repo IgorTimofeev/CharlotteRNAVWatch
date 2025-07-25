@@ -3,7 +3,7 @@
 #include <cstdint>
 
 #include <YOBA/main.h>
-#include <hardware/GNSS/GNSS.h>
+#include <hardware/AHRS/AHRS.h>
 #include <hardware/korryButton.h>
 #include <constants.h>
 
@@ -25,7 +25,7 @@ namespace pizda {
 	class RC {
 		public:
 			Settings settings {};
-			GNSS gnss {};
+			AHRS ahrs {};
 
 			GC9A01Display display = GC9A01Display(
 				constants::spi::mosi,
@@ -81,6 +81,7 @@ namespace pizda {
 			void updateThemeFromSettings() const;
 			void updatePerformanceProfileFromSettings();
 			void sleep();
+			void updateFaceFromSettings();
 
 		private:
 			RC() = default;

@@ -2,7 +2,7 @@
 
 #include "settingsPFD.h"
 #include "settingsNav.h"
-#include "settingsGNSS.h"
+#include "settingsAHRS.h"
 #include "settingsInterface.h"
 
 namespace pizda {
@@ -12,13 +12,13 @@ namespace pizda {
 		public:
 			SettingsPFD PFD {};
 			SettingsNav nav {};
-			SettingsGNSS GNSS {};
+			SettingsAHRS AHRS {};
 			SettingsInterface interface {};
 
 			void readAll() {
 				PFD.read();
 				nav.read();
-				GNSS.read();
+				AHRS.read();
 				interface.read();
 			}
 	};

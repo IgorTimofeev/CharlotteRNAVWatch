@@ -5,25 +5,21 @@
 namespace pizda {
 	using namespace YOBA;
 	
-	class SettingsGNSS : public NVSSettings {
+	class SettingsAHRS : public NVSSettings {
 		public:
 			bool GPS = true;
 			bool BeiDou = true;
 			bool GLONASS = true;
 			uint16_t updatingIntervalMs = 0;
-			uint16_t dataSamplingDistanceM = 0;
-			uint16_t dataSamplingZeroingIntervalMs = 0;
 			bool simulation = false;
 
 		protected:
 			const char* getNVSNamespace() override {
-				return "gns";
+				return "ahrs";
 			}
 
 			void onRead(const NVSStream& stream) override {
 				updatingIntervalMs = stream.getUint16(_updatingIntervalMs, 1'000);
-				dataSamplingDistanceM = stream.getUint16(_dataSamplingDistanceM, 20);
-				dataSamplingZeroingIntervalMs = stream.getUint16(_dataSamplingZeroingIntervalMs, 10'000);
 
 				GPS = stream.getBool(_GPS, true);
 				BeiDou = stream.getBool(_BDS, true);
@@ -34,8 +30,6 @@ namespace pizda {
 
 			void onWrite(const NVSStream& stream) override {
 				stream.setUint16(_updatingIntervalMs, updatingIntervalMs);
-				stream.setUint16(_dataSamplingDistanceM, dataSamplingDistanceM);
-				stream.setUint16(_dataSamplingZeroingIntervalMs, dataSamplingZeroingIntervalMs);
 
 				stream.setBool(_GPS, GPS);
 				stream.setBool(_BDS, BeiDou);
@@ -46,8 +40,6 @@ namespace pizda {
 
 		private:
 			constexpr static auto _updatingIntervalMs = "ui";
-			constexpr static auto _dataSamplingDistanceM = "dd";
-			constexpr static auto _dataSamplingZeroingIntervalMs = "dz";
 
 			constexpr static auto _GPS = "gp";
 			constexpr static auto _BDS = "bd";

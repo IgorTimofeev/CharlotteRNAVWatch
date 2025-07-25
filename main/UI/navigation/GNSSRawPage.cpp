@@ -1,4 +1,4 @@
-#include "devPage.h"
+#include "GNSSRawPage.h"
 
 #include <format>
 #include "rc.h"
@@ -7,11 +7,11 @@
 #include "utils/string.h"
 
 namespace pizda {
-	void DevPage::onTick() {
+	void GNSSRawPage::onTick() {
 		invalidate();
 	}
 
-	void DevPage::onRender(Renderer* renderer, const Bounds& bounds) {
+	void GNSSRawPage::onRender(Renderer* renderer, const Bounds& bounds) {
 		constexpr static uint8_t width = 140;
 		constexpr static uint8_t height = 140;
 
@@ -30,8 +30,8 @@ namespace pizda {
 		};
 
 		switch (mode) {
-			case DevPageMode::raw: {
-				const auto rx = rc.gnss.getRXData();
+			case GNSSRawPageMode::raw: {
+				const auto rx = rc.ahrs.getRXData();
 				auto str = StringUtils::toWString(std::string(rx.data()));
 				std::erase(str, L'\r');
 
@@ -47,11 +47,11 @@ namespace pizda {
 				break;
 			}
 			default: {
-				renderLine(std::format(L"LAT: {:.5f} deg", toDegrees(rc.gnss.getLatitudeRad())));
-				renderLine(std::format(L"LON: {:.5f} deg", toDegrees(rc.gnss.getLongitudeRad())));
-				renderLine(std::format(L"ALT: {:.2f} m", rc.gnss.getAltitudeM()));
-				renderLine(std::format(L"CRS: {:.2f} deg", rc.gnss.getCourseDeg()));
-				renderLine(std::format(L"SPD: {:.2f} mps", rc.gnss.getSpeedMps()));
+				renderLine(std::format(L"LAT: {:.5f} deg", toDegrees(rc.ahrs.getLatitudeRad())));
+				renderLine(std::format(L"LON: {:.5f} deg", toDegrees(rc.ahrs.getLongitudeRad())));
+				renderLine(std::format(L"ALT: {:.2f} m", rc.ahrs.getAltitudeM()));
+				renderLine(std::format(L"CRS: {:.2f} deg", rc.ahrs.getCourseDeg()));
+				renderLine(std::format(L"SPD: {:.2f} mps", rc.ahrs.getSpeedMps()));
 				renderLine(std::format(L"NAV: {:.2f} deg", rc.waypoint1BearingDeg));
 				renderLine(std::format(L"BRG: {:.2f} deg", rc.waypoint2BearingDeg));
 
@@ -60,7 +60,7 @@ namespace pizda {
 		}
 	}
 
-	void DevPage::onEvent(Event* event) {
+	void GNSSRawPage::onEvent(Event* event) {
 		if (event->getTypeID() != KorryEvent::typeID)
 			return;
 
@@ -77,14 +77,14 @@ namespace pizda {
 			if (korryEvent->getEventType() == KorryEventType::down) {
 				auto intMode = static_cast<int16_t>(mode) + (korryEvent->getButtonType() == KorryButtonType::down ? 1 : -1);
 
-				if (intMode < static_cast<int16_t>(DevPageMode::first)) {
-					intMode = static_cast<int16_t>(DevPageMode::last);
+				if (intMode < static_cast<int16_t>(GNSSRawPageMode::first)) {
+					intMode = static_cast<int16_t>(GNSSRawPageMode::last);
 				}
-				else if (intMode > static_cast<int16_t>(DevPageMode::last)) {
-					intMode = static_cast<int16_t>(DevPageMode::first);
+				else if (intMode > static_cast<int16_t>(GNSSRawPageMode::last)) {
+					intMode = static_cast<int16_t>(GNSSRawPageMode::first);
 				}
 
-				mode = static_cast<DevPageMode>(intMode);
+				mode = static_cast<GNSSRawPageMode>(intMode);
 
 				invalidate();
 			}
