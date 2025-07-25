@@ -13,8 +13,10 @@ namespace pizda {
 			MainMenuPage();
 
 			RouteMenuItem waypointsItem {};
-			RouteMenuItem faceItem {};
-			RouteMenuItem PFDSettingsItem {};
+			FunctionMenuItem PFDItem {};
+			FunctionMenuItem chronoItem {};
+			FunctionMenuItem rawGNSSItem {};
+			RouteMenuItem MCPItem {};
 			RouteMenuItem AHRSSettingsItem {};
 			RouteMenuItem themeItem {};
 			FunctionMenuItem sleepItem {};

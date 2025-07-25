@@ -1,4 +1,4 @@
-#include "GNSSRawPage.h"
+#include "RawGNSSPage.h"
 
 #include <format>
 #include "rc.h"
@@ -7,11 +7,11 @@
 #include "utils/string.h"
 
 namespace pizda {
-	void GNSSRawPage::onTick() {
+	void RawGNSSPage::onTick() {
 		invalidate();
 	}
 
-	void GNSSRawPage::onRender(Renderer* renderer, const Bounds& bounds) {
+	void RawGNSSPage::onRender(Renderer* renderer, const Bounds& bounds) {
 		constexpr static uint8_t width = 140;
 		constexpr static uint8_t height = 140;
 
@@ -30,19 +30,22 @@ namespace pizda {
 		};
 
 		switch (mode) {
-			case GNSSRawPageMode::raw: {
+			case RawGNSSPageMode::raw: {
 				const auto rx = rc.ahrs.getRXData();
-				auto str = StringUtils::toWString(std::string(rx.data()));
-				std::erase(str, L'\r');
 
-				Theme::fontBig.wrap(
-					str,
-					1,
-					width,
-					[&renderLine](const std::wstring_view line, uint16_t) {
-						renderLine(line);
-					}
-				);
+				if (!rx.empty()) {
+					auto str = StringUtils::toWString(std::string(rx.data()));
+					std::erase(str, L'\r');
+
+					Theme::fontBig.wrap(
+						str,
+						1,
+						width,
+						[&renderLine](const std::wstring_view line, uint16_t) {
+							renderLine(line);
+						}
+					);
+				}
 
 				break;
 			}
@@ -60,7 +63,7 @@ namespace pizda {
 		}
 	}
 
-	void GNSSRawPage::onEvent(Event* event) {
+	void RawGNSSPage::onEvent(Event* event) {
 		if (event->getTypeID() != KorryEvent::typeID)
 			return;
 
@@ -77,14 +80,14 @@ namespace pizda {
 			if (korryEvent->getEventType() == KorryEventType::down) {
 				auto intMode = static_cast<int16_t>(mode) + (korryEvent->getButtonType() == KorryButtonType::down ? 1 : -1);
 
-				if (intMode < static_cast<int16_t>(GNSSRawPageMode::first)) {
-					intMode = static_cast<int16_t>(GNSSRawPageMode::last);
+				if (intMode < static_cast<int16_t>(RawGNSSPageMode::first)) {
+					intMode = static_cast<int16_t>(RawGNSSPageMode::last);
 				}
-				else if (intMode > static_cast<int16_t>(GNSSRawPageMode::last)) {
-					intMode = static_cast<int16_t>(GNSSRawPageMode::first);
+				else if (intMode > static_cast<int16_t>(RawGNSSPageMode::last)) {
+					intMode = static_cast<int16_t>(RawGNSSPageMode::first);
 				}
 
-				mode = static_cast<GNSSRawPageMode>(intMode);
+				mode = static_cast<RawGNSSPageMode>(intMode);
 
 				invalidate();
 			}

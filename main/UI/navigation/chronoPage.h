@@ -6,15 +6,13 @@
 namespace pizda {
 	using namespace YOBA;
 
-	enum class GNSSRawPageMode : uint8_t {
-		raw,
-		processed,
-
-		first = raw,
-		last = processed
+	enum class ChronoPageTimerState : uint8_t {
+		zero,
+		active,
+		paused
 	};
 
-	class GNSSRawPage : public Control {
+	class ChronoPage : public Control {
 		public:
 
 		protected:
@@ -23,6 +21,8 @@ namespace pizda {
 			void onEvent(Event* event) override;
 
 		private:
-			GNSSRawPageMode mode = GNSSRawPageMode::raw;
+			static ChronoPageTimerState timerState;
+			static int64_t timerTime;
+			static bool timerView;
 	};
 }

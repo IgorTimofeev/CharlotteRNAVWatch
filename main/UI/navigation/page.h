@@ -11,17 +11,7 @@ namespace pizda {
 
 	class Page : public Layout {
 		public:
-			Page() {
-				rows.setSpacing(10);
-				rows.setAlignment(Alignment::center);
-
-				title.setHorizontalAlignment(Alignment::center);
-				title.setTextColor(&Theme::fg1);
-				title.setFont(&Theme::fontNormal);
-				rows += &title;
-
-				*this += &rows;
-			}
+			Page();
 
 			StackLayout rows {};
 			Text title {};
@@ -29,10 +19,7 @@ namespace pizda {
 
 	class MenuPage : public Page {
 		public:
-			MenuPage() {
-				menu.setSize({ menuWidth, menuHeight });
-				rows += &menu;
-			}
+			MenuPage();
 
 			constexpr static uint8_t menuWidth = 140;
 

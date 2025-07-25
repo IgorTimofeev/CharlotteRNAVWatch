@@ -8,9 +8,9 @@
 namespace pizda {
 	using namespace YOBA;
 
-	class PFDSettingsPage : public MenuPage {
+	class MCPPage : public MenuPage {
 		public:
-			PFDSettingsPage();
+			MCPPage();
 
 			IntInputMenuItem speedItem {};
 			IntInputMenuItem altitudeItem {};

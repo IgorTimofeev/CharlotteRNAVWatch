@@ -6,7 +6,15 @@
 namespace pizda {
 	using namespace YOBA;
 
-	class AnalogPage : public Control {
+	enum class RawGNSSPageMode : uint8_t {
+		raw,
+		processed,
+
+		first = raw,
+		last = processed
+	};
+
+	class RawGNSSPage : public Control {
 		public:
 
 		protected:
@@ -15,7 +23,6 @@ namespace pizda {
 			void onEvent(Event* event) override;
 
 		private:
-			static bool timerMode = true;
-			static int64_t timerTime;
+			RawGNSSPageMode mode = RawGNSSPageMode::raw;
 	};
 }

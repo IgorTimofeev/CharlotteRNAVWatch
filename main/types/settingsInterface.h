@@ -12,13 +12,13 @@ namespace pizda {
 
 	enum class SettingsInterfaceFace : uint8_t {
 		PFD,
-		analog,
-		GNSSRaw
+		chrono,
+		rawGNSS
 	};
 
 	class SettingsInterface : public NVSSettings {
 		public:
-			SettingsInterfaceFace face = SettingsInterfaceFace::analog;
+			SettingsInterfaceFace face = SettingsInterfaceFace::PFD;
 			SettingsInterfaceTheme theme = SettingsInterfaceTheme::dark;
 
 		protected:

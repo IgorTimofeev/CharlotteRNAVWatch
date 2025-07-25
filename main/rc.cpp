@@ -220,11 +220,11 @@ namespace pizda {
 			case SettingsInterfaceFace::PFD:
 				setRoute(&Routes::PFD);
 				break;
-			case SettingsInterfaceFace::analog:
-				setRoute(&Routes::analog);
+			case SettingsInterfaceFace::chrono:
+				setRoute(&Routes::chrono);
 				break;
-			case SettingsInterfaceFace::GNSSRaw:
-				setRoute(&Routes::GNSSRaw);
+			case SettingsInterfaceFace::rawGNSS:
+				setRoute(&Routes::rawGNSS);
 				break;
 		}
 	}

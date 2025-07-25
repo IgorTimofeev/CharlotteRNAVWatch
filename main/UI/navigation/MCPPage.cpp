@@ -1,9 +1,9 @@
-#include "PFDSettingsPage.h"
+#include "MCPPage.h"
 #include "UI/navigation/routes.h"
 #include "rc.h"
 
 namespace pizda {
-	PFDSettingsPage::PFDSettingsPage() {
+	MCPPage::MCPPage() {
 		title.setText(L"PFD settings");
 
 		auto& rc = RC::getInstance();

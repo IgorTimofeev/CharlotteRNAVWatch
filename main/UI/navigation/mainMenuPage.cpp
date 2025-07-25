@@ -8,20 +8,53 @@ namespace pizda {
 	MainMenuPage::MainMenuPage() {
 		title.setText(L"Main menu");
 
+		auto& rc = RC::getInstance();
+
 		// Waypoints
-		waypointsItem.setTitle(L"Waypoints");
+		waypointsItem.setTitle(L"Flight plan");
 		waypointsItem.setRoute(&Routes::waypoints);
 		menu.addItem(&waypointsItem);
 
-		// Face
-		faceItem.setTitle(L"Face");
-		faceItem.setRoute(&Routes::face);
-		menu.addItem(&faceItem);
+		// PFD
+		PFDItem.setTitle(L"PFD");
+
+		PFDItem.setOnPress([&rc] {
+			rc.settings.interface.face = SettingsInterfaceFace::PFD;
+			rc.settings.interface.scheduleWrite();
+
+			rc.setFaceRouteFromSettings();
+		});
+
+		menu.addItem(&PFDItem);
+
+		// Chrono
+		chronoItem.setTitle(L"Chrono");
+
+		chronoItem.setOnPress([&rc] {
+			rc.settings.interface.face = SettingsInterfaceFace::chrono;
+			rc.settings.interface.scheduleWrite();
+
+			rc.setFaceRouteFromSettings();
+		});
+
+		menu.addItem(&chronoItem);
 
 		// PFD
-		PFDSettingsItem.setTitle(L"MCP");
-		PFDSettingsItem.setRoute(&Routes::PFDSettings);
-		menu.addItem(&PFDSettingsItem);
+		rawGNSSItem.setTitle(L"Raw GNSS");
+
+		rawGNSSItem.setOnPress([&rc] {
+			rc.settings.interface.face = SettingsInterfaceFace::rawGNSS;
+			rc.settings.interface.scheduleWrite();
+
+			rc.setFaceRouteFromSettings();
+		});
+
+		menu.addItem(&rawGNSSItem);
+
+		// MCP
+		MCPItem.setTitle(L"MCP");
+		MCPItem.setRoute(&Routes::MCP);
+		menu.addItem(&MCPItem);
 
 		// AHRS
 		AHRSSettingsItem.setTitle(L"AHRS");

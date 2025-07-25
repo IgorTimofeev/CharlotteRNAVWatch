@@ -1,4 +1,4 @@
-#include "analogPage.h"
+#include "chronoPage.h"
 
 #include <format>
 #include "rc.h"
@@ -7,14 +7,15 @@
 #include "utils/string.h"
 
 namespace pizda {
-	bool AnalogPage::timerMode = true;
-	int64_t AnalogPage::timerTime = 0;
+	ChronoPageTimerState ChronoPage::timerState = ChronoPageTimerState::zero;
+	int64_t ChronoPage::timerTime = 0;
+	bool ChronoPage::timerView = true;
 
-	void AnalogPage::onTick() {
+	void ChronoPage::onTick() {
 		invalidate();
 	}
 
-	void AnalogPage::onRender(Renderer* renderer, const Bounds& bounds) {
+	void ChronoPage::onRender(Renderer* renderer, const Bounds& bounds) {
 		auto& rc = RC::getInstance();
 
 		const auto center = bounds.getCenter();
@@ -88,7 +89,7 @@ namespace pizda {
 		}
 
 		// Hands
-		const auto renderHand = [renderer, &center, &rc, radius](const uint16_t length, const Color* color, const uint8_t thickness, const float value01) {
+		const auto renderHand = [renderer, &center, radius](const uint16_t length, const Color* color, const uint8_t thickness, const float value01) {
 			const auto lineVecNorm = Vector2F(0, -1).rotate(value01 * std::numbers::pi_v<float> * 2);
 			const auto lineVecTo = lineVecNorm * static_cast<float>(radius);
 			const auto lineVecFrom = lineVecTo - lineVecNorm * length;
@@ -106,8 +107,8 @@ namespace pizda {
 
 		// Uptime
 		{
-			std::wstring text = timerMode ? L"Chrono" : L"Uptime";
-			const auto y = center.getY() - 15 - Theme::fontNormal.getHeight() / 2;
+			std::wstring text = timerView ? L"Chrono" : L"Uptime";
+			const auto y = center.getY() - Theme::fontNormal.getHeight() / 2 - 12;
 
 			renderer->renderString(
 				Point(
@@ -119,10 +120,27 @@ namespace pizda {
 				text
 			);
 
-			const auto timeUs =
-				timerMode
-				? (timerTime > 0 ? esp_timer_get_time() - timerTime : 0)
-				: esp_timer_get_time();
+			int64_t timeUs;
+
+			if (timerView) {
+				switch (timerState) {
+					case ChronoPageTimerState::zero: {
+						timeUs = 0;
+						break;
+					}
+					case ChronoPageTimerState::active: {
+						timeUs = esp_timer_get_time() - timerTime;
+						break;
+					}
+					default: {
+						timeUs = timerTime;
+						break;
+					}
+				}
+			}
+			else {
+				timeUs = esp_timer_get_time();
+			}
 
 			text = std::format(L"{:02}:{:02}:{:02}", timeUs / 3600'000'000, timeUs / 60'000'000 % 60, timeUs / 1'000'000 % 60);
 
@@ -139,7 +157,7 @@ namespace pizda {
 		}
 	}
 
-	void AnalogPage::onEvent(Event* event) {
+	void ChronoPage::onEvent(Event* event) {
 		if (event->getTypeID() != KorryEvent::typeID)
 			return;
 
@@ -149,18 +167,31 @@ namespace pizda {
 			return;
 
 		if (korryEvent->getButtonType() == KorryButtonType::up) {
-			if (timerTime == 0) {
-				timerTime = esp_timer_get_time();
-			}
-			else {
-				timerTime = 0;
+			switch (timerState) {
+				case ChronoPageTimerState::zero: {
+					timerState = ChronoPageTimerState::active;
+					timerTime = esp_timer_get_time();
+
+					break;
+				}
+				case ChronoPageTimerState::active: {
+					timerState = ChronoPageTimerState::paused;
+					timerTime = esp_timer_get_time() - timerTime;
+
+					break;
+				}
+				case ChronoPageTimerState::paused: {
+					timerState = ChronoPageTimerState::zero;
+					timerTime = 0;
+
+					break;
+				}
 			}
 
 			invalidate();
 		}
 		else if (korryEvent->getButtonType() == KorryButtonType::down) {
-			timerMode = !timerMode;
-
+			timerView = !timerView;
 			invalidate();
 		}
 		else {
