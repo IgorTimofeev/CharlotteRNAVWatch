@@ -10,9 +10,9 @@ namespace pizda {
 		public:
 			explicit SettingsNavWaypoint(
 				const std::wstring_view name,
-				const GeographicCoordinates& geographicCoordinates
+				const GeographicCoordinates& coordinates
 			) :
-				geographicCoordinates(geographicCoordinates)
+				coordinates(coordinates)
 			{
 				std::wcscpy(this->name, name.data());
 			}
@@ -22,7 +22,7 @@ namespace pizda {
 			}
 
 			wchar_t name[16];
-			GeographicCoordinates geographicCoordinates;
+			GeographicCoordinates coordinates;
 	};
 
 	enum class SettingsNavPerformanceProfile : uint8_t {
@@ -64,7 +64,7 @@ namespace pizda {
 
 							waypoints.push_back(SettingsNavWaypoint(
 								waypoint.name,
-								waypoint.geographicCoordinates
+								waypoint.coordinates
 							));
 						}
 					}

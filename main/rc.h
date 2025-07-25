@@ -89,10 +89,10 @@ namespace pizda {
 			constexpr static uint32_t mainTickInterval = 1'000'000 / 30;
 			constexpr static uint32_t computePrimaryTickInterval = 1'000'000 / 30;
 
-			const Route* _selectedRoute = nullptr;
-			Element* _selectedPage = nullptr;
+			const Route* selectedRoute = nullptr;
+			Element* selectedPage = nullptr;
 
-			int64_t _computingPrimaryTickTime = 0;
+			int64_t computingPrimaryTickTime = 0;
 
 			void SPIBusSetup() const;
 			static void sleepSetup();

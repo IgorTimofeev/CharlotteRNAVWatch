@@ -53,10 +53,10 @@ namespace pizda {
 			constexpr static uint8_t HSIArrowSmallWidth = 5;
 			constexpr static uint8_t HSIArrowSmallHeight = 8;
 
-			constexpr static uint8_t HSICDIAngleStepDeg = 10;
+			constexpr static uint8_t HSICDIAngleStepDeg = 5;
 			constexpr static uint8_t HSICDIAngleSteps = 2;
 			constexpr static uint8_t HSICDIAngleMaxDeg = HSICDIAngleStepDeg * HSICDIAngleSteps;
-			constexpr static uint8_t HSICDIAnglePixelsPerDeg = 2;
+			constexpr static uint8_t HSICDIAnglePixelsPerDeg = 4;
 			constexpr static uint8_t HSICDIAngleRadius = 2;
 
 			constexpr static uint8_t HSICDILength = 55;

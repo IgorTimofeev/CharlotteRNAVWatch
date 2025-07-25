@@ -308,15 +308,15 @@ namespace pizda {
 			waypoint1BearingDeg = normalizeAngle360(toDegrees(GeographicCoordinates::getBearing(
 				getLatitudeRad(),
 				getLongitudeRad(),
-				navWaypoint.geographicCoordinates.getLatitude(),
-				navWaypoint.geographicCoordinates.getLongitude()
+				navWaypoint.coordinates.getLatitude(),
+				navWaypoint.coordinates.getLongitude()
 			)));
 
 			waypoint1DistanceM = GeographicCoordinates::getDistance(
 				getLatitudeRad(),
 				getLongitudeRad(),
-				navWaypoint.geographicCoordinates.getLatitude(),
-				navWaypoint.geographicCoordinates.getLongitude()
+				navWaypoint.coordinates.getLatitude(),
+				navWaypoint.coordinates.getLongitude()
 			);
 
 			waypoint1ETESec = speedMps > 0 ? static_cast<uint32_t>(waypoint1DistanceM / speedMps) : 0;
@@ -325,8 +325,8 @@ namespace pizda {
 			waypoint2BearingDeg = normalizeAngle360(toDegrees(GeographicCoordinates::getBearing(
 				getLatitudeRad(),
 				getLongitudeRad(),
-				bearingWaypoint.geographicCoordinates.getLatitude(),
-				bearingWaypoint.geographicCoordinates.getLongitude()
+				bearingWaypoint.coordinates.getLatitude(),
+				bearingWaypoint.coordinates.getLongitude()
 			)));
 		}
 		else {

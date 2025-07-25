@@ -103,22 +103,22 @@ namespace pizda {
 	}
 
 	const Route* RC::getRoute() const {
-		return _selectedRoute;
+		return selectedRoute;
 	}
 
 	void RC::setRoute(const Route* route) {
-		if (_selectedPage) {
-			application -= _selectedPage;
-			delete _selectedPage;
+		if (selectedPage) {
+			application -= selectedPage;
+			delete selectedPage;
 		}
 
-		_selectedRoute = route;
-		_selectedPage = _selectedRoute->buildElement();
-		application += _selectedPage;
+		selectedRoute = route;
+		selectedPage = selectedRoute->buildElement();
+		application += selectedPage;
 	}
 
 	void RC::computeStuff() {
-		const auto deltaTime = static_cast<float>(esp_timer_get_time() - _computingPrimaryTickTime);
+		const auto deltaTime = static_cast<float>(esp_timer_get_time() - computingPrimaryTickTime);
 
 		if (deltaTime < computePrimaryTickInterval)
 			return;
@@ -135,7 +135,7 @@ namespace pizda {
 		float LPFFactor = deltaTime / 1'000'000.f;
 
 		const auto isAHRSAligned = ahrs.getState() == AHRSState::aligned;
-		
+
 		LowPassFilter::apply(speedKt, isAHRSAligned ? Units::convertSpeed(ahrs.getSpeedMps(), SpeedUnit::meterPerSecond, SpeedUnit::knot) : 0, LPFFactor);
 		LowPassFilter::apply(altitudeFt, isAHRSAligned ? Units::convertDistance(ahrs.getAltitudeM(), DistanceUnit::meter, DistanceUnit::foot) : 0, LPFFactor);
 
@@ -172,7 +172,7 @@ namespace pizda {
 		// ESP_LOGI("CDI", "dist: %f", WPTDistanceM);
 		// ESP_LOGI("CDI", "WPTCourseDeviationDeg deg: %f", WPTCourseDeviationDeg);
 
-		_computingPrimaryTickTime = esp_timer_get_time() + computePrimaryTickInterval;
+		computingPrimaryTickTime = esp_timer_get_time() + computePrimaryTickInterval;
 	}
 
 	void RC::SPIBusSetup() const {

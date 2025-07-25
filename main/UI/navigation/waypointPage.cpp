@@ -14,8 +14,17 @@ namespace pizda {
 		// Nav
 		navItem.setTitle(L"As destination");
 
-		navItem.setOnPress([&rc, waypointIndex] {
+		navItem.setOnPress([&rc, waypointIndex, &waypoint] {
 			rc.settings.nav.waypoint1Index = waypointIndex;
+
+			// Setting wpt crs to brg
+			rc.settings.nav.waypoint1CourseDeg = static_cast<uint16_t>(normalizeAngle360(toDegrees(GeographicCoordinates::getBearing(
+				rc.ahrs.getLatitudeRad(),
+				rc.ahrs.getLongitudeRad(),
+				waypoint.coordinates.getLatitude(),
+				waypoint.coordinates.getLongitude()
+			))));
+
 			rc.settings.nav.scheduleWrite();
 
 			rc.setFaceRouteFromSettings();

@@ -987,6 +987,8 @@ namespace pizda {
 				rc.settings.nav.waypoint1CourseDeg = static_cast<uint16_t>(normalizeAngle360(static_cast<int32_t>(rc.settings.nav.waypoint1CourseDeg) + incrementValue));
 				rc.settings.nav.scheduleWrite();
 
+				invalidate();
+
 				event->setHandled(true);
 			}
 		}
