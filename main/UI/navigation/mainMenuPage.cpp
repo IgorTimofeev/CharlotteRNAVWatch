@@ -10,11 +10,6 @@ namespace pizda {
 
 		auto& rc = RC::getInstance();
 
-		// Waypoints
-		waypointsItem.setTitle(L"Flight plan");
-		waypointsItem.setRoute(&Routes::waypoints);
-		menu.addItem(&waypointsItem);
-
 		// PFD
 		PFDItem.setTitle(L"PFD");
 
@@ -50,6 +45,11 @@ namespace pizda {
 		});
 
 		menu.addItem(&rawGNSSItem);
+
+		// Waypoints
+		waypointsItem.setTitle(L"Flight plan");
+		waypointsItem.setRoute(&Routes::waypoints);
+		menu.addItem(&waypointsItem);
 
 		// MCP
 		MCPItem.setTitle(L"MCP");

@@ -446,7 +446,7 @@ namespace pizda {
 			renderer->renderFilledCircle(
 			   center,
 			   compassRadius,
-			   &Theme::bg1
+			   &Theme::bg3
 			);
 
 			const auto centerVec = static_cast<Vector2F>(center);
@@ -772,7 +772,7 @@ namespace pizda {
 		);
 
 		// Background
-		renderer->clear(&Theme::bg1);
+		renderer->clear(&Theme::bg2);
 
 		// Sidebars
 		renderSpeedLines(renderer, sidebarBounds, center, speed);
@@ -791,7 +791,7 @@ namespace pizda {
 					bounds.getWidth(),
 					sidebarBounds.getY() - sidebarUnderlayHeight
 				),
-				&Theme::bg3
+				&Theme::bg1
 			);
 
 			// Bottom
@@ -802,7 +802,7 @@ namespace pizda {
 					bounds.getWidth(),
 					bounds.getHeight() - sidebarBounds.getY2() + 1
 				),
-				&Theme::bg3
+				&Theme::bg1
 			);
 		}
 
@@ -816,7 +816,7 @@ namespace pizda {
 					sidebarBounds.getWidth(),
 					sidebarUnderlayHeight
 				),
-				&Theme::bg4
+				&Theme::bg3
 			);
 
 			// Bottom
@@ -827,7 +827,7 @@ namespace pizda {
 					sidebarBounds.getWidth(),
 					sidebarUnderlayHeight
 				),
-				&Theme::bg4
+				&Theme::bg3
 			);
 
 			// Texts
@@ -841,7 +841,7 @@ namespace pizda {
 			constexpr static uint8_t courseWidth = 42;
 			constexpr static uint8_t courseHeight = sidebarWidth + 5;
 
-			const auto bg = rc.ahrs.getState() == AHRSState::aligned ? &Theme::bg1 : &Theme::bgRed2;
+			const auto bg = rc.ahrs.getState() == AHRSState::aligned ? &Theme::bg2 : &Theme::bgRed2;
 			const auto fg = rc.ahrs.getState() == AHRSState::aligned ? &Theme::fg1 : &Theme::fgRed1;
 			const auto text = rc.ahrs.getState() == AHRSState::aligned ? std::format(L"{:03}", static_cast<int16_t>(rc.courseDeg)) : L"---";
 
@@ -872,7 +872,7 @@ namespace pizda {
 			constexpr static uint8_t timeWidth = 62;
 			constexpr static uint8_t timeHeight = sidebarWidth + 5;
 
-			const auto bg = rc.ahrs.haveTime() ? &Theme::bg1 : &Theme::bgRed2;
+			const auto bg = rc.ahrs.haveTime() ? &Theme::bg2 : &Theme::bgRed2;
 			const auto fg = rc.ahrs.haveTime() ? &Theme::fg1 : &Theme::fgRed1;
 			const auto text = rc.ahrs.haveTime() ? std::format(L"{:02}{:02}Z", rc.ahrs.getTimeHours(), rc.ahrs.getTimeMinutes()) : L"----Z";
 
