@@ -9,6 +9,7 @@
 namespace pizda {
 	ChronoPageTimerState ChronoPage::timerState = ChronoPageTimerState::zero;
 	int64_t ChronoPage::timerTime = 0;
+	float ChronoPage::timerDistance = 0;
 	bool ChronoPage::timerView = true;
 
 	void ChronoPage::onTick() {
@@ -111,53 +112,97 @@ namespace pizda {
 
 		// CYKA
 		{
-			std::wstring text = timerView ? L"Chrono" : L"Uptime";
-			const auto y = center.getY() - Theme::fontNormal.getHeight() / 2 - 14;
+			constexpr static uint8_t spacingSmall = 0;
+			constexpr static uint8_t spacingBig = 7;
 
-			renderer->renderString(
-				Point(
-					center.getX() - Theme::fontNormal.getWidth(text) / 2,
-					y
-				),
-				&Theme::fontNormal,
-				&Theme::fg4,
-				text
-			);
+			auto y = center.getY() - ((Theme::fontNormal.getHeight() + spacingSmall + Theme::fontNormal.getHeight(2)) * 2 + spacingBig) / 2;
 
-			int64_t timeUs;
+			const auto renderDomAndSub = [renderer, &center, &y](const std::wstring_view title, const std::wstring_view text) {
+				renderer->renderString(
+					Point(
+						center.getX() - Theme::fontNormal.getWidth(title) / 2,
+						y
+					),
+					&Theme::fontNormal,
+					&Theme::fg4,
+					title
+				);
 
-			if (timerView) {
-				switch (timerState) {
-					case ChronoPageTimerState::zero: {
-						timeUs = 0;
-						break;
-					}
-					case ChronoPageTimerState::active: {
-						timeUs = esp_timer_get_time() - timerTime;
-						break;
-					}
-					default: {
-						timeUs = timerTime;
-						break;
+				y += Theme::fontNormal.getHeight() + spacingSmall;
+
+				renderer->renderString(
+					Point(
+						center.getX() - Theme::fontNormal.getWidth(text, 2) / 2,
+						y
+					),
+					&Theme::fontNormal,
+					&Theme::fg1,
+					text,
+					2
+				);
+
+				y += Theme::fontNormal.getHeight(2) + spacingBig;
+			};
+
+			// Time
+			{
+				int64_t timeUs;
+
+				if (timerView) {
+					switch (timerState) {
+						case ChronoPageTimerState::zero: {
+							timeUs = 0;
+							break;
+						}
+						case ChronoPageTimerState::active: {
+							timeUs = esp_timer_get_time() - timerTime;
+							break;
+						}
+						default: {
+							timeUs = timerTime;
+							break;
+						}
 					}
 				}
-			}
-			else {
-				timeUs = esp_timer_get_time();
+				else {
+					timeUs = esp_timer_get_time();
+				}
+
+				renderDomAndSub(
+					timerView ? L"Timer" : L"Uptime",
+					std::format(L"{:02}:{:02}:{:02}", timeUs / 3600'000'000, timeUs / 60'000'000 % 60, timeUs / 1'000'000 % 60)
+				);
 			}
 
-			text = std::format(L"{:02}:{:02}:{:02}", timeUs / 3600'000'000, timeUs / 60'000'000 % 60, timeUs / 1'000'000 % 60);
+			// Distance
+			{
+				float distanceM;
 
-			renderer->renderString(
-				Point(
-					center.getX() - Theme::fontNormal.getWidth(text, 2) / 2,
-					y + Theme::fontNormal.getHeight() + 1
-				),
-				&Theme::fontNormal,
-				&Theme::fg1,
-				text,
-				2
-			);
+				if (timerView) {
+					switch (timerState) {
+						case ChronoPageTimerState::zero: {
+							distanceM = 0;
+							break;
+						}
+						case ChronoPageTimerState::active: {
+							distanceM = rc.ahrs.getDistanceM() - timerDistance;
+							break;
+						}
+						default: {
+							distanceM = timerDistance;
+							break;
+						}
+					}
+				}
+				else {
+					distanceM = rc.ahrs.getDistanceM();
+				}
+
+				renderDomAndSub(
+					timerView ? L"Distance" : L"Total dist",
+					std::format(L"{:.1f} nm", Units::convertDistance(distanceM, DistanceUnit::meter, DistanceUnit::nauticalMile))
+				);
+			}
 		}
 	}
 
@@ -171,28 +216,35 @@ namespace pizda {
 			return;
 
 		if (korryEvent->getButtonType() == KorryButtonType::up) {
-			switch (timerState) {
-				case ChronoPageTimerState::zero: {
-					timerState = ChronoPageTimerState::active;
-					timerTime = esp_timer_get_time();
+			if (timerView) {
+				const auto& rc = RC::getInstance();
 
-					break;
-				}
-				case ChronoPageTimerState::active: {
-					timerState = ChronoPageTimerState::paused;
-					timerTime = esp_timer_get_time() - timerTime;
+				switch (timerState) {
+					case ChronoPageTimerState::zero: {
+						timerState = ChronoPageTimerState::active;
+						timerTime = esp_timer_get_time();
+						timerDistance = rc.ahrs.getDistanceM();
 
-					break;
-				}
-				case ChronoPageTimerState::paused: {
-					timerState = ChronoPageTimerState::zero;
-					timerTime = 0;
+						break;
+					}
+					case ChronoPageTimerState::active: {
+						timerState = ChronoPageTimerState::paused;
+						timerTime = esp_timer_get_time() - timerTime;
+						timerDistance = rc.ahrs.getDistanceM() - timerDistance;
 
-					break;
+						break;
+					}
+					case ChronoPageTimerState::paused: {
+						timerState = ChronoPageTimerState::zero;
+						timerTime = 0;
+						timerDistance = 0;
+
+						break;
+					}
 				}
+
+				invalidate();
 			}
-
-			invalidate();
 		}
 		else if (korryEvent->getButtonType() == KorryButtonType::down) {
 			timerView = !timerView;

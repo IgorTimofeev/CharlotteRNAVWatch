@@ -59,6 +59,8 @@ namespace pizda {
 			uint32_t getWaypoint1ETESec() const;
 			float getWaypoint2BearingDeg() const;
 
+			float getDistanceM() const;
+
 			float getHDOP();
 			std::span<char> getRXData();
 
@@ -100,6 +102,9 @@ namespace pizda {
 			float dataSamplingPrevLonRad = 0;
 			int64_t dataSamplingTime = 0;
 			int64_t dataSamplingZeroingTime = 0;
+
+			// Distance
+			float distance = 0;
 
 			// Speed
 			float speedMps = 0;

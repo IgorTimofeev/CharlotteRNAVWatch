@@ -23,6 +23,7 @@ namespace pizda {
 		private:
 			static ChronoPageTimerState timerState;
 			static int64_t timerTime;
+			static float timerDistance;
 			static bool timerView;
 	};
 }

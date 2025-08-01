@@ -166,6 +166,10 @@ namespace pizda {
 		return waypoint2BearingDeg;
 	}
 
+	float AHRS::getDistanceM() const {
+		return distance;
+	}
+
 	uint8_t AHRS::computeCommandCRC(const char* data) {
 		uint8_t crc = 0;
 
@@ -292,6 +296,10 @@ namespace pizda {
 						getLongitudeRad()
 					)));
 
+					// Distance
+					distance += dataSamplingDistanceM;
+
+					// )))
 					dataSamplingPrevLatRad = getLatitudeRad();
 					dataSamplingPrevLonRad = getLongitudeRad();
 
