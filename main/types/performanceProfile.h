@@ -68,8 +68,8 @@ namespace pizda {
 				altitude.radPerUnit = toRadians(0.5f);
 
 				// AHRS
-				AHRS.dataSamplingDistanceM = 8;
-				AHRS.dataSamplingIntervalUs = 20'000'000;
+				AHRS.dataSamplingDistanceM = 15;
+				AHRS.dataSamplingIntervalUs = 30'000'000;
 			}
 
 			void setCycling() {
@@ -93,7 +93,7 @@ namespace pizda {
 				altitude.radPerUnit = toRadians(0.5f);
 
 				// AHRS
-				AHRS.dataSamplingDistanceM = 10;
+				AHRS.dataSamplingDistanceM = 20;
 				AHRS.dataSamplingIntervalUs = 10'000'000;
 			}
 
