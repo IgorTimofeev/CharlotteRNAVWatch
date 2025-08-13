@@ -8,46 +8,13 @@ namespace pizda {
 	MainMenuPage::MainMenuPage() {
 		title.setText(L"Main menu");
 
-		auto& rc = RC::getInstance();
-
-		// PFD
-		PFDItem.setTitle(L"PFD");
-
-		PFDItem.setOnPress([&rc] {
-			rc.settings.interface.face = SettingsInterfaceFace::PFD;
-			rc.settings.interface.scheduleWrite();
-
-			rc.setFaceRouteFromSettings();
-		});
-
-		menu.addItem(&PFDItem);
-
-		// Chrono
-		chronoItem.setTitle(L"Chrono");
-
-		chronoItem.setOnPress([&rc] {
-			rc.settings.interface.face = SettingsInterfaceFace::chrono;
-			rc.settings.interface.scheduleWrite();
-
-			rc.setFaceRouteFromSettings();
-		});
-
-		menu.addItem(&chronoItem);
-
-		// PFD
-		rawGNSSItem.setTitle(L"Raw GNSS");
-
-		rawGNSSItem.setOnPress([&rc] {
-			rc.settings.interface.face = SettingsInterfaceFace::rawGNSS;
-			rc.settings.interface.scheduleWrite();
-
-			rc.setFaceRouteFromSettings();
-		});
-
-		menu.addItem(&rawGNSSItem);
+		// Face
+		faceItem.setTitle(L"Display");
+		faceItem.setRoute(&Routes::face);
+		menu.addItem(&faceItem);
 
 		// Waypoints
-		waypointsItem.setTitle(L"Flight plan");
+		waypointsItem.setTitle(L"Waypoints");
 		waypointsItem.setRoute(&Routes::waypoints);
 		menu.addItem(&waypointsItem);
 
@@ -67,7 +34,7 @@ namespace pizda {
 		menu.addItem(&themeItem);
 
 		// Sleep
-		sleepItem.setTitle(L"Shutdown");
+		sleepItem.setTitle(L"Sleep");
 		sleepItem.setDefaultTitleColor(&Theme::speedBarRed);
 		sleepItem.setActiveBackgroundColor(&Theme::speedBarRed);
 		sleepItem.setActiveTitleColor(&Theme::bg1);

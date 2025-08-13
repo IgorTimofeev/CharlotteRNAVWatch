@@ -12,10 +12,8 @@ namespace pizda {
 		public:
 			MainMenuPage();
 
+			RouteMenuItem faceItem {};
 			RouteMenuItem waypointsItem {};
-			FunctionMenuItem PFDItem {};
-			FunctionMenuItem chronoItem {};
-			FunctionMenuItem rawGNSSItem {};
 			RouteMenuItem MCPItem {};
 			RouteMenuItem AHRSSettingsItem {};
 			RouteMenuItem themeItem {};
